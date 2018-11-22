@@ -7,8 +7,8 @@ Bringing real-time ray-tracing to the Maya viewport using the Wisp real-time ray
 
 1. Copy the .mll file.
 
-   1. Developers, build the project and navigate to ```bin/Debug``` or ```bin/Release```, depending on the chosen configuration. Copy the `.mll` file.
-   2. Regular users, grab a copy of the `.mll` file from the releases on GitHub.
+   1. **Developers**, build the project and navigate to ```bin/Debug``` or ```bin/Release```, depending on the chosen configuration. Copy the `.mll` file.
+   2. **Regular users**, grab a copy of the `.mll` file from the releases on GitHub.
 
 2. Paste the `.mll` file in the Autodesk Maya plug-ins folder. Depending on your personal Autodesk Maya configuration, this could be different for you.
 
@@ -20,7 +20,7 @@ Bringing real-time ray-tracing to the Maya viewport using the Wisp real-time ray
 
 ![Plug-in loaded and read to use](./readme_media/maya_plugin_loaded.png)
 
-## Developers
+# Developers
 
 Before running the installer, install the Maya dev-kit (if needed), and create an environment variable called `MAYA_2018_DIR`. This environment variable should point to your `<installation/path>/Autodesk/Maya2018` folder.
 
@@ -28,13 +28,13 @@ Before running the installer, install the Maya dev-kit (if needed), and create a
 
 Download this repository and run the **install.bat** file on your machine. If you are compiling this on a different platform, you may have to run CMake manually.
 
-# Debugging
+## Debugging
 
 The instructions below assume that the Visual Studio Debugger is used for plug-in development. If you use any other debugger, the guide below does not apply to you.
 
 Please check your debugger documentation to find out how to attach to a running process.
 
-## Setting up the debugger in Visual Studio
+### Setting up the Windows Remote Debugger in Visual Studio
 
 1. Right-click on the project and open the properties.
 
