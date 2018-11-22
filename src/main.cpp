@@ -54,12 +54,15 @@ void AddRemovePlugin(MStatus& t_status, bool t_add)
 	{
 		if (t_add)
 		{
-			// Register the plug-in with Autodesk Maya
+			// Create the renderer instance
+			renderer_override_instance = std::make_unique<wisp::ViewportRendererOverride>(PRODUCT_NAME);
+
+			// Register the renderer with Autodesk Maya
 			t_status = renderer->registerOverride(renderer_override_instance.get());
 		}
 		else
 		{
-			// Unregister the plug-in with Autodesk Maya
+			// Unregister the renderer with Autodesk Maya
 			t_status = renderer->deregisterOverride(renderer_override_instance.get());
 		}
 	}
