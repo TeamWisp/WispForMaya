@@ -1,5 +1,5 @@
 # Maya-Ray-Traced-Viewport-Plugin
-Bringing real-time ray-tracing to the Maya viewport using the Wisp real-time ray-tracing library.
+Bringing real-time ray-tracing to the Maya viewport using the [Wisp real-time ray-tracing library](https://github.com/TeamWisp/Procedural-Ray-Tracing).
 
 # Table of contents
 
