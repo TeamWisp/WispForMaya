@@ -2,7 +2,7 @@
 
 wisp::ViewportRendererOverride::ViewportRendererOverride(const MString& t_name)
 	: MRenderOverride(t_name)
-	, m_plugin_name("Wisp Real-time Ray-tracer")
+	, m_plugin_name("Realtime viewport ray-tracer")
 {
 }
 
