@@ -35,6 +35,8 @@ project(${PROJECT_NAME})
 # === Files === #
 file(GLOB HEADERS [CONFIGURE_DEPENDS] "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp")
 file(GLOB SOURCES [CONFIGURE_DEPENDS] "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+file(GLOB PLUGIN_HEADERS [CONFIGURE_DEPENDS] "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/*.hpp")
+file(GLOB PLUGIN_SOURCES [CONFIGURE_DEPENDS] "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/*.cpp")
 
 # === Maya API === #
 include_directories(${MAYA_INCLUDE_DIR})
@@ -44,10 +46,15 @@ link_directories(${MAYA_LIBRARY_DIR})
 set(LIBRARIES "OpenMaya.lib" "Foundation.lib")
 
 # A Maya plug-in needs to be built as a shared library, it is not a standalone executable
-add_library(${PROJECT_NAME} SHARED ${HEADERS} ${SOURCES})
+add_library(${PROJECT_NAME} SHARED ${HEADERS} ${SOURCES} ${PLUGIN_HEADERS} ${PLUGIN_SOURCES})
 
 # A Maya plug-in needs its own custom (.mll) extension
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ${PLUGIN_EXTENSION})
+
+# Additional properties
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
+set_target_properties(${PROJECT_NAME} PROPERTIES CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Change the startup project to this project (not the CMake projects)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
