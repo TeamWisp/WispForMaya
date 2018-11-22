@@ -30,7 +30,9 @@ Download this repository and run the **install.bat** file on your machine. If yo
 
 # Debugging
 
-Nick Cullen has written an excellent [blog](https://nickcullen.net/blog/misc-tutorials/how-to-debug-a-maya-2016-c-plugin-using-visual-studio-2015/) post on how to debug a plug-in for Autodesk Maya. The steps you read below are taken from his blog. It is assumed that the Visual Studio Debugger is used for plug-in development. If you use any other debuggers, the guide below does not apply to you. Please check your debugger documentation to find out how to attach to a running process.
+The instructions below assume that the Visual Studio Debugger is used for plug-in development. If you use any other debugger, the guide below does not apply to you.
+
+Please check your debugger documentation to find out how to attach to a running process.
 
 ## Setting up the debugger in Visual Studio
 
@@ -48,8 +50,6 @@ Nick Cullen has written an excellent [blog](https://nickcullen.net/blog/misc-tut
       The remote command is the command that run once the *Remote Windows Debugger* is launched.
       Set this to the location of `maya.exe`. The location of the executable depends on your installation settings, but by default it is located here: `C:\Program Files\Autodesk\Maya2018\bin\maya.exe`.
 
-      I installed Autodesk Maya on the `D` drive, so I had to change the path a little bit.
-
    2. **Attach**
       If you were to launch the *Remote Windows Debugger* right now, a new instance of Maya will be launched. This is not something you want when debugging an application, so change this setting to `Yes`.
 
@@ -59,4 +59,4 @@ Nick Cullen has written an excellent [blog](https://nickcullen.net/blog/misc-tut
 
    ![Launching the Remote Windows Debugger](readme_media/select_correct_way_to_run.png)
 
-This should be all you need to set-up the Visual Studio Debugger to attach to the Maya process.
+Thanks a lot, [Nick Cullen](https://nickcullen.net/blog/misc-tutorials/how-to-debug-a-maya-2016-c-plugin-using-visual-studio-2015/), for the step-by-step instructions on how to get the Remote Windows Debugger to work with Autodesk Maya 2018.
