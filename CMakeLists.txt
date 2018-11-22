@@ -42,8 +42,8 @@ file(GLOB PLUGIN_SOURCES [CONFIGURE_DEPENDS] "${CMAKE_CURRENT_SOURCE_DIR}/src/pl
 include_directories(${MAYA_INCLUDE_DIR})
 link_directories(${MAYA_LIBRARY_DIR})
 
-# TODO: make this crossplatform (e.g. .lib or .so as a prefix)
-set(LIBRARIES "OpenMaya.lib" "Foundation.lib")
+# === Maya libraries === #
+set(LIBRARIES "OpenMaya.lib" "OpenMayaUI.lib" "OpenMayaRender.lib" "Foundation.lib")
 
 # A Maya plug-in needs to be built as a shared library, it is not a standalone executable
 add_library(${PROJECT_NAME} SHARED ${HEADERS} ${SOURCES} ${PLUGIN_HEADERS} ${PLUGIN_SOURCES})
@@ -55,6 +55,9 @@ set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ${PLUGIN_EXTENSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
 set_target_properties(${PROJECT_NAME} PROPERTIES CMAKE_CXX_STANDARD_REQUIRED ON)
+if (MSVC)
+	target_compile_options(${PROJECT_NAME} PRIVATE /W4 /permissive- /MP /Gm-)
+endif()
 
 # Change the startup project to this project (not the CMake projects)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
