@@ -1,6 +1,16 @@
 # Maya-Ray-Traced-Viewport-Plugin
 Bringing real-time ray-tracing to the Maya viewport using the Wisp real-time ray-tracing library.
 
+# Table of contents
+
+1. [Installation instructions](#instructions)
+2. [Setting the environment variable](#environment-variable)
+3. [Configuring the Remote Windows Debugger](#debugging)
+   1. [Project properties](#project-properties)
+   2. [Changing the debugger](#select-the-remote-windows-debugger)
+   3. [Windows Remote Debugger settings](#windows-remote-debugger-settings)
+   4. [Using the Windows Remote Debugger](#select-the-windows-remote-debugger)
+
 # Installation
 
 ## Instructions
@@ -20,7 +30,9 @@ Bringing real-time ray-tracing to the Maya viewport using the Wisp real-time ray
 
 ![Plug-in loaded and read to use](./readme_media/maya_plugin_loaded.png)
 
-# Developers
+# Plug-in development
+
+## Environment variable
 
 Before running the installer, install the Maya dev-kit (if needed), and create an environment variable called `MAYA_2018_DIR`. This environment variable should point to your `<installation/path>/Autodesk/Maya2018` folder.
 
@@ -34,29 +46,34 @@ The instructions below assume that the Visual Studio Debugger is used for plug-i
 
 Please check your debugger documentation to find out how to attach to a running process.
 
-### Setting up the Windows Remote Debugger in Visual Studio
+### Project properties
+Right-click on the project and open the properties.
 
-1. Right-click on the project and open the properties.
+![Project properties](readme_media/project_properties.png)
 
-   ![Project properties](readme_media/project_properties.png)
+### Select the Remote Windows Debugger
 
-2. Go to the **debugging** settings. By default, Visual Studio uses the *Local Windows Debugger*, change this into *Remote Windows Debugger*.
+Go to the **debugging** settings. By default, Visual Studio uses the *Local Windows Debugger*, change this into *Remote Windows Debugger*.
 
-   ![Selecting the remote debugger](readme_media/selecting_remote_debugger.png)
+![Selecting the remote debugger](readme_media/selecting_remote_debugger.png)
 
-3. After selecting the *Remote Windows Debugger*, new settings will appear. There are two settings that need to be changed:
+### Windows Remote Debugger settings
 
-   1. **Remote command**
-      The remote command is the command that run once the *Remote Windows Debugger* is launched.
-      Set this to the location of `maya.exe`. The location of the executable depends on your installation settings, but by default it is located here: `C:\Program Files\Autodesk\Maya2018\bin\maya.exe`.
+After selecting the *Remote Windows Debugger*, new settings will appear. There are two settings that need to be changed:
 
-   2. **Attach**
-      If you were to launch the *Remote Windows Debugger* right now, a new instance of Maya will be launched. This is not something you want when debugging an application, so change this setting to `Yes`.
+1. **Remote command**
+   The remote command is the command that run once the *Remote Windows Debugger* is launched.
+   Set this to the location of `maya.exe`. The location of the executable depends on your installation settings, but by default it is located here: `C:\Program Files\Autodesk\Maya2018\bin\maya.exe`.
 
-   ![Correct Remote Windows Debugger settings](readme_media/debugger_settings_to_attach.png)
+2. **Attach**
+   If you were to launch the *Remote Windows Debugger* right now, a new instance of Maya will be launched. This is not something you want when debugging an application, so change this setting to `Yes`.
 
-4. To make it easy to launch the *Windows Remote Debugger*, click the arrow next to *Local Windows Debugger* and select the *Remote Windows Debugger*. Now, every time that button is clicked (shortcut: `F5`), the *Remote Windows Debugger* is used instead of the *Local Windows Debugger*.
+![Correct Remote Windows Debugger settings](readme_media/debugger_settings_to_attach.png)
 
-   ![Launching the Remote Windows Debugger](readme_media/select_correct_way_to_run.png)
+### Select the Windows Remote Debugger
+
+To make it easy to launch the *Windows Remote Debugger*, click the arrow next to *Local Windows Debugger* and select the *Remote Windows Debugger*. Now, every time that button is clicked (shortcut: `F5`), the *Remote Windows Debugger* is used instead of the *Local Windows Debugger*.
+
+![Launching the Remote Windows Debugger](readme_media/select_correct_way_to_run.png)
 
 Thanks a lot, [Nick Cullen](https://nickcullen.net/blog/misc-tutorials/how-to-debug-a-maya-2016-c-plugin-using-visual-studio-2015/), for the step-by-step instructions on how to get the Remote Windows Debugger to work with Autodesk Maya 2018.
