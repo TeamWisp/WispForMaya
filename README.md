@@ -27,3 +27,36 @@ Before running the installer, install the Maya dev-kit (if needed), and create a
 ![MAYA_2018_DIR environment variable](./readme_media/environment_variable.png)
 
 Download this repository and run the **install.bat** file on your machine. If you are compiling this on a different platform, you may have to run CMake manually.
+
+# Debugging
+
+Nick Cullen has written an excellent [blog](https://nickcullen.net/blog/misc-tutorials/how-to-debug-a-maya-2016-c-plugin-using-visual-studio-2015/) post on how to debug a plug-in for Autodesk Maya. The steps you read below are taken from his blog. It is assumed that the Visual Studio Debugger is used for plug-in development. If you use any other debuggers, the guide below does not apply to you. Please check your debugger documentation to find out how to attach to a running process.
+
+## Setting up the debugger in Visual Studio
+
+1. Right-click on the project and open the properties.
+
+   ![Project properties](readme_media/project_properties.png)
+
+2. Go to the **debugging** settings. By default, Visual Studio uses the *Local Windows Debugger*, change this into *Remote Windows Debugger*.
+
+   ![Selecting the remote debugger](readme_media/selecting_remote_debugger.png)
+
+3. After selecting the *Remote Windows Debugger*, new settings will appear. There are two settings that need to be changed:
+
+   1. **Remote command**
+      The remote command is the command that run once the *Remote Windows Debugger* is launched.
+      Set this to the location of `maya.exe`. The location of the executable depends on your installation settings, but by default it is located here: `C:\Program Files\Autodesk\Maya2018\bin\maya.exe`.
+
+      I installed Autodesk Maya on the `D` drive, so I had to change the path a little bit.
+
+   2. **Attach**
+      If you were to launch the *Remote Windows Debugger* right now, a new instance of Maya will be launched. This is not something you want when debugging an application, so change this setting to `Yes`.
+
+   ![Correct Remote Windows Debugger settings](readme_media/debugger_settings_to_attach.png)
+
+4. To make it easy to launch the *Windows Remote Debugger*, click the arrow next to *Local Windows Debugger* and select the *Remote Windows Debugger*. Now, every time that button is clicked (shortcut: `F5`), the *Remote Windows Debugger* is used instead of the *Local Windows Debugger*.
+
+   ![Launching the Remote Windows Debugger](readme_media/select_correct_way_to_run.png)
+
+This should be all you need to set-up the Visual Studio Debugger to attach to the Maya process.
