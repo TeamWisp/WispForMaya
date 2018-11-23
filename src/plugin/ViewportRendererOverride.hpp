@@ -1,5 +1,4 @@
-#ifndef VIEWPORT_RENDERER_OVERRIDE_HPP
-#define VIEWPORT_RENDERER_OVERRIDE_HPP
+#pragma once
 
 #include <maya/MString.h>
 #include <maya/MViewport2Renderer.h>
@@ -20,5 +19,3 @@ namespace wisp
 		MString m_plugin_name;
 	};
 }
-
-#endif
