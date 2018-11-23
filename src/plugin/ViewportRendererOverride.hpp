@@ -1,7 +1,6 @@
 #ifndef VIEWPORT_RENDERER_OVERRIDE_HPP
 #define VIEWPORT_RENDERER_OVERRIDE_HPP
 
-#include <maya/MString.h>
 #include <maya/MViewport2Renderer.h>
 
 namespace wisp
