@@ -1,6 +1,6 @@
 #include "plugin/ViewportRendererOverride.hpp"
 
-#include "Settings.hpp"
+#include "Constants.hpp"
 
 #include <maya/MFnPlugin.h>
 
@@ -16,7 +16,7 @@ void CheckStatus(const MStatus& t_status, const MString& t_message);
 MStatus initializePlugin(MObject t_object)
 {
 	MStatus status = MStatus::kFailure;
-	MFnPlugin plugin(t_object, wisp::COMPANY_NAME, wisp::PRODUCT_VERSION);
+	MFnPlugin plugin(t_object, wisp::Constants::COMPANY_NAME, wisp::Constants::PRODUCT_VERSION);
 
 	if (!renderer_override_instance)
 	{
@@ -55,7 +55,7 @@ void AddRemovePlugin(MStatus& t_status, bool t_add)
 		if (t_add)
 		{
 			// Create the renderer instance
-			renderer_override_instance = std::make_unique<wisp::ViewportRendererOverride>(wisp::PRODUCT_NAME);
+			renderer_override_instance = std::make_unique<wisp::ViewportRendererOverride>(wisp::Constants::PRODUCT_NAME);
 
 			// Register the renderer with Autodesk Maya
 			t_status = renderer->registerOverride(renderer_override_instance.get());
