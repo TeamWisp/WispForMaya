@@ -1,6 +1,5 @@
 #pragma once
 
-#include <maya/MString.h>
 #include <maya/MViewport2Renderer.h>
 
 namespace wisp

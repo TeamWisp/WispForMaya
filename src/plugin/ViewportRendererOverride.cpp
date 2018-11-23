@@ -48,7 +48,7 @@ MString wisp::ViewportRendererOverride::uiName() const
 	return m_plugin_name;
 }
 
-MStatus wisp::ViewportRendererOverride::setup(const MString & t_destination)
+MStatus wisp::ViewportRendererOverride::setup(const MString& t_destination)
 {
 	return MStatus::kSuccess;
 }
