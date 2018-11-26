@@ -1,6 +1,6 @@
 #include "QuadRendererOverride.hpp"
 
-wmr::WispQuadRenderer::WispQuadRenderer(const MString & t_name)
+wmr::WispScreenBlitter::WispScreenBlitter(const MString & t_name)
 	: MQuadRender(t_name)
 	, m_shader_instance(nullptr)
 	, m_color_texture_changed(false)
@@ -8,7 +8,7 @@ wmr::WispQuadRenderer::WispQuadRenderer(const MString & t_name)
 	m_color_texture.texture = nullptr;
 }
 
-wmr::WispQuadRenderer::~WispQuadRenderer()
+wmr::WispScreenBlitter::~WispScreenBlitter()
 {
 	MHWRender::MRenderer* maya_renderer = MHWRender::MRenderer::theRenderer();
 
@@ -31,7 +31,7 @@ wmr::WispQuadRenderer::~WispQuadRenderer()
 	}
 }
 
-const MHWRender::MShaderInstance* wmr::WispQuadRenderer::shader()
+const MHWRender::MShaderInstance* wmr::WispScreenBlitter::shader()
 {
 	if (!m_shader_instance)
 	{
@@ -67,7 +67,7 @@ const MHWRender::MShaderInstance* wmr::WispQuadRenderer::shader()
 	return m_shader_instance;
 }
 
-MHWRender::MClearOperation& wmr::WispQuadRenderer::clearOperation()
+MHWRender::MClearOperation& wmr::WispScreenBlitter::clearOperation()
 {
 	mClearOperation.setClearGradient(false);
 	mClearOperation.setMask(static_cast<unsigned int>(MHWRender::MClearOperation::kClearAll));
@@ -75,7 +75,7 @@ MHWRender::MClearOperation& wmr::WispQuadRenderer::clearOperation()
 	return mClearOperation;
 }
 
-void wmr::WispQuadRenderer::SetColorTexture(const MHWRender::MTextureAssignment& t_color_texture)
+void wmr::WispScreenBlitter::SetColorTexture(const MHWRender::MTextureAssignment& t_color_texture)
 {
 	m_color_texture.texture = t_color_texture.texture;
 	m_color_texture_changed = true;
