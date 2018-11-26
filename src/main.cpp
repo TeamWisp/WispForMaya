@@ -15,7 +15,7 @@
 #include <maya/MCommandResult.h>
 #include <maya/MGlobal.h>
 
-#include "Constants.hpp"
+#include "Settings.hpp"
 #include "plugin/ViewportRendererOverride.hpp"
 
 MStatus initializePlugin(MObject obj)
