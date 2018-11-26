@@ -6,7 +6,7 @@ namespace wisp
 	class UIOverride : public MHWRender::MSceneRender
 	{
 	public:
-		UIOverride();
+		UIOverride(const MString& t_name);
 		~UIOverride();
 
 	private:
