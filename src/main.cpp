@@ -1,77 +1,89 @@
-#include "plugin/ViewportRendererOverride.hpp"
+//-
+// Copyright 2015 Autodesk, Inc.  All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license agreement
+// provided at the time of installation or download, or which otherwise
+// accompanies this software in either electronic or hard copy form.
+//+
 
-#include "Constants.hpp"
+#include <stdio.h>
+#include <exception>
 
+#include <maya/MString.h>
 #include <maya/MFnPlugin.h>
+#include <maya/MViewport2Renderer.h>
+#include <maya/MCommandResult.h>
+#include <maya/MGlobal.h>
 
-#include <memory>
+#include "plugin/AutodeskSample.hpp"
 
-static std::unique_ptr<wisp::ViewportRendererOverride> renderer_override_instance;
 
-void AddRemovePlugin(MStatus& t_status, bool t_add);
-void CheckStatus(const MStatus& t_status, const MString& t_message);
-
-// NOTE:	This function name deviates from the coding standard because Autodesk Maya looks for a function that is
-//			written exactly like this.
-MStatus initializePlugin(MObject t_object)
+MStatus initializePlugin(MObject obj)
 {
-	MStatus status = MStatus::kFailure;
-	MFnPlugin plugin(t_object, wisp::Constants::COMPANY_NAME, wisp::Constants::PRODUCT_VERSION);
+	MStatus status;
+	MFnPlugin plugin(obj, PLUGIN_COMPANY, "1.0", "Any");
 
-	if (!renderer_override_instance)
+	// ************************ MAYA-25818 PART 1 of 2 *************************
+	// Workaround for avoiding dirtying the scene until there's a way to
+	// register overrides without causing dirty.
+	bool sceneDirty = true; // assume true since that's the safest
+	try
 	{
-		AddRemovePlugin(status, true);
+		// is the scene currently dirty?
+		MCommandResult sceneDirtyResult(&status);
+		if (status != MStatus::kSuccess) throw std::exception();
+		status = MGlobal::executeCommand("file -query -modified", sceneDirtyResult);
+		if (status != MStatus::kSuccess) throw std::exception();
+		int commandResult;
+		status = sceneDirtyResult.getResult(commandResult);
+		if (status != MStatus::kSuccess) throw std::exception();
+		sceneDirty = commandResult != 0;
 	}
-
-	CheckStatus(status, "Failed to register the renderer override!");
-
-	return status;
-}
-
-// NOTE:	This function name deviates from the coding standard because Autodesk Maya looks for a function that is
-//			written exactly like this.
-MStatus uninitializePlugin(MObject t_object)
-{
-	MStatus status = MStatus::kFailure;
-	MFnPlugin plugin(t_object);
-
-	// Unregister the override
-	if (renderer_override_instance)
+	catch (std::exception&)
 	{
-		AddRemovePlugin(status, false);
+		// if we got here, assume the scene is dirty
+		sceneDirty = true;
 	}
+	// ************************ MAYA-25818 PART 1 of 2 *********************
 
-	CheckStatus(status, "Failed to unregister the renderer override!");
-
-	return status;
-}
-
-void AddRemovePlugin(MStatus& t_status, bool t_add)
-{
-	auto renderer = MHWRender::MRenderer::theRenderer();
-
+	MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer();
 	if (renderer)
 	{
-		if (t_add)
+		if (!viewImageBlitOverride::RenderOverride::sViewImageBlitOverrideInstance)
 		{
-			// Create the renderer instance
-			renderer_override_instance = std::make_unique<wisp::ViewportRendererOverride>(wisp::Constants::PRODUCT_NAME);
-
-			// Register the renderer with Autodesk Maya
-			t_status = renderer->registerOverride(renderer_override_instance.get());
-		}
-		else
-		{
-			// Unregister the renderer with Autodesk Maya
-			t_status = renderer->deregisterOverride(renderer_override_instance.get());
+			viewImageBlitOverride::RenderOverride::sViewImageBlitOverrideInstance = new viewImageBlitOverride::RenderOverride("my_viewImageBlitOverride");
+			renderer->registerOverride(viewImageBlitOverride::RenderOverride::sViewImageBlitOverrideInstance);
 		}
 	}
-}
 
-void CheckStatus(const MStatus& t_status, const MString& t_message)
-{
-	if (!t_status)
+	// ************************ MAYA-25818 PART 2 of 2 *************************
+	// If the scene was previously unmodified, return it to that state since
+	// we haven't done anything that needs to be saved.
+	if (sceneDirty == false)
 	{
-		t_status.perror(t_message);
+		MGlobal::executeCommand("file -modified 0");
 	}
+	// ************************ END MAYA-25818 PART 2 of 2 *********************
+
+	return status;
 }
+
+MStatus uninitializePlugin(MObject obj)
+{
+	MStatus status;
+	MFnPlugin plugin(obj);
+
+	MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer();
+	if (renderer)
+	{
+		if (viewImageBlitOverride::RenderOverride::sViewImageBlitOverrideInstance)
+		{
+			renderer->deregisterOverride(viewImageBlitOverride::RenderOverride::sViewImageBlitOverrideInstance);
+			delete viewImageBlitOverride::RenderOverride::sViewImageBlitOverrideInstance;
+		}
+		viewImageBlitOverride::RenderOverride::sViewImageBlitOverrideInstance = NULL;
+	}
+
+	return status;
+}
+
