@@ -1,10 +1,9 @@
 #include "ViewportRendererOverride.hpp"
+#include "QuadRendererOverride.hpp"
 #include "UIOverride.hpp"
 
-// Used for the Blit class, will be replaced when refactoring
-#include "AutodeskSample.hpp"
-
 #include <maya/MImage.h>
+#include <maya/M3dView.h>
 
 wmr::WispViewportRenderer* wmr::WispViewportRenderer::sViewImageBlitOverrideInstance = nullptr;
 
@@ -84,7 +83,7 @@ MStatus wmr::WispViewportRenderer::setup(const MString& t_destination)
 	// Create a new set of operations if required
 	if (!m_render_operations[0])
 	{
-		m_render_operations[0] = (MHWRender::MRenderOperation*) new viewImageBlitOverride::SceneBlit(m_render_operation_names[0]);
+		m_render_operations[0] = (MHWRender::MRenderOperation*) new wmr::WispQuadRenderer(m_render_operation_names[0]);
 		m_render_operations[1] = (MHWRender::MRenderOperation*) new wmr::WispUIRenderer(m_render_operation_names[1]);
 		m_render_operations[2] = (MHWRender::MRenderOperation*) new MHWRender::MHUDRender();
 		m_render_operations[3] = (MHWRender::MRenderOperation*) new MHWRender::MPresentTarget(m_render_operation_names[2]);
@@ -218,8 +217,8 @@ bool wmr::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* t_renderer,
 	// Update the textures for the blit operation
 	if (aquire_new_texture)
 	{
-		auto blit = (viewImageBlitOverride::SceneBlit*)m_render_operations[0];
-		blit->setColorTexture(m_color_texture);
+		auto blit = (wmr::WispQuadRenderer*)m_render_operations[0];
+		blit->SetColorTexture(m_color_texture);
 	}
 
 	if (m_color_texture.texture)

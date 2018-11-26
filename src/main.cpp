@@ -18,8 +18,6 @@
 #include "Constants.hpp"
 #include "plugin/ViewportRendererOverride.hpp"
 
-#include "plugin/AutodeskSample.hpp"
-
 MStatus initializePlugin(MObject obj)
 {
 	MStatus status;
