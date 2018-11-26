@@ -24,50 +24,6 @@
 // 
 namespace viewImageBlitOverride
 {
-	class RenderOverride : public MHWRender::MRenderOverride
-	{
-	public:
-		RenderOverride(const MString & name);
-		~RenderOverride() override;
-		MHWRender::DrawAPI supportedDrawAPIs() const override;
-
-		MStatus setup(const MString & destination) override;
-		bool startOperationIterator() override;
-		MHWRender::MRenderOperation * renderOperation() override;
-		bool nextRenderOperation() override;
-		MStatus cleanup() override;
-
-		MString uiName() const override
-		{
-			return mUIName;
-		}
-
-		// Global override instance
-		static RenderOverride* sViewImageBlitOverrideInstance;
-
-	protected:
-		bool updateTextures(MHWRender::MRenderer *theRenderer,
-			MHWRender::MTextureManager* textureManager);
-
-		// UI name 
-		MString mUIName;
-
-		// Operations + names
-		MHWRender::MRenderOperation* mOperations[4];
-		MString mOperationNames[3];
-
-		// Texture(s) used for the quad render
-		MHWRender::MTextureDescription mColorTextureDesc;
-		MHWRender::MTextureDescription mDepthTextureDesc;
-		MHWRender::MTextureAssignment mColorTexture;
-		MHWRender::MTextureAssignment mDepthTexture;
-
-		int mCurrentOperation;
-
-		// Options
-		bool mLoadImagesFromDisk;
-	};
-
 	//
 	// Image blit used to perform the 'scene render'
 	//
