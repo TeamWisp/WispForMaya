@@ -15,13 +15,13 @@
 #include <maya/MCommandResult.h>
 #include <maya/MGlobal.h>
 
+#include "Constants.hpp"
 #include "plugin/AutodeskSample.hpp"
-
 
 MStatus initializePlugin(MObject obj)
 {
 	MStatus status;
-	MFnPlugin plugin(obj, PLUGIN_COMPANY, "1.0", "Any");
+	MFnPlugin plugin(obj, wisp::settings::COMPANY_NAME, wisp::settings::PRODUCT_VERSION, "Any");
 
 	// ************************ MAYA-25818 PART 1 of 2 *************************
 	// Workaround for avoiding dirtying the scene until there's a way to
