@@ -41,9 +41,7 @@ namespace wmr
 
 		// Texture(s) used for the quad render
 		MHWRender::MTextureDescription m_color_texture_desc;
-		MHWRender::MTextureDescription m_depth_texture_desc;
 		MHWRender::MTextureAssignment m_color_texture;
-		MHWRender::MTextureAssignment m_depth_texture;
 
 		int m_current_render_operation;
 
