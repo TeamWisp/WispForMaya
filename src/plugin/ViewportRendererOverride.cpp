@@ -21,8 +21,6 @@ wmr::WispViewportRenderer::WispViewportRenderer(const MString& t_name)
 
 	m_color_texture.texture = nullptr;
 	m_color_texture_desc.setToDefault2DTexture();
-	m_depth_texture.texture = nullptr;
-	m_depth_texture_desc.setToDefault2DTexture();
 }
 
 wmr::WispViewportRenderer::~WispViewportRenderer()
@@ -36,11 +34,6 @@ wmr::WispViewportRenderer::~WispViewportRenderer()
 		if (m_color_texture.texture)
 		{
 			maya_texture_manager->releaseTexture(m_color_texture.texture);
-		}
-
-		if (m_depth_texture.texture)
-		{
-			maya_texture_manager->releaseTexture(m_depth_texture.texture);
 		}
 	}
 
@@ -180,19 +173,12 @@ bool wmr::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* t_renderer,
 	// Any existing textures will be released
 	if (force_reload ||
 		!m_color_texture.texture ||
-		!m_depth_texture.texture ||
 		texture_resized)
 	{
 		if (m_color_texture.texture)
 		{
 			t_texture_manager->releaseTexture(m_color_texture.texture);
 			m_color_texture.texture = nullptr;
-		}
-
-		if (m_depth_texture.texture)
-		{
-			t_texture_manager->releaseTexture(m_depth_texture.texture);
-			m_depth_texture.texture = nullptr;
 		}
 
 		aquire_new_texture = true;
@@ -234,7 +220,6 @@ bool wmr::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* t_renderer,
 	{
 		auto blit = (viewImageBlitOverride::SceneBlit*)m_render_operations[0];
 		blit->setColorTexture(m_color_texture);
-		blit->setDepthTexture(m_depth_texture);
 	}
 
 	if (m_color_texture.texture)
