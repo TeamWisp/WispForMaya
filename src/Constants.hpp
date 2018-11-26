@@ -2,9 +2,8 @@
 
 namespace wisp
 {
-	class Constants
+	namespace settings
 	{
-	public:
 		// Settings for this plug-in
 		static const constexpr char* COMPANY_NAME = "Team Wisp";
 		static const constexpr char* PRODUCT_NAME = "Realtime ray-traced viewport by Team Wisp";
