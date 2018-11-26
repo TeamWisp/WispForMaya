@@ -3,11 +3,11 @@
 
 namespace wmr
 {
-	class WispQuadRenderer : public MHWRender::MQuadRender
+	class WispScreenBlitter : public MHWRender::MQuadRender
 	{
 	public:
-		WispQuadRenderer(const MString& t_name);
-		~WispQuadRenderer() override;
+		WispScreenBlitter(const MString& t_name);
+		~WispScreenBlitter() override;
 
 		void SetColorTexture(const MHWRender::MTextureAssignment& t_color_texture);
 
