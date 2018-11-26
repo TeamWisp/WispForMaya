@@ -143,39 +143,5 @@ namespace viewImageBlitOverride
 		}
 		return mDepthStencilState;
 	}
-
-	///////////////////////////////////////////////////////////////
-	// Maya UI draw operation. Draw all UI except for a few exclusion
-	// 
-	UIDraw::UIDraw(const MString& name)
-		: MHWRender::MSceneRender(name)
-	{
-	}
-
-	UIDraw::~UIDraw()
-	{
-	}
-
-	MHWRender::MSceneRender::MSceneFilterOption
-		UIDraw::renderFilterOverride()
-	{
-		return MHWRender::MSceneRender::kRenderNonShadedItems;
-	}
-
-	MUint64
-		UIDraw::getObjectTypeExclusions()
-	{
-		// Exclude drawing the grid and image planes
-		return (MHWRender::MFrameContext::kExcludeGrid | MHWRender::MFrameContext::kExcludeImagePlane);
-	}
-
-	MHWRender::MClearOperation &
-		UIDraw::clearOperation()
-	{
-		// Disable clear since we don't want to clobber the scene colour blit.
-		mClearOperation.setMask((unsigned int)MHWRender::MClearOperation::kClearNone);
-		return mClearOperation;
-	}
-
 } //namespace
 

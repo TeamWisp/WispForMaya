@@ -1,13 +1,14 @@
 #include "ViewportRendererOverride.hpp"
+#include "UIOverride.hpp"
 
 // Used for the Blit class, will be replaced when refactoring
 #include "AutodeskSample.hpp"
 
 #include <maya/MImage.h>
 
-wmp::WispViewportRenderer* wmp::WispViewportRenderer::sViewImageBlitOverrideInstance = nullptr;
+wmr::WispViewportRenderer* wmr::WispViewportRenderer::sViewImageBlitOverrideInstance = nullptr;
 
-wmp::WispViewportRenderer::WispViewportRenderer(const MString& t_name)
+wmr::WispViewportRenderer::WispViewportRenderer(const MString& t_name)
 	: MRenderOverride(t_name)
 	, m_ui_name("Realtime ray-traced viewport by Team Wisp")
 	, m_current_render_operation(-1)
@@ -24,7 +25,7 @@ wmp::WispViewportRenderer::WispViewportRenderer(const MString& t_name)
 	m_depth_texture_desc.setToDefault2DTexture();
 }
 
-wmp::WispViewportRenderer::~WispViewportRenderer()
+wmr::WispViewportRenderer::~WispViewportRenderer()
 {
 	MHWRender::MRenderer* maya_renderer = MHWRender::MRenderer::theRenderer();
 	MHWRender::MTextureManager* maya_texture_manager = maya_renderer ? maya_renderer->getTextureManager() : nullptr;
@@ -54,12 +55,12 @@ wmp::WispViewportRenderer::~WispViewportRenderer()
 	}
 }
 
-MHWRender::DrawAPI wmp::WispViewportRenderer::supportedDrawAPIs() const
+MHWRender::DrawAPI wmr::WispViewportRenderer::supportedDrawAPIs() const
 {
 	return (MHWRender::kOpenGL | MHWRender::kOpenGLCoreProfile | MHWRender::kDirectX11);
 }
 
-MHWRender::MRenderOperation* wmp::WispViewportRenderer::renderOperation()
+MHWRender::MRenderOperation* wmr::WispViewportRenderer::renderOperation()
 {
 	if (m_current_render_operation >= 0 && m_current_render_operation < 4)
 	{
@@ -71,7 +72,7 @@ MHWRender::MRenderOperation* wmp::WispViewportRenderer::renderOperation()
 	return nullptr;
 }
 
-MStatus wmp::WispViewportRenderer::setup(const MString& t_destination)
+MStatus wmr::WispViewportRenderer::setup(const MString& t_destination)
 {
 	MHWRender::MRenderer* maya_renderer = MHWRender::MRenderer::theRenderer();
 
@@ -91,7 +92,7 @@ MStatus wmp::WispViewportRenderer::setup(const MString& t_destination)
 	if (!m_render_operations[0])
 	{
 		m_render_operations[0] = (MHWRender::MRenderOperation*) new viewImageBlitOverride::SceneBlit(m_render_operation_names[0]);
-		m_render_operations[1] = (MHWRender::MRenderOperation*) new viewImageBlitOverride::UIDraw(m_render_operation_names[1]);
+		m_render_operations[1] = (MHWRender::MRenderOperation*) new wmr::WispUIRenderer(m_render_operation_names[1]);
 		m_render_operations[2] = (MHWRender::MRenderOperation*) new MHWRender::MHUDRender();
 		m_render_operations[3] = (MHWRender::MRenderOperation*) new MHWRender::MPresentTarget(m_render_operation_names[2]);
 	}
@@ -126,24 +127,24 @@ MStatus wmp::WispViewportRenderer::setup(const MString& t_destination)
 	return MStatus::kSuccess;
 }
 
-MStatus wmp::WispViewportRenderer::cleanup()
+MStatus wmr::WispViewportRenderer::cleanup()
 {
 	m_current_render_operation = -1;
 	return MStatus::kSuccess;
 }
 
-MString wmp::WispViewportRenderer::uiName() const
+MString wmr::WispViewportRenderer::uiName() const
 {
 	return m_ui_name;
 }
 
-bool wmp::WispViewportRenderer::startOperationIterator()
+bool wmr::WispViewportRenderer::startOperationIterator()
 {
 	m_current_render_operation = 0;
 	return true;
 }
 
-bool wmp::WispViewportRenderer::nextRenderOperation()
+bool wmr::WispViewportRenderer::nextRenderOperation()
 {
 	++m_current_render_operation;
 	
@@ -155,7 +156,7 @@ bool wmp::WispViewportRenderer::nextRenderOperation()
 	return false;
 }
 
-bool wmp::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* t_renderer, MHWRender::MTextureManager* t_texture_manager)
+bool wmr::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* t_renderer, MHWRender::MTextureManager* t_texture_manager)
 {
 	if (!t_renderer || !t_texture_manager)
 	{
@@ -234,5 +235,14 @@ bool wmp::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* t_renderer,
 		auto blit = (viewImageBlitOverride::SceneBlit*)m_render_operations[0];
 		blit->setColorTexture(m_color_texture);
 		blit->setDepthTexture(m_depth_texture);
+	}
+
+	if (m_color_texture.texture)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 }

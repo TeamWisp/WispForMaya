@@ -51,10 +51,10 @@ MStatus initializePlugin(MObject obj)
 	MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer();
 	if (renderer)
 	{
-		if (!wmp::WispViewportRenderer::sViewImageBlitOverrideInstance)
+		if (!wmr::WispViewportRenderer::sViewImageBlitOverrideInstance)
 		{
-			wmp::WispViewportRenderer::sViewImageBlitOverrideInstance = new wmp::WispViewportRenderer("my_viewImageBlitOverride");
-			renderer->registerOverride(wmp::WispViewportRenderer::sViewImageBlitOverrideInstance);
+			wmr::WispViewportRenderer::sViewImageBlitOverrideInstance = new wmr::WispViewportRenderer("my_viewImageBlitOverride");
+			renderer->registerOverride(wmr::WispViewportRenderer::sViewImageBlitOverrideInstance);
 		}
 	}
 
@@ -78,12 +78,12 @@ MStatus uninitializePlugin(MObject obj)
 	MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer();
 	if (renderer)
 	{
-		if (wmp::WispViewportRenderer::sViewImageBlitOverrideInstance)
+		if (wmr::WispViewportRenderer::sViewImageBlitOverrideInstance)
 		{
-			renderer->deregisterOverride(wmp::WispViewportRenderer::sViewImageBlitOverrideInstance);
-			delete wmp::WispViewportRenderer::sViewImageBlitOverrideInstance;
+			renderer->deregisterOverride(wmr::WispViewportRenderer::sViewImageBlitOverrideInstance);
+			delete wmr::WispViewportRenderer::sViewImageBlitOverrideInstance;
 		}
-		wmp::WispViewportRenderer::sViewImageBlitOverrideInstance = nullptr;
+		wmr::WispViewportRenderer::sViewImageBlitOverrideInstance = nullptr;
 	}
 
 	return status;

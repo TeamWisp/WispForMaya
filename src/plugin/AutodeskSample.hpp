@@ -59,22 +59,6 @@ namespace viewImageBlitOverride
 
 		const MHWRender::MDepthStencilState *mDepthStencilState;
 	};
-
-	//
-	// UI pass
-	//
-	class UIDraw : MHWRender::MSceneRender
-	{
-	public:
-		UIDraw(const MString& name);
-		~UIDraw() override;
-
-		MHWRender::MSceneRender::MSceneFilterOption		renderFilterOverride() override;
-		MUint64											getObjectTypeExclusions() override;
-		MHWRender::MClearOperation &					clearOperation() override;
-	};
-
-
 } //namespace
 
 #endif
