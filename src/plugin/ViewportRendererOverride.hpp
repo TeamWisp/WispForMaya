@@ -1,7 +1,7 @@
 #pragma once
 #include <maya/MShaderManager.h>
 
-namespace wmp
+namespace wmr
 {
 	class WispViewportRenderer : public MHWRender::MRenderOverride
 	{
