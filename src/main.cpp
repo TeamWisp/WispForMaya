@@ -16,6 +16,8 @@
 #include <maya/MGlobal.h>
 
 #include "Constants.hpp"
+#include "plugin/ViewportRendererOverride.hpp"
+
 #include "plugin/AutodeskSample.hpp"
 
 MStatus initializePlugin(MObject obj)
@@ -49,10 +51,10 @@ MStatus initializePlugin(MObject obj)
 	MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer();
 	if (renderer)
 	{
-		if (!viewImageBlitOverride::RenderOverride::sViewImageBlitOverrideInstance)
+		if (!wmp::WispViewportRenderer::sViewImageBlitOverrideInstance)
 		{
-			viewImageBlitOverride::RenderOverride::sViewImageBlitOverrideInstance = new viewImageBlitOverride::RenderOverride("my_viewImageBlitOverride");
-			renderer->registerOverride(viewImageBlitOverride::RenderOverride::sViewImageBlitOverrideInstance);
+			wmp::WispViewportRenderer::sViewImageBlitOverrideInstance = new wmp::WispViewportRenderer("my_viewImageBlitOverride");
+			renderer->registerOverride(wmp::WispViewportRenderer::sViewImageBlitOverrideInstance);
 		}
 	}
 
@@ -76,12 +78,12 @@ MStatus uninitializePlugin(MObject obj)
 	MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer();
 	if (renderer)
 	{
-		if (viewImageBlitOverride::RenderOverride::sViewImageBlitOverrideInstance)
+		if (wmp::WispViewportRenderer::sViewImageBlitOverrideInstance)
 		{
-			renderer->deregisterOverride(viewImageBlitOverride::RenderOverride::sViewImageBlitOverrideInstance);
-			delete viewImageBlitOverride::RenderOverride::sViewImageBlitOverrideInstance;
+			renderer->deregisterOverride(wmp::WispViewportRenderer::sViewImageBlitOverrideInstance);
+			delete wmp::WispViewportRenderer::sViewImageBlitOverrideInstance;
 		}
-		viewImageBlitOverride::RenderOverride::sViewImageBlitOverrideInstance = NULL;
+		wmp::WispViewportRenderer::sViewImageBlitOverrideInstance = nullptr;
 	}
 
 	return status;

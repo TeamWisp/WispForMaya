@@ -1,33 +1,52 @@
 #pragma once
+#include <maya/MShaderManager.h>
 
-#include <maya/MViewport2Renderer.h>
-
-namespace wisp
+namespace wmp
 {
-	class ViewportRendererOverride : public MHWRender::MRenderOverride
+	class WispViewportRenderer : public MHWRender::MRenderOverride
 	{
 	public:
-		ViewportRendererOverride(const MString& t_name);
-		~ViewportRendererOverride() final override;
+		WispViewportRenderer(const MString& t_name);
+		~WispViewportRenderer() override;
 
-		// This plug-in supports all rendering APIs (only has to show the output of the Wisp renderer)
-		MHWRender::DrawAPI supportedDrawAPIs() const final override;
-
-		bool startOperationIterator() final override;
-
-		MHWRender::MRenderOperation* renderOperation() final override;
-
-		bool nextRenderOperation() final override;
-
-		MString uiName() const final override;
-
-		MStatus setup(const MString& t_destination) final override;
-		MStatus cleanup() final override;
+	public:
+		// Global override instance
+		static WispViewportRenderer* sViewImageBlitOverrideInstance;
 
 	private:
-		// This is the name that will appear in the "Renderer" menu drop-down
-		MString m_plugin_name;
+		// ============================================================
 
-		int m_render_operation_iterator;
+		MHWRender::DrawAPI supportedDrawAPIs() const override;
+		MHWRender::MRenderOperation* renderOperation() override;
+		
+		MStatus setup(const MString& t_destination) override;
+		MStatus cleanup() override;
+		MString uiName() const override;
+
+		bool startOperationIterator() override;
+		bool nextRenderOperation() override;
+
+		// ============================================================
+
+		bool UpdateTextures(MHWRender::MRenderer* t_renderer, MHWRender::MTextureManager* t_texture_manager);
+
+		// ============================================================
+
+	private:
+		MString m_ui_name;
+
+		// Operations and their names
+		MHWRender::MRenderOperation* m_render_operations[4];
+		MString m_render_operation_names[3];
+
+		// Texture(s) used for the quad render
+		MHWRender::MTextureDescription m_color_texture_desc;
+		MHWRender::MTextureDescription m_depth_texture_desc;
+		MHWRender::MTextureAssignment m_color_texture;
+		MHWRender::MTextureAssignment m_depth_texture;
+
+		int m_current_render_operation;
+
+		bool m_load_images_from_disk;
 	};
 }
