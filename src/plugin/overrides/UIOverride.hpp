@@ -7,12 +7,12 @@ namespace wmr
 	{
 	public:
 		WispUIRenderer(const MString& t_name);
-		~WispUIRenderer() override;
+		~WispUIRenderer() final override;
 
 	private:
-		MHWRender::MSceneRender::MSceneFilterOption renderFilterOverride() override;
-		MHWRender::MClearOperation& clearOperation() override;
+		MHWRender::MSceneRender::MSceneFilterOption renderFilterOverride() final override;
+		MHWRender::MClearOperation& clearOperation() final override;
 		
-		MUint64 getObjectTypeExclusions() override;
+		MUint64 getObjectTypeExclusions() final override;
 	};
 }
