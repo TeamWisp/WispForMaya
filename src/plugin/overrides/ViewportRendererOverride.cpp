@@ -1,6 +1,7 @@
 #include "ViewportRendererOverride.hpp"
 #include "QuadRendererOverride.hpp"
 #include "UIOverride.hpp"
+#include "plugin/renderer/RendererMain.hpp"
 
 #include <maya/MImage.h>
 #include <maya/M3dView.h>
@@ -17,10 +18,17 @@ wmr::WispViewportRenderer::WispViewportRenderer(const MString& t_name)
 
 	m_color_texture.texture = nullptr;
 	m_color_texture_desc.setToDefault2DTexture();
+
+	// "Entry point" for the Wisp renderer
+	m_wisp_renderer = std::make_unique<wri::RendererMain>();
+	m_wisp_renderer->StartWispRenderer();
 }
 
 wmr::WispViewportRenderer::~WispViewportRenderer()
 {
+	// This will clean-up any Wisp resources
+	m_wisp_renderer->StopWispRenderer();
+
 	MHWRender::MRenderer* maya_renderer = MHWRender::MRenderer::theRenderer();
 	MHWRender::MTextureManager* maya_texture_manager = maya_renderer ? maya_renderer->getTextureManager() : nullptr;
 
