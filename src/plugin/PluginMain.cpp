@@ -12,14 +12,14 @@ wmr::PluginMain::~PluginMain()
 {
 }
 
-void wmr::PluginMain::Initialize() const
+void wmr::PluginMain::Initialize(std::unique_ptr<wmr::WispViewportRenderer>& t_viewport_renderer_override_instance) const
 {
 	// Workaround for avoiding dirtying the scene until there is a way to
 	// register overrides without causing dirty.
 	bool is_scene_dirty = true;
 	is_scene_dirty = IsSceneDirty();
 
-	RegisterPlugin(MHWRender::MRenderer::theRenderer());
+	RegisterPlugin(MHWRender::MRenderer::theRenderer(), t_viewport_renderer_override_instance);
 
 	// If the scene was previously unmodified, return it to that state since
 	// there are no changes that need to be saved
@@ -29,9 +29,9 @@ void wmr::PluginMain::Initialize() const
 	}
 }
 
-void wmr::PluginMain::Uninitialize() const
+void wmr::PluginMain::Uninitialize(wmr::WispViewportRenderer* const t_viewport_renderer_override_instance) const
 {
-	UnregisterPlugin(MHWRender::MRenderer::theRenderer());
+	UnregisterPlugin(MHWRender::MRenderer::theRenderer(), t_viewport_renderer_override_instance);
 }
 
 bool wmr::PluginMain::IsSceneDirty() const
@@ -59,17 +59,17 @@ bool wmr::PluginMain::IsSceneDirty() const
 	}
 }
 
-void wmr::PluginMain::RegisterPlugin(MHWRender::MRenderer* const t_maya_renderer) const
+void wmr::PluginMain::RegisterPlugin(MHWRender::MRenderer* const t_maya_renderer, std::unique_ptr<WispViewportRenderer>& t_viewport_renderer_override_instance) const
 {
 	if (!t_maya_renderer)
 	{
 		return;
 	}
 
-	if (!wmr::WispViewportRenderer::global_viewport_renderer_instance)
+	if (!t_viewport_renderer_override_instance)
 	{
-		wmr::WispViewportRenderer::global_viewport_renderer_instance = std::make_unique<wmr::WispViewportRenderer>("my_viewImageBlitOverride");
-		t_maya_renderer->registerOverride(wmr::WispViewportRenderer::global_viewport_renderer_instance.get());
+		t_viewport_renderer_override_instance = std::make_unique<wmr::WispViewportRenderer>("wisp_ViewportBlitOverride");
+		t_maya_renderer->registerOverride(t_viewport_renderer_override_instance.get());
 	}
 }
 
@@ -81,15 +81,15 @@ void wmr::PluginMain::ThrowIfFailed(const MStatus& t_status) const
 	}
 }
 
-void wmr::PluginMain::UnregisterPlugin(MHWRender::MRenderer* const t_maya_renderer) const
+void wmr::PluginMain::UnregisterPlugin(MHWRender::MRenderer* const t_maya_renderer, WispViewportRenderer* const t_viewport_renderer_override_instance) const
 {
 	if (!t_maya_renderer)
 	{
 		return;
 	}
 
-	if (wmr::WispViewportRenderer::global_viewport_renderer_instance)
+	if (t_viewport_renderer_override_instance)
 	{
-		t_maya_renderer->deregisterOverride(wmr::WispViewportRenderer::global_viewport_renderer_instance.get());
+		t_maya_renderer->deregisterOverride(t_viewport_renderer_override_instance);
 	}
 }
