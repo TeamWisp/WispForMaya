@@ -153,7 +153,8 @@ bool wmr::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* t_renderer,
 	bool texture_resized = (m_color_texture_desc.fWidth != target_width ||
 							m_color_texture_desc.fHeight != target_height);
 
-	MString image_location(MString("C:/users/tntme/Downloads/wisp.png"));
+	MString image_location(MString(getenv("MAYA_2018_DIR")) + MString("\\devkit\\plug-ins\\viewImageBlitOverride\\"));
+	image_location += MString("renderedImage.iff");
 
 	// If a resize occurred, or a texture has not been allocated yet, create new textures that match the output size
 	// Any existing textures will be released
