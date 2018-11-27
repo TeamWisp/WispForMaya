@@ -157,7 +157,7 @@ void wmr::wri::RendererMain::StartWispRenderer()
 	auto scene_graph = std::make_shared<wr::SceneGraph>(m_render_system.get());
 
 	auto mesh_node = scene_graph->CreateChild<wr::MeshNode>(nullptr, model);
-	auto camera = scene_graph->CreateChild<wr::CameraNode>(nullptr, 70.f, 1280.0f, 720.0f);
+	auto camera = scene_graph->CreateChild<wr::CameraNode>(nullptr, 70.f, 1280.0f / 720.0f);
 
 	// #### background cubes
 	std::vector<std::pair<std::shared_ptr<wr::MeshNode>, int>> bg_nodes(500);
