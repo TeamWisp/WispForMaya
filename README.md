@@ -20,7 +20,7 @@ Bringing real-time ray-tracing to the Maya viewport using the [Wisp real-time ra
    1. **Developers**, build the project and navigate to ```bin/Debug``` or ```bin/Release```, depending on the chosen configuration. Copy the `.mll` file.
    2. **Regular users**, grab a copy of the `.mll` file from the releases on GitHub.
 
-2. Paste the `.mll` file in the Autodesk Maya plug-ins folder. Depending on your personal Autodesk Maya configuration, this could be different for you.
+2. Paste the `.mll` file in the Autodesk Maya plug-ins folder. This folder is different for each user, as it has to be manually specified in the `Maya.env` configuration file. Please refer to [the documentation](https://knowledge.autodesk.com/support/maya/learn-explore/caas/CloudHelp/cloudhelp/2018/ENU/Maya-EnvVar/files/GUID-8EFB1AC1-ED7D-4099-9EEE-624097872C04-htm.html) for more information on how to set-up your `Maya.env` file.
 
    By default, the Autodesk Maya installation folder contains a `/plug-ins` folder, the `.mll` file can be placed in here. However, this is considered bad practice. Instead, create a folder somewhere on your computer and add an **environment variable** that points to the newly created folder. Inside this folder, create three sub-directories: *plug-ins*, *icons*, and *scripts*.
 
