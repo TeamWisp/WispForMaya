@@ -11,10 +11,6 @@ namespace wmr
 		WispViewportRenderer(const MString& t_name);
 		~WispViewportRenderer() override;
 
-	public:
-		// Global override instance
-		static std::unique_ptr<WispViewportRenderer> global_viewport_renderer_instance;
-
 	private:
 		// ============================================================
 
