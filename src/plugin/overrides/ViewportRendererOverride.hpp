@@ -9,20 +9,20 @@ namespace wmr
 	{
 	public:
 		WispViewportRenderer(const MString& t_name);
-		~WispViewportRenderer() override;
+		~WispViewportRenderer() final override;
 
 	private:
 		// ============================================================
 
-		MHWRender::DrawAPI supportedDrawAPIs() const override;
-		MHWRender::MRenderOperation* renderOperation() override;
+		MHWRender::DrawAPI supportedDrawAPIs() const final override;
+		MHWRender::MRenderOperation* renderOperation() final override;
 		
-		MStatus setup(const MString& t_destination) override;
-		MStatus cleanup() override;
-		MString uiName() const override;
+		MStatus setup(const MString& t_destination) final override;
+		MStatus cleanup() final override;
+		MString uiName() const final override;
 
-		bool startOperationIterator() override;
-		bool nextRenderOperation() override;
+		bool startOperationIterator() final override;
+		bool nextRenderOperation() final override;
 
 		// ============================================================
 

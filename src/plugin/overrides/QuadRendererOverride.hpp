@@ -7,13 +7,13 @@ namespace wmr
 	{
 	public:
 		WispScreenBlitter(const MString& t_name);
-		~WispScreenBlitter() override;
+		~WispScreenBlitter() final override;
 
 		void SetColorTexture(const MHWRender::MTextureAssignment& t_color_texture);
 
 	private:
-		const MHWRender::MShaderInstance* shader() override;
-		MHWRender::MClearOperation& clearOperation() override;
+		const MHWRender::MShaderInstance* shader() final override;
+		MHWRender::MClearOperation& clearOperation() final override;
 
 	private:
 		// TODO: Write a shader to render a colored texture to a fullscreen quad
