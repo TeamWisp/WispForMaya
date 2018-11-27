@@ -1,7 +1,7 @@
 #include <maya/MFnPlugin.h>
 
-#include "Settings.hpp"
 #include "plugin/PluginMain.hpp"
+#include "miscellaneous/Settings.hpp"
 
 wmr::PluginMain plugin_instance;
 
