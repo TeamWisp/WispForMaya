@@ -11,7 +11,6 @@ wmr::WispViewportRenderer::WispViewportRenderer(const MString& t_name)
 	, m_current_render_operation(-1)
 	, m_load_images_from_disk(true)
 {
-	m_render_operations[0] = m_render_operations[1] = m_render_operations[2] = m_render_operations[3] = nullptr;
 	m_render_operation_names[0] = "wisp_SceneBlit";
 	m_render_operation_names[1] = "wisp_UIDraw";
 	m_render_operation_names[2] = "wisp_Present";
@@ -33,16 +32,6 @@ wmr::WispViewportRenderer::~WispViewportRenderer()
 			maya_texture_manager->releaseTexture(m_color_texture.texture);
 		}
 	}
-
-	// Release operations
-	for (unsigned int i = 0; i < 4; ++i)
-	{
-		if (m_render_operations[i])
-		{
-			delete m_render_operations[i];
-			m_render_operations[i] = nullptr;
-		}
-	}
 }
 
 MHWRender::DrawAPI wmr::WispViewportRenderer::supportedDrawAPIs() const
@@ -56,7 +45,7 @@ MHWRender::MRenderOperation* wmr::WispViewportRenderer::renderOperation()
 	{
 		if (m_render_operations[m_current_render_operation])
 		{
-			return m_render_operations[m_current_render_operation];
+			return m_render_operations[m_current_render_operation].get();
 		}
 	}
 	return nullptr;
@@ -81,10 +70,10 @@ MStatus wmr::WispViewportRenderer::setup(const MString& t_destination)
 	// Create a new set of operations if required
 	if (!m_render_operations[0])
 	{
-		m_render_operations[0] = (MHWRender::MRenderOperation*) new wmr::WispScreenBlitter(m_render_operation_names[0]);
-		m_render_operations[1] = (MHWRender::MRenderOperation*) new wmr::WispUIRenderer(m_render_operation_names[1]);
-		m_render_operations[2] = (MHWRender::MRenderOperation*) new MHWRender::MHUDRender();
-		m_render_operations[3] = (MHWRender::MRenderOperation*) new MHWRender::MPresentTarget(m_render_operation_names[2]);
+		m_render_operations[0] = std::make_unique<wmr::WispScreenBlitter>(m_render_operation_names[0]);
+		m_render_operations[1] = std::make_unique<wmr::WispUIRenderer>(m_render_operation_names[1]);
+		m_render_operations[2] = std::make_unique<MHWRender::MHUDRender>();
+		m_render_operations[3] = std::make_unique<MHWRender::MPresentTarget>(m_render_operation_names[2]);
 	}
 
 	if (!m_render_operations[0] ||
@@ -215,7 +204,7 @@ bool wmr::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* t_renderer,
 	// Update the textures for the blit operation
 	if (aquire_new_texture)
 	{
-		auto blit = (wmr::WispScreenBlitter*)m_render_operations[0];
+		auto blit = (wmr::WispScreenBlitter*)m_render_operations[0].get();
 		blit->SetColorTexture(m_color_texture);
 	}
 

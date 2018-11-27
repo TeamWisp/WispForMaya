@@ -1,6 +1,7 @@
 #pragma once
 #include <maya/MShaderManager.h>
 
+#include <array>
 #include <memory>
 
 namespace wmr
@@ -34,7 +35,7 @@ namespace wmr
 		MString m_ui_name;
 
 		// Operations and their names
-		MHWRender::MRenderOperation* m_render_operations[4];
+		std::array<std::unique_ptr<MHWRender::MRenderOperation>, 4> m_render_operations;
 		MString m_render_operation_names[3];
 
 		// Texture(s) used for the quad render
