@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
+add_compile_definitions(_ENABLE_EXTENDED_ALIGNED_STORAGE)
+
 # The Maya installation directory location is required for this project to work
 if (NOT EXISTS "$ENV{MAYA_2018_DIR}")
     message(FATAL_ERROR "\"MAYA_2018_DIR\" environment variable could not be found!")
