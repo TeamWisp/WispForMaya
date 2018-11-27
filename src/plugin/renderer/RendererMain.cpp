@@ -8,13 +8,88 @@
 
 #include <algorithm>
 
+bool main_menu = true;
+bool open0 = true;
+bool open1 = true;
+bool open2 = true;
+bool open_console = false;
+bool show_imgui = true;
+char message_buffer[600];
+
+static wr::imgui::special::DebugConsole debug_console;
+
+void RenderEditor()
+{
+	debug_console.Draw("Console", &open_console);
+
+	if (!show_imgui) return;
+
+	if (main_menu && ImGui::BeginMainMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("Exit", "ALT+F4")) std::exit(0);
+			if (ImGui::MenuItem("Hide ImGui", "F1")) show_imgui = false;
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Window"))
+		{
+			wr::imgui::menu::Registries();
+			ImGui::Separator();
+			ImGui::MenuItem("Theme", nullptr, &open0);
+			ImGui::MenuItem("ImGui Details", nullptr, &open1);
+			ImGui::MenuItem("Logging Example", nullptr, &open2);
+			ImGui::EndMenu();
+		}
+
+		ImGui::EndMainMenuBar();
+	}
+
+	ImGui::DockSpaceOverViewport(main_menu, nullptr, ImGuiDockNodeFlags_PassthruDockspace);
+
+	auto& io = ImGui::GetIO();
+
+	// Create dockable background
+	if (open0)
+	{
+		ImGui::Begin("Theme", &open0);
+		if (ImGui::Button("Cherry")) ImGui::StyleColorsCherry();
+		if (ImGui::Button("Unreal Engine")) ImGui::StyleColorsUE();
+		if (ImGui::Button("Light Green")) ImGui::StyleColorsLightGreen();
+		if (ImGui::Button("Light")) ImGui::StyleColorsLight();
+		if (ImGui::Button("Dark")) ImGui::StyleColorsDark();
+		if (ImGui::Button("Dark2")) ImGui::StyleColorsDarkCodz1();
+		ImGui::End();
+	}
+
+	if (open1)
+	{
+		ImGui::Begin("ImGui Details", &open1);
+		ImGui::Text("Mouse Pos: (%0.f, %0.f)", io.MousePos.x, io.MousePos.y);
+		ImGui::Text("Framerate: %.0f", io.Framerate);
+		ImGui::Text("Delta: %f", io.DeltaTime);
+		ImGui::Text("Display Size: (%.0f, %.0f)", io.DisplaySize.x, io.DisplaySize.y);
+		ImGui::End();
+	}
+
+	if (open2)
+	{
+		ImGui::Begin("Logging Example", &open2);
+		ImGui::InputText("Message", message_buffer, 600);
+		if (ImGui::Button("LOG (Message)")) LOG(message_buffer);
+		if (ImGui::Button("LOGW (Warning)")) LOGW(message_buffer);
+		if (ImGui::Button("LOGE (Error)")) LOGE(message_buffer);
+		if (ImGui::Button("LOGC (Critical)")) LOGC(message_buffer);
+		ImGui::End();
+	}
+
+	wr::imgui::window::ShaderRegistry();
+	wr::imgui::window::PipelineRegistry();
+	wr::imgui::window::RootSignatureRegistry();
+	wr::imgui::window::D3D12Settings();
+}
+
 wmr::wri::RendererMain::RendererMain()
-	: m_main_menu(true)
-	, m_open0(true)
-	, m_open1(true)
-	, m_open2(true)
-	, m_open_console(false)
-	, m_show_imgui(true)
 {
 }
 
@@ -27,7 +102,7 @@ void wmr::wri::RendererMain::StartWispRenderer()
 	// ImGui Logging
 	util::log_callback::impl = [&](std::string const & str)
 	{
-		m_debug_console.AddLog(str.c_str());
+		debug_console.AddLog(str.c_str());
 	};
 
 	m_render_system = std::make_unique<wr::D3D12RenderSystem>();
@@ -118,78 +193,6 @@ void wmr::wri::RendererMain::StartWispRenderer()
 	wr::FrameGraph frame_graph;
 	frame_graph.AddTask(wr::GetDeferredMainTask());
 	frame_graph.AddTask(wr::GetDeferredCompositionTask());
-	frame_graph.AddTask(wr::GetImGuiTask(&(this->RenderEditor)));
+	frame_graph.AddTask(wr::GetImGuiTask(&RenderEditor));
 	frame_graph.Setup(*m_render_system);
-}
-
-void wmr::wri::RendererMain::RenderEditor()
-{
-	m_debug_console.Draw("Console", &m_open_console);
-
-	if (!m_show_imgui) return;
-
-	if (m_main_menu && ImGui::BeginMainMenuBar())
-	{
-		if (ImGui::BeginMenu("File"))
-		{
-			if (ImGui::MenuItem("Exit", "ALT+F4")) std::exit(0);
-			if (ImGui::MenuItem("Hide ImGui", "F1")) m_show_imgui = false;
-			ImGui::EndMenu();
-		}
-		if (ImGui::BeginMenu("Window"))
-		{
-			wr::imgui::menu::Registries();
-			ImGui::Separator();
-			ImGui::MenuItem("Theme", nullptr, &m_open0);
-			ImGui::MenuItem("ImGui Details", nullptr, &m_open1);
-			ImGui::MenuItem("Logging Example", nullptr, &m_open2);
-			ImGui::EndMenu();
-		}
-
-		ImGui::EndMainMenuBar();
-	}
-
-	ImGui::DockSpaceOverViewport(m_main_menu, nullptr, ImGuiDockNodeFlags_PassthruDockspace);
-
-	auto& io = ImGui::GetIO();
-
-	// Create dockable background
-	if (m_open0)
-	{
-		ImGui::Begin("Theme", &m_open0);
-		if (ImGui::Button("Cherry")) ImGui::StyleColorsCherry();
-		if (ImGui::Button("Unreal Engine")) ImGui::StyleColorsUE();
-		if (ImGui::Button("Light Green")) ImGui::StyleColorsLightGreen();
-		if (ImGui::Button("Light")) ImGui::StyleColorsLight();
-		if (ImGui::Button("Dark")) ImGui::StyleColorsDark();
-		if (ImGui::Button("Dark2")) ImGui::StyleColorsDarkCodz1();
-		ImGui::End();
-	}
-
-	if (m_open1)
-	{
-		ImGui::Begin("ImGui Details", &m_open1);
-		ImGui::Text("Mouse Pos: (%0.f, %0.f)", io.MousePos.x, io.MousePos.y);
-		ImGui::Text("Framerate: %.0f", io.Framerate);
-		ImGui::Text("Delta: %f", io.DeltaTime);
-		ImGui::Text("Display Size: (%.0f, %.0f)", io.DisplaySize.x, io.DisplaySize.y);
-		ImGui::End();
-	}
-
-	if (m_open2)
-	{
-		ImGui::Begin("Logging Example", &m_open2);
-		ImGui::InputText("Message", message_buffer, 600);
-		if (ImGui::Button("LOG (Message)")) LOG(message_buffer);
-		if (ImGui::Button("LOGW (Warning)")) LOGW(message_buffer);
-		if (ImGui::Button("LOGE (Error)")) LOGE(message_buffer);
-		if (ImGui::Button("LOGC (Critical)")) LOGC(message_buffer);
-		ImGui::End();
-	}
-
-	wr::imgui::window::ShaderRegistry();
-	wr::imgui::window::PipelineRegistry();
-	wr::imgui::window::RootSignatureRegistry();
-	wr::imgui::window::D3D12HardwareInfo(*m_render_system.get());
-	wr::imgui::window::D3D12Settings();
 }
