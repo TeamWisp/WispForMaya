@@ -1,11 +1,3 @@
-//-
-// Copyright 2015 Autodesk, Inc.  All rights reserved.
-//
-// Use of this software is subject to the terms of the Autodesk license agreement
-// provided at the time of installation or download, or which otherwise
-// accompanies this software in either electronic or hard copy form.
-//+
-
 #include <stdio.h>
 #include <exception>
 
@@ -23,13 +15,13 @@ MStatus initializePlugin(MObject obj)
 	MStatus status;
 	MFnPlugin plugin(obj, wisp::settings::COMPANY_NAME, wisp::settings::PRODUCT_VERSION, "Any");
 
-	// ************************ MAYA-25818 PART 1 of 2 *************************
-	// Workaround for avoiding dirtying the scene until there's a way to
+	// Workaround for avoiding dirtying the scene until there is a way to
 	// register overrides without causing dirty.
-	bool sceneDirty = true; // assume true since that's the safest
+	bool sceneDirty = true;
+
 	try
 	{
-		// is the scene currently dirty?
+		// Is the scene currently dirty?
 		MCommandResult sceneDirtyResult(&status);
 		if (status != MStatus::kSuccess) throw std::exception();
 		status = MGlobal::executeCommand("file -query -modified", sceneDirtyResult);
@@ -41,10 +33,8 @@ MStatus initializePlugin(MObject obj)
 	}
 	catch (std::exception&)
 	{
-		// if we got here, assume the scene is dirty
 		sceneDirty = true;
 	}
-	// ************************ MAYA-25818 PART 1 of 2 *********************
 
 	MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer();
 	if (renderer)
@@ -56,14 +46,12 @@ MStatus initializePlugin(MObject obj)
 		}
 	}
 
-	// ************************ MAYA-25818 PART 2 of 2 *************************
 	// If the scene was previously unmodified, return it to that state since
-	// we haven't done anything that needs to be saved.
+	// there are no changes that need to be saved
 	if (sceneDirty == false)
 	{
 		MGlobal::executeCommand("file -modified 0");
 	}
-	// ************************ END MAYA-25818 PART 2 of 2 *********************
 
 	return status;
 }
