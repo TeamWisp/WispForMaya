@@ -1,6 +1,8 @@
 #pragma once
 #include <maya/MShaderManager.h>
 
+#include <memory>
+
 namespace wmr
 {
 	class WispViewportRenderer : public MHWRender::MRenderOverride
@@ -11,7 +13,7 @@ namespace wmr
 
 	public:
 		// Global override instance
-		static WispViewportRenderer* sViewImageBlitOverrideInstance;
+		static std::unique_ptr<WispViewportRenderer> global_viewport_renderer_instance;
 
 	private:
 		// ============================================================

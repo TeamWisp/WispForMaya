@@ -5,7 +5,7 @@
 #include <maya/MImage.h>
 #include <maya/M3dView.h>
 
-wmr::WispViewportRenderer* wmr::WispViewportRenderer::sViewImageBlitOverrideInstance = nullptr;
+std::unique_ptr<wmr::WispViewportRenderer> wmr::WispViewportRenderer::global_viewport_renderer_instance;
 
 wmr::WispViewportRenderer::WispViewportRenderer(const MString& t_name)
 	: MRenderOverride(t_name)
