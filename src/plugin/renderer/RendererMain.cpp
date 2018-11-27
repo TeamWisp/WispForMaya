@@ -5,6 +5,8 @@
 #include "render_tasks/d3d12_imgui_render_task.hpp"
 #include "render_tasks/d3d12_deferred_main.hpp"
 #include "render_tasks/d3d12_deferred_composition.hpp"
+#include "frame_graph/frame_graph.hpp"
+#include "scene_graph/scene_graph.hpp"
 
 #include <algorithm>
 
@@ -106,93 +108,102 @@ void wmr::wri::RendererMain::StartWispRenderer()
 	};
 
 	m_render_system = std::make_unique<wr::D3D12RenderSystem>();
-	m_render_system->Init(nullptr);
 
-#pragma region Cube sample
-	// Load custom model
-	auto model_pool = m_render_system->CreateModelPool(1, 1);
-	wr::Model* model;
-	{
-		wr::MeshData<wr::Vertex> mesh;
-		static const constexpr float size = 0.5f;
+	// TODO: Add support for "windowless" rendering
+	//m_render_system->Init(nullptr);
 
-		mesh.m_indices = {
-			2, 1, 0, 3, 2, 0, 6, 5,
-			4, 7, 6, 4, 10, 9, 8, 11,
-			10, 8, 14, 13, 12, 15, 14, 12,
-			18, 17, 16, 19, 18, 16, 22, 21,
-			20, 23, 22, 20
-		};
+	m_scene_graph = std::make_unique<wr::SceneGraph>(m_render_system.get());
+	m_frame_graph = std::make_unique<wr::FrameGraph>();
 
-		mesh.m_vertices = {
-			{ 1, 1, -1, 1, 1, 0, 0, -1 },
-			{ 1, -1, -1, 0, 1, 0, 0, -1 },
-			{ -1, -1, -1, 0, 0, 0, 0, -1 },
-			{ -1, 1, -1, 1, 0, 0, 0, -1 },
-			{ 1, 1, 1, 1, 1, 0, 0, 1 },
-			{ -1, 1, 1, 0, 1, 0, 0, 1 },
-			{ -1, -1, 1, 0, 0, 0, 0, 1 },
-			{ 1, -1, 1, 1, 0, 0, 0, 1 },
-			{ 1, 1, -1, 1, 0, 1, 0, 0 },
-			{ 1, 1, 1, 1, 1, 1, 0, 0 },
-			{ 1, -1, 1, 0, 1, 1, 0, 0 },
-			{ 1, -1, -1, 0, 0, 1, 0, 0 },
-			{ 1, -1, -1, 1, 0, 0, -1, 0 },
-			{ 1, -1, 1, 1, 1, 0, -1, 0 },
-			{ -1, -1, 1, 0, 1, 0, -1, 0 },
-			{ -1, -1, -1, 0, 0, 0, -1, 0 },
-			{ -1, -1, -1, 0, 1, -1, 0, 0 },
-			{ -1, -1, 1, 0, 0, -1, 0, 0 },
-			{ -1, 1, 1, 1, 0, -1, 0, 0 },
-			{ -1, 1, -1, 1, 1, -1, 0, 0 },
-			{ 1, 1, 1, 1, 0, 0, 1, 0 },
-			{ 1, 1, -1, 1, 1, 0, 1, 0 },
-			{ -1, 1, -1, 0, 1, 0, 1, 0 },
-			{ -1, 1, 1, 0, 0, 0, 1, 0 },
-		};
+//#pragma region Cube sample
+//	// Load custom model
+//	auto model_pool = m_render_system->CreateModelPool(1, 1);
+//	wr::Model* model;
+//	{
+//		wr::MeshData<wr::Vertex> mesh;
+//		static const constexpr float size = 0.5f;
+//
+//		mesh.m_indices = {
+//			2, 1, 0, 3, 2, 0, 6, 5,
+//			4, 7, 6, 4, 10, 9, 8, 11,
+//			10, 8, 14, 13, 12, 15, 14, 12,
+//			18, 17, 16, 19, 18, 16, 22, 21,
+//			20, 23, 22, 20
+//		};
+//
+//		mesh.m_vertices = {
+//			{ 1, 1, -1, 1, 1, 0, 0, -1 },
+//			{ 1, -1, -1, 0, 1, 0, 0, -1 },
+//			{ -1, -1, -1, 0, 0, 0, 0, -1 },
+//			{ -1, 1, -1, 1, 0, 0, 0, -1 },
+//			{ 1, 1, 1, 1, 1, 0, 0, 1 },
+//			{ -1, 1, 1, 0, 1, 0, 0, 1 },
+//			{ -1, -1, 1, 0, 0, 0, 0, 1 },
+//			{ 1, -1, 1, 1, 0, 0, 0, 1 },
+//			{ 1, 1, -1, 1, 0, 1, 0, 0 },
+//			{ 1, 1, 1, 1, 1, 1, 0, 0 },
+//			{ 1, -1, 1, 0, 1, 1, 0, 0 },
+//			{ 1, -1, -1, 0, 0, 1, 0, 0 },
+//			{ 1, -1, -1, 1, 0, 0, -1, 0 },
+//			{ 1, -1, 1, 1, 1, 0, -1, 0 },
+//			{ -1, -1, 1, 0, 1, 0, -1, 0 },
+//			{ -1, -1, -1, 0, 0, 0, -1, 0 },
+//			{ -1, -1, -1, 0, 1, -1, 0, 0 },
+//			{ -1, -1, 1, 0, 0, -1, 0, 0 },
+//			{ -1, 1, 1, 1, 0, -1, 0, 0 },
+//			{ -1, 1, -1, 1, 1, -1, 0, 0 },
+//			{ 1, 1, 1, 1, 0, 0, 1, 0 },
+//			{ 1, 1, -1, 1, 1, 0, 1, 0 },
+//			{ -1, 1, -1, 0, 1, 0, 1, 0 },
+//			{ -1, 1, 1, 0, 0, 0, 1, 0 },
+//		};
+//
+//		model = model_pool->LoadCustom<wr::Vertex>({ mesh });
+//	}
+//
+//	auto mesh_node = scene_graph->CreateChild<wr::MeshNode>(nullptr, model);
+//	auto camera = scene_graph->CreateChild<wr::CameraNode>(nullptr, 70.f, 1280.0f / 720.0f);
+//
+//	// #### background cubes
+//	std::vector<std::pair<std::shared_ptr<wr::MeshNode>, int>> bg_nodes(500);
+//	float distance = 20;
+//	float cube_size = 2.5f;
+//
+//	float start_x = -30;
+//	float start_y = -18;
+//	float max_column_width = 30;
+//
+//	int column = 0;
+//	int row = 0;
+//
+//	srand(time(0));
+//	int rand_max = 15;
+//
+//	for (auto& node : bg_nodes)
+//	{
+//		node.first = scene_graph->CreateChild<wr::MeshNode>(nullptr, model);
+//		node.first->SetPosition({ start_x + (cube_size * column), start_y + (cube_size * row), distance });
+//		node.second = (rand() % rand_max + 0);
+//
+//		column++;
+//		if (column > max_column_width) { column = 0; row++; }
+//	}
+//	// ### background cubes
+//
+//	camera->SetPosition(0, 0, -5);
+//#pragma endregion
 
-		model = model_pool->LoadCustom<wr::Vertex>({ mesh });
-	}
+	m_render_system->InitSceneGraph(*m_scene_graph.get());
 
-	auto scene_graph = std::make_shared<wr::SceneGraph>(m_render_system.get());
+	m_frame_graph->AddTask(wr::GetDeferredMainTask());
+	m_frame_graph->AddTask(wr::GetDeferredCompositionTask());
+	m_frame_graph->AddTask(wr::GetImGuiTask(&RenderEditor));
+	m_frame_graph->Setup(*m_render_system);
+}
 
-	auto mesh_node = scene_graph->CreateChild<wr::MeshNode>(nullptr, model);
-	auto camera = scene_graph->CreateChild<wr::CameraNode>(nullptr, 70.f, 1280.0f / 720.0f);
-
-	// #### background cubes
-	std::vector<std::pair<std::shared_ptr<wr::MeshNode>, int>> bg_nodes(500);
-	float distance = 20;
-	float cube_size = 2.5f;
-
-	float start_x = -30;
-	float start_y = -18;
-	float max_column_width = 30;
-
-	int column = 0;
-	int row = 0;
-
-	srand(time(0));
-	int rand_max = 15;
-
-	for (auto& node : bg_nodes)
-	{
-		node.first = scene_graph->CreateChild<wr::MeshNode>(nullptr, model);
-		node.first->SetPosition({ start_x + (cube_size * column), start_y + (cube_size * row), distance });
-		node.second = (rand() % rand_max + 0);
-
-		column++;
-		if (column > max_column_width) { column = 0; row++; }
-	}
-	// ### background cubes
-
-	camera->SetPosition(0, 0, -5);
-#pragma endregion
-
-	m_render_system->InitSceneGraph(*scene_graph.get());
-
-	wr::FrameGraph frame_graph;
-	frame_graph.AddTask(wr::GetDeferredMainTask());
-	frame_graph.AddTask(wr::GetDeferredCompositionTask());
-	frame_graph.AddTask(wr::GetImGuiTask(&RenderEditor));
-	frame_graph.Setup(*m_render_system);
+void wmr::wri::RendererMain::StopWispRenderer()
+{
+	m_render_system->WaitForAllPreviousWork();
+	m_frame_graph->Destroy();
+	m_render_system.reset();
 }
