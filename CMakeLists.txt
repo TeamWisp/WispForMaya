@@ -39,10 +39,16 @@ file(GLOB PLUGIN_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/*.hpp")
 file(GLOB PLUGIN_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/*.cpp")
 file(GLOB PLUGIN_OVERRIDE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/overrides/*.hpp")
 file(GLOB PLUGIN_OVERRIDE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/overrides/*.cpp")
+file(GLOB PLUGIN_RENDERER_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/renderer/*.hpp")
+file(GLOB PLUGIN_RENDERER_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/renderer/*.cpp")
 
 # === Source groups === #
-source_group("Plugin" FILES ${PLUGIN_HEADERS} ${PLUGIN_SOURCES})
+source_group("Plugin Start" FILES ${PLUGIN_HEADERS} ${PLUGIN_SOURCES})
 source_group("Plugin Overrides" FILES ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES})
+source_group("Plugin Renderer" FILES ${PLUGIN_RENDERER_HEADERS} ${PLUGIN_RENDERER_SOURCES})
+
+# === Dependencies === $
+add_subdirectory(deps/Procedural-Ray-Tracing)
 
 # === Maya API === #
 include_directories(${MAYA_INCLUDE_DIR})
@@ -55,10 +61,15 @@ set(LIBRARIES "OpenMaya.lib" "OpenMayaUI.lib" "OpenMayaRender.lib" "Foundation.l
 add_library(${PROJECT_NAME} SHARED
             ${HEADERS} ${SOURCES}
             ${PLUGIN_HEADERS} ${PLUGIN_SOURCES}
-            ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES})
+            ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES}
+            ${PLUGIN_RENDERER_HEADERS} ${PLUGIN_RENDERER_SOURCES})
 
 # A Maya plug-in needs its own custom (.mll) extension
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ${PLUGIN_EXTENSION})
+
+# === Wisp set-up === #
+target_include_directories(${PROJECT_NAME} PUBLIC deps/Procedural-Ray-Tracing/src)
+target_link_libraries(${PROJECT_NAME} WispRenderer)
 
 # Additional properties
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
