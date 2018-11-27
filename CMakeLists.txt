@@ -66,6 +66,8 @@ add_library(${PROJECT_NAME} SHARED
             ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES}
             ${PLUGIN_RENDERER_HEADERS} ${PLUGIN_RENDERER_SOURCES})
 
+target_include_directories(${PROJECT_NAME} PUBLIC src)
+
 # A Maya plug-in needs its own custom (.mll) extension
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ${PLUGIN_EXTENSION})
 
