@@ -33,10 +33,16 @@ message(STATUS "Maya library path:\t\t" ${MAYA_LIBRARY_DIR}\n)
 project(${PROJECT_NAME})
 
 # === Files === #
-file(GLOB HEADERS [CONFIGURE_DEPENDS] "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp")
-file(GLOB SOURCES [CONFIGURE_DEPENDS] "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-file(GLOB PLUGIN_HEADERS [CONFIGURE_DEPENDS] "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/*.hpp")
-file(GLOB PLUGIN_SOURCES [CONFIGURE_DEPENDS] "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/*.cpp")
+file(GLOB HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp")
+file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+file(GLOB PLUGIN_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/*.hpp")
+file(GLOB PLUGIN_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/*.cpp")
+file(GLOB PLUGIN_OVERRIDE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/overrides/*.hpp")
+file(GLOB PLUGIN_OVERRIDE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/overrides/*.cpp")
+
+# === Source groups === #
+source_group("Plugin" FILES ${PLUGIN_HEADERS} ${PLUGIN_SOURCES})
+source_group("Plugin Overrides" FILES ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES})
 
 # === Maya API === #
 include_directories(${MAYA_INCLUDE_DIR})
@@ -46,7 +52,10 @@ link_directories(${MAYA_LIBRARY_DIR})
 set(LIBRARIES "OpenMaya.lib" "OpenMayaUI.lib" "OpenMayaRender.lib" "Foundation.lib")
 
 # A Maya plug-in needs to be built as a shared library, it is not a standalone executable
-add_library(${PROJECT_NAME} SHARED ${HEADERS} ${SOURCES} ${PLUGIN_HEADERS} ${PLUGIN_SOURCES})
+add_library(${PROJECT_NAME} SHARED
+            ${HEADERS} ${SOURCES}
+            ${PLUGIN_HEADERS} ${PLUGIN_SOURCES}
+            ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES})
 
 # A Maya plug-in needs its own custom (.mll) extension
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ${PLUGIN_EXTENSION})
