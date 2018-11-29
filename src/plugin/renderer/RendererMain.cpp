@@ -109,8 +109,7 @@ void wmr::wri::RendererMain::StartWispRenderer()
 
 	m_render_system = std::make_unique<wr::D3D12RenderSystem>();
 
-	// TODO: Add support for "windowless" rendering
-	//m_render_system->Init(nullptr);
+	m_render_system->Init(std::nullopt);	// Create the renderer without a window
 
 	m_scene_graph = std::make_unique<wr::SceneGraph>(m_render_system.get());
 	m_frame_graph = std::make_unique<wr::FrameGraph>();
@@ -195,9 +194,13 @@ void wmr::wri::RendererMain::StartWispRenderer()
 
 	m_render_system->InitSceneGraph(*m_scene_graph.get());
 
-	m_frame_graph->AddTask(wr::GetDeferredMainTask());
-	m_frame_graph->AddTask(wr::GetDeferredCompositionTask());
-	m_frame_graph->AddTask(wr::GetImGuiTask(&RenderEditor));
+	// For now, just use a hard-coded width and height
+	// TODO: Retrieve the width and height from the Maya viewport
+	m_frame_graph->AddTask(wr::GetDeferredMainTask(800, 600));
+	m_frame_graph->AddTask(wr::GetDeferredCompositionTask(800, 600));
+
+	// No ImGui for now, it complicates things...
+	//m_frame_graph->AddTask(wr::GetImGuiTask(&RenderEditor));
 	m_frame_graph->Setup(*m_render_system);
 }
 
