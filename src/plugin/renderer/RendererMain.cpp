@@ -10,6 +10,10 @@
 
 #include <algorithm>
 
+// TODO: Remove this once debugging is over
+#include <maya/MGlobal.h>
+#include <maya/MStreamUtils.h>
+
 bool main_menu = true;
 bool open0 = true;
 bool open1 = true;
@@ -114,7 +118,7 @@ void wmr::wri::RendererMain::StartWispRenderer()
 	m_scene_graph = std::make_unique<wr::SceneGraph>(m_render_system.get());
 	m_frame_graph = std::make_unique<wr::FrameGraph>();
 
-//#pragma region Cube sample
+#pragma region Cube sample
 //	// Load custom model
 //	auto model_pool = m_render_system->CreateModelPool(1, 1);
 //	wr::Model* model;
@@ -190,7 +194,7 @@ void wmr::wri::RendererMain::StartWispRenderer()
 //	// ### background cubes
 //
 //	camera->SetPosition(0, 0, -5);
-//#pragma endregion
+#pragma endregion
 
 	m_render_system->InitSceneGraph(*m_scene_graph.get());
 
@@ -202,6 +206,11 @@ void wmr::wri::RendererMain::StartWispRenderer()
 	// No ImGui for now, it complicates things...
 	//m_frame_graph->AddTask(wr::GetImGuiTask(&RenderEditor));
 	m_frame_graph->Setup(*m_render_system);
+}
+
+void wmr::wri::RendererMain::UpdateWispRenderer()
+{
+	MStreamUtils::stdOutStream() << "Wisp renderer update!" << "\n";
 }
 
 void wmr::wri::RendererMain::StopWispRenderer()

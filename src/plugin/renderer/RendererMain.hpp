@@ -19,6 +19,7 @@ namespace wmr::wri
 		~RendererMain();
 
 		void StartWispRenderer();
+		void UpdateWispRenderer();
 		void StopWispRenderer();
 
 	private:
