@@ -17,6 +17,8 @@ namespace wmr
 		WispViewportRenderer(const MString& t_name);
 		~WispViewportRenderer() final override;
 
+		void ShutDownRenderer() const;
+
 	private:
 		// ============================================================
 

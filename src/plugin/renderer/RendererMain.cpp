@@ -190,13 +190,11 @@ void wmr::wri::RendererMain::StartWispRenderer()
 
 	m_render_system->InitSceneGraph(*m_scene_graph.get());
 
-	// For now, just use a hard-coded width and height
-	// TODO: Retrieve the width and height from the Maya viewport
-	m_frame_graph->AddTask(wr::GetDeferredMainTask(800, 600));
-	m_frame_graph->AddTask(wr::GetDeferredCompositionTask(800, 600));
+	m_frame_graph->AddTask(wr::GetDeferredMainTask());
+	m_frame_graph->AddTask(wr::GetDeferredCompositionTask());
 
 	// No ImGui for now, it complicates things...
-	//m_frame_graph->AddTask(wr::GetImGuiTask(&RenderEditor));
+	m_frame_graph->AddTask(wr::GetImGuiTask(&RenderEditor));
 	m_frame_graph->Setup(*m_render_system);
 }
 
