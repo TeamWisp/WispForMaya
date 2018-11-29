@@ -26,9 +26,6 @@ wmr::WispViewportRenderer::WispViewportRenderer(const MString& t_name)
 
 wmr::WispViewportRenderer::~WispViewportRenderer()
 {
-	// This will clean-up any Wisp resources
-	m_wisp_renderer->StopWispRenderer();
-
 	MHWRender::MRenderer* maya_renderer = MHWRender::MRenderer::theRenderer();
 	MHWRender::MTextureManager* maya_texture_manager = maya_renderer ? maya_renderer->getTextureManager() : nullptr;
 
@@ -227,4 +224,10 @@ bool wmr::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* t_renderer,
 	{
 		return false;
 	}
+}
+
+void wmr::WispViewportRenderer::ShutDownRenderer() const
+{
+	// This will clean-up any Wisp resources
+	m_wisp_renderer->StopWispRenderer();
 }
