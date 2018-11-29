@@ -22,6 +22,6 @@ MHWRender::MClearOperation& wmr::WispUIRenderer::clearOperation()
 
 MUint64 wmr::WispUIRenderer::getObjectTypeExclusions()
 {
-	// Exclude the grid and image planes from the final render
-	return (MHWRender::MFrameContext::kExcludeGrid | MHWRender::MFrameContext::kExcludeImagePlane);
+	// Render all UI
+	return 0;
 }
