@@ -34,7 +34,7 @@ Bringing real-time ray-tracing to the Maya viewport using the [Wisp real-time ra
 
 ## Environment variable
 
-Before running the installer, install the Maya dev-kit (if needed), and create an environment variable called `MAYA_2018_DIR`. This environment variable should point to your `<installation/path>/Autodesk/Maya2018` folder.
+Before running the installer, install the [Maya dev-kit](https://www.autodesk.com/developer-network/platform-technologies/maya) (if needed), and create an environment variable called `MAYA_2018_DIR`. This environment variable should point to your `<installation/path>/Autodesk/Maya2018` folder.
 
 ![MAYA_2018_DIR environment variable](./readme_media/environment_variable.png)
 
@@ -64,6 +64,8 @@ After selecting the *Remote Windows Debugger*, new settings will appear. There a
 1. **Remote command**
    The remote command is the command that run once the *Remote Windows Debugger* is launched.
    Set this to the location of `maya.exe`. The location of the executable depends on your installation settings, but by default it is located here: `C:\Program Files\Autodesk\Maya2018\bin\maya.exe`.
+
+   <u>Please note that the backslashes (`\`) are required. Using forward slashes (`/`) will cause the Windows Remote Debugger to fail to attach to the Maya process.</u>
 
 2. **Attach**
    If you were to launch the *Remote Windows Debugger* right now, a new instance of Maya will be launched. This is not something you want when debugging an application, so change this setting to `Yes`.
