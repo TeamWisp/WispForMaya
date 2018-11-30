@@ -34,7 +34,7 @@ Bringing real-time ray-tracing to the Maya viewport using the [Wisp real-time ra
 
 ## Environment variable
 
-Before running the installer, install the Maya dev-kit (if needed), and create an environment variable called `MAYA_2018_DIR`. This environment variable should point to your `<installation/path>/Autodesk/Maya2018` folder.
+Before running the installer, install the [Maya dev-kit](https://www.autodesk.com/developer-network/platform-technologies/maya) (if needed), and create an environment variable called `MAYA_2018_DIR`. This environment variable should point to your `<installation/path>/Autodesk/Maya2018` folder.
 
 ![MAYA_2018_DIR environment variable](./readme_media/environment_variable.png)
 
