@@ -31,8 +31,8 @@ void wmr::PluginMain::Initialize(std::unique_ptr<wmr::WispViewportRenderer>& t_v
 
 void wmr::PluginMain::Uninitialize(wmr::WispViewportRenderer* const t_viewport_renderer_override_instance) const
 {
-	t_viewport_renderer_override_instance->ShutDownRenderer();
 	UnregisterPlugin(MHWRender::MRenderer::theRenderer(), t_viewport_renderer_override_instance);
+	t_viewport_renderer_override_instance->ShutDownRenderer();
 }
 
 bool wmr::PluginMain::IsSceneDirty() const
