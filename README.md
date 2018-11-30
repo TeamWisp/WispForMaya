@@ -65,6 +65,8 @@ After selecting the *Remote Windows Debugger*, new settings will appear. There a
    The remote command is the command that run once the *Remote Windows Debugger* is launched.
    Set this to the location of `maya.exe`. The location of the executable depends on your installation settings, but by default it is located here: `C:\Program Files\Autodesk\Maya2018\bin\maya.exe`.
 
+   <u>Please note that the backslashes (`\`) are required. Using forward slashes (`/`) will cause the Windows Remote Debugger to fail to attach to the Maya process.</u>
+
 2. **Attach**
    If you were to launch the *Remote Windows Debugger* right now, a new instance of Maya will be launched. This is not something you want when debugging an application, so change this setting to `Yes`.
 
