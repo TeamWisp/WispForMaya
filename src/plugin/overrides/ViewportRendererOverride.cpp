@@ -19,17 +19,7 @@ wmr::WispViewportRenderer::WispViewportRenderer(const MString& t_name)
 
 wmr::WispViewportRenderer::~WispViewportRenderer()
 {
-	MHWRender::MRenderer* maya_renderer = MHWRender::MRenderer::theRenderer();
-	MHWRender::MTextureManager* maya_texture_manager = maya_renderer ? maya_renderer->getTextureManager() : nullptr;
-
-	// Release textures
-	if (maya_texture_manager)
-	{
-		if (m_color_texture.texture)
-		{
-			maya_texture_manager->releaseTexture(m_color_texture.texture);
-		}
-	}
+	ReleaseColorTextureResources();
 }
 
 void wmr::WispViewportRenderer::ConfigureRenderOperations()
@@ -43,6 +33,25 @@ void wmr::WispViewportRenderer::SetDefaultColorTextureState()
 {
 	m_color_texture.texture = nullptr;
 	m_color_texture_desc.setToDefault2DTexture();
+}
+
+void wmr::WispViewportRenderer::ReleaseColorTextureResources() const
+{
+	const auto maya_renderer = MHWRender::MRenderer::theRenderer();
+
+	if (!maya_renderer)
+	{
+		return;
+	}
+
+	const auto maya_texture_manager = maya_renderer->getTextureManager();
+
+	if (!maya_texture_manager || !m_color_texture.texture)
+	{
+		return;
+	}
+
+	maya_texture_manager->releaseTexture(m_color_texture.texture);
 }
 
 MHWRender::DrawAPI wmr::WispViewportRenderer::supportedDrawAPIs() const
