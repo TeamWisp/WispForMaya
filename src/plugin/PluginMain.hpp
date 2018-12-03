@@ -22,6 +22,7 @@ namespace wmr
 		void InitializeViewportRendererOverride() const;
 		void RegisterOverride() const;
 		void ActOnCurrentDirtyState(const bool& t_state) const;
+		void UninitializeViewportRendererOverride() const;
 
 	private:
 		std::unique_ptr<WispViewportRenderer> m_wisp_viewport_renderer;

@@ -1,18 +1,16 @@
 #pragma once
 
-#include <memory>
-
 namespace wmr::wri
 {
 	class RendererMain
 	{
 	public:
-		RendererMain();
-		~RendererMain();
+		RendererMain() = default;
+		~RendererMain() = default;
 
-		void StartWispRenderer();
-		void UpdateWispRenderer();
-		void StopWispRenderer();
+		void Initialize();
+		void Update();
+		void Cleanup();
 
 	private:
 	};

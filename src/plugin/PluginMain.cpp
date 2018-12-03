@@ -72,8 +72,15 @@ void wmr::PluginMain::ActOnCurrentDirtyState(const bool& t_state) const
 	}
 }
 
+void wmr::PluginMain::UninitializeViewportRendererOverride() const
+{
+	m_wisp_viewport_renderer->Destroy();
+}
+
 void wmr::PluginMain::Uninitialize() const
 {
+	UninitializeViewportRendererOverride();
+
 	const auto maya_renderer = MHWRender::MRenderer::theRenderer();
 
 	if (maya_renderer)
