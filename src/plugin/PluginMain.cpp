@@ -1,5 +1,6 @@
 #include "PluginMain.hpp"
 #include "overrides/ViewportRendererOverride.hpp"
+#include "miscellaneous/Functions.hpp"
 
 #include <maya/MGlobal.h>
 #include <maya/MCommandResult.h>
@@ -25,28 +26,20 @@ bool wmr::PluginMain::IsSceneDirty() const
 	{
 		// Is the scene currently dirty?
 		MCommandResult scene_dirty_result(&status);
-		ThrowIfFailed(status);
+		functions::ThrowIfFailedMaya(status);
 
 		status = MGlobal::executeCommand("file -query -modified", scene_dirty_result);
-		ThrowIfFailed(status);
+		functions::ThrowIfFailedMaya(status);
 
 		int command_result = -1;
 		status = scene_dirty_result.getResult(command_result);
-		ThrowIfFailed(status);
+		functions::ThrowIfFailedMaya(status);
 
 		return (command_result != 0);
 	}
 	catch (std::exception&)
 	{
 		return true;
-	}
-}
-
-void wmr::PluginMain::ThrowIfFailed(const MStatus& t_status) const
-{
-	if (t_status != MStatus::kSuccess)
-	{
-		throw std::exception();
 	}
 }
 
