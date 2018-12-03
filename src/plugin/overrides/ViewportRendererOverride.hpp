@@ -6,18 +6,11 @@
 
 namespace wmr
 {
-	namespace wri
-	{
-		class RendererMain;
-	}
-
 	class WispViewportRenderer : public MHWRender::MRenderOverride
 	{
 	public:
 		WispViewportRenderer(const MString& t_name);
 		~WispViewportRenderer() final override;
-
-		void ShutDownRenderer() const;
 
 	private:
 		// ============================================================
@@ -52,7 +45,5 @@ namespace wmr
 		int m_current_render_operation;
 
 		bool m_load_images_from_disk;
-
-		std::unique_ptr<wri::RendererMain> m_wisp_renderer;
 	};
 }

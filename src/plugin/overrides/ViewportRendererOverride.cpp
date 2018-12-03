@@ -18,10 +18,6 @@ wmr::WispViewportRenderer::WispViewportRenderer(const MString& t_name)
 
 	m_color_texture.texture = nullptr;
 	m_color_texture_desc.setToDefault2DTexture();
-
-	// Entry point for the Wisp renderer
-	m_wisp_renderer = std::make_unique<wri::RendererMain>();
-	m_wisp_renderer->StartWispRenderer();
 }
 
 wmr::WispViewportRenderer::~WispViewportRenderer()
@@ -107,8 +103,6 @@ MStatus wmr::WispViewportRenderer::setup(const MString& t_destination)
 			view.setDisplayStyle(M3dView::kGouraudShaded);
 		}
 	}
-
-	m_wisp_renderer->UpdateWispRenderer();
 
 	return MStatus::kSuccess;
 }
@@ -224,10 +218,4 @@ bool wmr::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* t_renderer,
 	{
 		return false;
 	}
-}
-
-void wmr::WispViewportRenderer::ShutDownRenderer() const
-{
-	// This will clean-up any Wisp resources
-	m_wisp_renderer->StopWispRenderer();
 }

@@ -45,7 +45,8 @@ file(GLOB PLUGIN_RENDERER_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/render
 file(GLOB PLUGIN_RENDERER_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/renderer/*.cpp")
 
 # === Source groups === #
-source_group("Plugin Start" FILES ${PLUGIN_HEADERS} ${PLUGIN_SOURCES})
+source_group("Main" FILES ${HEADERS} ${SOURCES})
+source_group("Plugin" FILES ${PLUGIN_HEADERS} ${PLUGIN_SOURCES})
 source_group("Plugin Overrides" FILES ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES})
 source_group("Plugin Renderer" FILES ${PLUGIN_RENDERER_HEADERS} ${PLUGIN_RENDERER_SOURCES})
 
