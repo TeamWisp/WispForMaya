@@ -25,6 +25,13 @@ wmr::WispViewportRenderer::~WispViewportRenderer()
 void wmr::WispViewportRenderer::Initialize()
 {
 	CreateRenderOperations();
+	CreateWispRenderer();
+	InitializeWispRenderer();
+}
+
+void wmr::WispViewportRenderer::Destroy()
+{
+	m_wisp_renderer_instance->Cleanup();
 }
 
 void wmr::WispViewportRenderer::ConfigureRenderOperations()
@@ -70,6 +77,16 @@ void wmr::WispViewportRenderer::CreateRenderOperations()
 	}
 }
 
+void wmr::WispViewportRenderer::CreateWispRenderer()
+{
+	m_wisp_renderer_instance = std::make_unique<wri::RendererMain>();
+}
+
+void wmr::WispViewportRenderer::InitializeWispRenderer()
+{
+	m_wisp_renderer_instance->Initialize();
+}
+
 MHWRender::DrawAPI wmr::WispViewportRenderer::supportedDrawAPIs() const
 {
 	return (MHWRender::kOpenGL | MHWRender::kOpenGLCoreProfile | MHWRender::kDirectX11);
@@ -90,6 +107,8 @@ MHWRender::MRenderOperation* wmr::WispViewportRenderer::renderOperation()
 
 MStatus wmr::WispViewportRenderer::setup(const MString& t_destination)
 {
+	m_wisp_renderer_instance->Update();
+
 	const auto maya_renderer = MHWRender::MRenderer::theRenderer();
 
 	if (!maya_renderer)

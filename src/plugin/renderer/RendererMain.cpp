@@ -1,21 +1,13 @@
 #include "RendererMain.hpp"
 
-wmr::wri::RendererMain::RendererMain()
+void wmr::wri::RendererMain::Initialize()
 {
 }
 
-wmr::wri::RendererMain::~RendererMain()
+void wmr::wri::RendererMain::Update()
 {
 }
 
-void wmr::wri::RendererMain::StartWispRenderer()
-{
-}
-
-void wmr::wri::RendererMain::UpdateWispRenderer()
-{
-}
-
-void wmr::wri::RendererMain::StopWispRenderer()
+void wmr::wri::RendererMain::Cleanup()
 {
 }

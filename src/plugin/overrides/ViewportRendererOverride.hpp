@@ -4,6 +4,11 @@
 #include <array>
 #include <memory>
 
+namespace wmr::wri
+{
+	class RendererMain;
+}
+
 namespace wmr
 {
 	class WispViewportRenderer : public MHWRender::MRenderOverride
@@ -13,6 +18,7 @@ namespace wmr
 		~WispViewportRenderer() final override;
 
 		void Initialize();
+		void Destroy();
 
 	private:
 		// Set the names of the render operations
@@ -21,6 +27,8 @@ namespace wmr
 		void SetDefaultColorTextureState();
 		void ReleaseColorTextureResources() const;
 		void CreateRenderOperations();
+		void CreateWispRenderer();
+		void InitializeWispRenderer();
 
 		// Which Maya rendering back ends are supported by this plug-in?
 		MHWRender::DrawAPI supportedDrawAPIs() const final override;
@@ -58,5 +66,7 @@ namespace wmr
 		int m_current_render_operation;
 
 		bool m_load_images_from_disk;
+
+		std::unique_ptr<wri::RendererMain> m_wisp_renderer_instance;
 	};
 }
