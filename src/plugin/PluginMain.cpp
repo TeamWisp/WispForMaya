@@ -4,34 +4,16 @@
 #include <maya/MGlobal.h>
 #include <maya/MCommandResult.h>
 
-wmr::PluginMain::PluginMain()
+void wmr::PluginMain::Initialize()
 {
-}
+	// Workaround for avoiding dirtying the scene when registering overrides
+	const auto is_scene_dirty = IsSceneDirty();
 
-wmr::PluginMain::~PluginMain()
-{
-}
+	CreateViewportRendererOverride();
+	RegisterOverride();
 
-void wmr::PluginMain::Initialize(std::unique_ptr<wmr::WispViewportRenderer>& t_viewport_renderer_override_instance) const
-{
-	// Workaround for avoiding dirtying the scene until there is a way to
-	// register overrides without causing dirty.
-	bool is_scene_dirty = true;
-	is_scene_dirty = IsSceneDirty();
-
-	RegisterPlugin(MHWRender::MRenderer::theRenderer(), t_viewport_renderer_override_instance);
-
-	// If the scene was previously unmodified, return it to that state since
-	// there are no changes that need to be saved
-	if (is_scene_dirty == false)
-	{
-		MGlobal::executeCommand("file -modified 0");
-	}
-}
-
-void wmr::PluginMain::Uninitialize(wmr::WispViewportRenderer* const t_viewport_renderer_override_instance) const
-{
-	UnregisterPlugin(MHWRender::MRenderer::theRenderer(), t_viewport_renderer_override_instance);
+	// If the scene was previously unmodified, return it to that state to avoid dirtying
+	ActOnCurrentDirtyState(is_scene_dirty);
 }
 
 bool wmr::PluginMain::IsSceneDirty() const
@@ -59,20 +41,6 @@ bool wmr::PluginMain::IsSceneDirty() const
 	}
 }
 
-void wmr::PluginMain::RegisterPlugin(MHWRender::MRenderer* const t_maya_renderer, std::unique_ptr<WispViewportRenderer>& t_viewport_renderer_override_instance) const
-{
-	if (!t_maya_renderer)
-	{
-		return;
-	}
-
-	if (!t_viewport_renderer_override_instance)
-	{
-		t_viewport_renderer_override_instance = std::make_unique<wmr::WispViewportRenderer>("wisp_ViewportBlitOverride");
-		t_maya_renderer->registerOverride(t_viewport_renderer_override_instance.get());
-	}
-}
-
 void wmr::PluginMain::ThrowIfFailed(const MStatus& t_status) const
 {
 	if (t_status != MStatus::kSuccess)
@@ -81,15 +49,36 @@ void wmr::PluginMain::ThrowIfFailed(const MStatus& t_status) const
 	}
 }
 
-void wmr::PluginMain::UnregisterPlugin(MHWRender::MRenderer* const t_maya_renderer, WispViewportRenderer* const t_viewport_renderer_override_instance) const
+void wmr::PluginMain::CreateViewportRendererOverride()
 {
-	if (!t_maya_renderer)
-	{
-		return;
-	}
+	m_wisp_viewport_renderer = std::make_unique<WispViewportRenderer>("wisp_ViewportBlitOverride");
+}
 
-	if (t_viewport_renderer_override_instance)
+void wmr::PluginMain::RegisterOverride() const
+{
+	const auto maya_renderer = MHWRender::MRenderer::theRenderer();
+
+	if (maya_renderer)
 	{
-		t_maya_renderer->deregisterOverride(t_viewport_renderer_override_instance);
+		maya_renderer->registerOverride(m_wisp_viewport_renderer.get());
+	}
+}
+
+void wmr::PluginMain::ActOnCurrentDirtyState(const bool& t_state) const
+{
+	// The scene is dirty, no need to set the flag
+	if (!t_state)
+	{
+		MGlobal::executeCommand("file -modified 0");
+	}
+}
+
+void wmr::PluginMain::Uninitialize() const
+{
+	const auto maya_renderer = MHWRender::MRenderer::theRenderer();
+
+	if (maya_renderer)
+	{
+		maya_renderer->deregisterOverride(m_wisp_viewport_renderer.get());
 	}
 }
