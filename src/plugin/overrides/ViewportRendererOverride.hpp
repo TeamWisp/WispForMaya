@@ -13,7 +13,8 @@ namespace wmr
 		~WispViewportRenderer() final override;
 
 	private:
-		// ============================================================
+		void ConfigureRenderOperations();
+		void SetDefaultColorTextureState();
 
 		MHWRender::DrawAPI supportedDrawAPIs() const final override;
 		MHWRender::MRenderOperation* renderOperation() final override;
@@ -24,12 +25,7 @@ namespace wmr
 
 		bool startOperationIterator() final override;
 		bool nextRenderOperation() final override;
-
-		// ============================================================
-
 		bool UpdateTextures(MHWRender::MRenderer* t_renderer, MHWRender::MTextureManager* t_texture_manager);
-
-		// ============================================================
 
 	private:
 		MString m_ui_name;

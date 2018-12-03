@@ -2,22 +2,19 @@
 #include "QuadRendererOverride.hpp"
 #include "UIOverride.hpp"
 #include "plugin/renderer/RendererMain.hpp"
+#include "miscellaneous/Settings.hpp"
 
 #include <maya/MImage.h>
 #include <maya/M3dView.h>
 
 wmr::WispViewportRenderer::WispViewportRenderer(const MString& t_name)
 	: MRenderOverride(t_name)
-	, m_ui_name("Realtime ray-traced viewport by Team Wisp")
+	, m_ui_name(wisp::settings::PRODUCT_NAME)
 	, m_current_render_operation(-1)
 	, m_load_images_from_disk(true)
 {
-	m_render_operation_names[0] = "wisp_SceneBlit";
-	m_render_operation_names[1] = "wisp_UIDraw";
-	m_render_operation_names[2] = "wisp_Present";
-
-	m_color_texture.texture = nullptr;
-	m_color_texture_desc.setToDefault2DTexture();
+	ConfigureRenderOperations();
+	SetDefaultColorTextureState();
 }
 
 wmr::WispViewportRenderer::~WispViewportRenderer()
@@ -33,6 +30,19 @@ wmr::WispViewportRenderer::~WispViewportRenderer()
 			maya_texture_manager->releaseTexture(m_color_texture.texture);
 		}
 	}
+}
+
+void wmr::WispViewportRenderer::ConfigureRenderOperations()
+{
+	m_render_operation_names[0] = "wisp_SceneBlit";
+	m_render_operation_names[1] = "wisp_UIDraw";
+	m_render_operation_names[2] = "wisp_Present";
+}
+
+void wmr::WispViewportRenderer::SetDefaultColorTextureState()
+{
+	m_color_texture.texture = nullptr;
+	m_color_texture_desc.setToDefault2DTexture();
 }
 
 MHWRender::DrawAPI wmr::WispViewportRenderer::supportedDrawAPIs() const
