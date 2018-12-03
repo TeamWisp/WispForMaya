@@ -1,77 +1,28 @@
-#include "plugin/ViewportRendererOverride.hpp"
-
-#include "Constants.hpp"
-
 #include <maya/MFnPlugin.h>
+
+#include "plugin/PluginMain.hpp"
+#include "plugin/overrides/ViewportRendererOverride.hpp"
+#include "miscellaneous/Settings.hpp"
 
 #include <memory>
 
-static std::unique_ptr<wisp::ViewportRendererOverride> renderer_override_instance;
+wmr::PluginMain plugin_instance;
+std::unique_ptr<wmr::WispViewportRenderer> global_viewport_override_instance;
 
-void AddRemovePlugin(MStatus& t_status, bool t_add);
-void CheckStatus(const MStatus& t_status, const MString& t_message);
-
-// NOTE:	This function name deviates from the coding standard because Autodesk Maya looks for a function that is
-//			written exactly like this.
 MStatus initializePlugin(MObject t_object)
 {
-	MStatus status = MStatus::kFailure;
-	MFnPlugin plugin(t_object, wisp::Constants::COMPANY_NAME, wisp::Constants::PRODUCT_VERSION);
+	MFnPlugin plugin(t_object, wisp::settings::COMPANY_NAME, wisp::settings::PRODUCT_VERSION, "Any");
 
-	if (!renderer_override_instance)
-	{
-		AddRemovePlugin(status, true);
-	}
+	plugin_instance.Initialize(global_viewport_override_instance);
 
-	CheckStatus(status, "Failed to register the renderer override!");
-
-	return status;
+	return MStatus::kSuccess;
 }
 
-// NOTE:	This function name deviates from the coding standard because Autodesk Maya looks for a function that is
-//			written exactly like this.
 MStatus uninitializePlugin(MObject t_object)
 {
-	MStatus status = MStatus::kFailure;
 	MFnPlugin plugin(t_object);
 
-	// Unregister the override
-	if (renderer_override_instance)
-	{
-		AddRemovePlugin(status, false);
-	}
+	plugin_instance.Uninitialize(global_viewport_override_instance.get());
 
-	CheckStatus(status, "Failed to unregister the renderer override!");
-
-	return status;
-}
-
-void AddRemovePlugin(MStatus& t_status, bool t_add)
-{
-	auto renderer = MHWRender::MRenderer::theRenderer();
-
-	if (renderer)
-	{
-		if (t_add)
-		{
-			// Create the renderer instance
-			renderer_override_instance = std::make_unique<wisp::ViewportRendererOverride>(wisp::Constants::PRODUCT_NAME);
-
-			// Register the renderer with Autodesk Maya
-			t_status = renderer->registerOverride(renderer_override_instance.get());
-		}
-		else
-		{
-			// Unregister the renderer with Autodesk Maya
-			t_status = renderer->deregisterOverride(renderer_override_instance.get());
-		}
-	}
-}
-
-void CheckStatus(const MStatus& t_status, const MString& t_message)
-{
-	if (!t_status)
-	{
-		t_status.perror(t_message);
-	}
+	return MStatus::kSuccess;
 }
