@@ -18,7 +18,6 @@ namespace wmr
 	private:
 		bool IsSceneDirty() const;
 		
-		void ThrowIfFailed(const MStatus& t_status) const;
 		void CreateViewportRendererOverride();
 		void InitializeViewportRendererOverride() const;
 		void RegisterOverride() const;
