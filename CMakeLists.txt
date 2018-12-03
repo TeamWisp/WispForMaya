@@ -37,6 +37,8 @@ project(${PROJECT_NAME})
 # === Files === #
 file(GLOB HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp")
 file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+file(GLOB MISC_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/miscellaneous/*.hpp")
+file(GLOB MISC_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/miscellaneous/*.cpp")
 file(GLOB PLUGIN_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/*.hpp")
 file(GLOB PLUGIN_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/*.cpp")
 file(GLOB PLUGIN_OVERRIDE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/overrides/*.hpp")
@@ -46,6 +48,7 @@ file(GLOB PLUGIN_RENDERER_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/render
 
 # === Source groups === #
 source_group("Main" FILES ${HEADERS} ${SOURCES})
+source_group("Miscellaneous" FILES ${MISC_HEADERS} ${MISC_SOURCES})
 source_group("Plugin" FILES ${PLUGIN_HEADERS} ${PLUGIN_SOURCES})
 source_group("Plugin Overrides" FILES ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES})
 source_group("Plugin Renderer" FILES ${PLUGIN_RENDERER_HEADERS} ${PLUGIN_RENDERER_SOURCES})
@@ -63,6 +66,7 @@ set(LIBRARIES "OpenMaya.lib" "OpenMayaUI.lib" "OpenMayaRender.lib" "Foundation.l
 # A Maya plug-in needs to be built as a shared library, it is not a standalone executable
 add_library(${PROJECT_NAME} SHARED
             ${HEADERS} ${SOURCES}
+            ${MISC_HEADERS} ${MISC_SOURCES}
             ${PLUGIN_HEADERS} ${PLUGIN_SOURCES}
             ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES}
             ${PLUGIN_RENDERER_HEADERS} ${PLUGIN_RENDERER_SOURCES})
