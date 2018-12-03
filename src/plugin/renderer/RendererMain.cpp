@@ -22,4 +22,8 @@ void wmr::wri::RendererMain::Resize(unsigned int t_new_width, unsigned int t_new
 
 void wmr::wri::RendererMain::Cleanup()
 {
+	// Make sure the GPU has finished executing the final command list before starting the cleanup
+	m_render_system->WaitForAllPreviousWork();
+	m_frame_graph->Destroy();
+	m_render_system.reset();
 }
