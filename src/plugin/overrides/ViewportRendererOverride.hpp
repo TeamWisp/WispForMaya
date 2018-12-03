@@ -15,6 +15,7 @@ namespace wmr
 	private:
 		void ConfigureRenderOperations();
 		void SetDefaultColorTextureState();
+		void ReleaseColorTextureResources() const;
 
 		MHWRender::DrawAPI supportedDrawAPIs() const final override;
 		MHWRender::MRenderOperation* renderOperation() final override;
