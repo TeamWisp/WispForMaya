@@ -20,6 +20,7 @@ namespace wmr
 		
 		void ThrowIfFailed(const MStatus& t_status) const;
 		void CreateViewportRendererOverride();
+		void InitializeViewportRendererOverride() const;
 		void RegisterOverride() const;
 		void ActOnCurrentDirtyState(const bool& t_state) const;
 
