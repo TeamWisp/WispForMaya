@@ -22,6 +22,11 @@ wmr::WispViewportRenderer::~WispViewportRenderer()
 	ReleaseColorTextureResources();
 }
 
+void wmr::WispViewportRenderer::Initialize()
+{
+	CreateRenderOperations();
+}
+
 void wmr::WispViewportRenderer::ConfigureRenderOperations()
 {
 	m_render_operation_names[0] = "wisp_SceneBlit";
@@ -54,6 +59,17 @@ void wmr::WispViewportRenderer::ReleaseColorTextureResources() const
 	maya_texture_manager->releaseTexture(m_color_texture.texture);
 }
 
+void wmr::WispViewportRenderer::CreateRenderOperations()
+{
+	if (!m_render_operations[0])
+	{
+		m_render_operations[0] = std::make_unique<wmr::WispScreenBlitter>(m_render_operation_names[0]);
+		m_render_operations[1] = std::make_unique<wmr::WispUIRenderer>(m_render_operation_names[1]);
+		m_render_operations[2] = std::make_unique<MHWRender::MHUDRender>();
+		m_render_operations[3] = std::make_unique<MHWRender::MPresentTarget>(m_render_operation_names[2]);
+	}
+}
+
 MHWRender::DrawAPI wmr::WispViewportRenderer::supportedDrawAPIs() const
 {
 	return (MHWRender::kOpenGL | MHWRender::kOpenGLCoreProfile | MHWRender::kDirectX11);
@@ -68,38 +84,29 @@ MHWRender::MRenderOperation* wmr::WispViewportRenderer::renderOperation()
 			return m_render_operations[m_current_render_operation].get();
 		}
 	}
+
 	return nullptr;
 }
 
 MStatus wmr::WispViewportRenderer::setup(const MString& t_destination)
 {
-	MHWRender::MRenderer* maya_renderer = MHWRender::MRenderer::theRenderer();
+	const auto maya_renderer = MHWRender::MRenderer::theRenderer();
 
 	if (!maya_renderer)
 	{
 		return MStatus::kFailure;
 	}
 
-	MHWRender::MTextureManager* maya_texture_manager = maya_renderer->getTextureManager();
+	const auto maya_texture_manager = maya_renderer->getTextureManager();
 
 	if (!maya_texture_manager)
 	{
 		return MStatus::kFailure;
 	}
 
-	// Create a new set of operations if required
-	if (!m_render_operations[0])
-	{
-		m_render_operations[0] = std::make_unique<wmr::WispScreenBlitter>(m_render_operation_names[0]);
-		m_render_operations[1] = std::make_unique<wmr::WispUIRenderer>(m_render_operation_names[1]);
-		m_render_operations[2] = std::make_unique<MHWRender::MHUDRender>();
-		m_render_operations[3] = std::make_unique<MHWRender::MPresentTarget>(m_render_operation_names[2]);
-	}
+	const auto render_operations_set = AreAllRenderOperationsSetCorrectly();
 
-	if (!m_render_operations[0] ||
-		!m_render_operations[1] ||
-		!m_render_operations[2] ||
-		!m_render_operations[3])
+	if (render_operations_set)
 	{
 		return MStatus::kFailure;
 	}
@@ -112,18 +119,17 @@ MStatus wmr::WispViewportRenderer::setup(const MString& t_destination)
 
 	// Force the panel display style to smooth shaded if it is not already
 	// this ensures that viewport selection behavior works as if shaded
-	M3dView view;
-
-	if (t_destination.length() &&
-		M3dView::getM3dViewFromModelPanel(t_destination, view) == MStatus::kSuccess)
-	{
-		if (view.displayStyle() != M3dView::kGouraudShaded)
-		{
-			view.setDisplayStyle(M3dView::kGouraudShaded);
-		}
-	}
+	EnsurePanelDisplayShading(t_destination);
 
 	return MStatus::kSuccess;
+}
+
+bool wmr::WispViewportRenderer::AreAllRenderOperationsSetCorrectly() const
+{
+	return (!m_render_operations[0] ||
+			!m_render_operations[1] ||
+			!m_render_operations[2] ||
+			!m_render_operations[3]);
 }
 
 MStatus wmr::WispViewportRenderer::cleanup()
@@ -236,5 +242,19 @@ bool wmr::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* t_renderer,
 	else
 	{
 		return false;
+	}
+}
+
+void wmr::WispViewportRenderer::EnsurePanelDisplayShading(const MString& t_destination)
+{
+	M3dView view;
+
+	if (t_destination.length() &&
+		M3dView::getM3dViewFromModelPanel(t_destination, view) == MStatus::kSuccess)
+	{
+		if (view.displayStyle() != M3dView::kGouraudShaded)
+		{
+			view.setDisplayStyle(M3dView::kGouraudShaded);
+		}
 	}
 }

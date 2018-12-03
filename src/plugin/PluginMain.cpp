@@ -10,6 +10,7 @@ void wmr::PluginMain::Initialize()
 	const auto is_scene_dirty = IsSceneDirty();
 
 	CreateViewportRendererOverride();
+	InitializeViewportRendererOverride();
 	RegisterOverride();
 
 	// If the scene was previously unmodified, return it to that state to avoid dirtying
@@ -52,6 +53,11 @@ void wmr::PluginMain::ThrowIfFailed(const MStatus& t_status) const
 void wmr::PluginMain::CreateViewportRendererOverride()
 {
 	m_wisp_viewport_renderer = std::make_unique<WispViewportRenderer>("wisp_ViewportBlitOverride");
+}
+
+void wmr::PluginMain::InitializeViewportRendererOverride() const
+{
+	m_wisp_viewport_renderer->Initialize();
 }
 
 void wmr::PluginMain::RegisterOverride() const

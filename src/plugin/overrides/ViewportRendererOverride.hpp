@@ -12,30 +12,46 @@ namespace wmr
 		WispViewportRenderer(const MString& t_name);
 		~WispViewportRenderer() final override;
 
+		void Initialize();
+
 	private:
+		// Set the names of the render operations
 		void ConfigureRenderOperations();
+
 		void SetDefaultColorTextureState();
 		void ReleaseColorTextureResources() const;
+		void CreateRenderOperations();
 
+		// Which Maya rendering back ends are supported by this plug-in?
 		MHWRender::DrawAPI supportedDrawAPIs() const final override;
+
+		// Loop through all render operations and return the current active operation to Maya
 		MHWRender::MRenderOperation* renderOperation() final override;
 		
+		// Called when the viewport needs to be refreshed (no updates if nothing changes)
 		MStatus setup(const MString& t_destination) final override;
+
+		bool AreAllRenderOperationsSetCorrectly() const;
+
+		// Update the Maya color texture
+		bool UpdateTextures(MHWRender::MRenderer* t_renderer, MHWRender::MTextureManager* t_texture_manager);
+
+		void EnsurePanelDisplayShading(const MString& t_destination);
+
 		MStatus cleanup() final override;
+
+		// Returns the name of the plug-in that should show up under the "renderer" drop-down menu in the Maya viewport
 		MString uiName() const final override;
 
 		bool startOperationIterator() final override;
 		bool nextRenderOperation() final override;
-		bool UpdateTextures(MHWRender::MRenderer* t_renderer, MHWRender::MTextureManager* t_texture_manager);
 
 	private:
 		MString m_ui_name;
 
-		// Operations and their names
 		std::array<std::unique_ptr<MHWRender::MRenderOperation>, 4> m_render_operations;
 		MString m_render_operation_names[3];
 
-		// Texture(s) used for the quad render
 		MHWRender::MTextureDescription m_color_texture_desc;
 		MHWRender::MTextureAssignment m_color_texture;
 
