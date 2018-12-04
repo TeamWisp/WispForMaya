@@ -1,3 +1,6 @@
 [submodule "deps/Procedural-Ray-Tracing"]
 	path = deps/Procedural-Ray-Tracing
 	url = https://github.com/TeamWisp/Procedural-Ray-Tracing
+[submodule "deps/googletest"]
+	path = deps/googletest
+	url = https://github.com/abseil/googletest.git
