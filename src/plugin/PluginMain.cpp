@@ -1,37 +1,21 @@
 #include "PluginMain.hpp"
 #include "overrides/ViewportRendererOverride.hpp"
+#include "miscellaneous/Functions.hpp"
 
 #include <maya/MGlobal.h>
 #include <maya/MCommandResult.h>
 
-wmr::PluginMain::PluginMain()
+void wmr::PluginMain::Initialize()
 {
-}
+	// Workaround for avoiding dirtying the scene when registering overrides
+	const auto is_scene_dirty = IsSceneDirty();
 
-wmr::PluginMain::~PluginMain()
-{
-}
+	CreateViewportRendererOverride();
+	InitializeViewportRendererOverride();
+	RegisterOverride();
 
-void wmr::PluginMain::Initialize(std::unique_ptr<wmr::WispViewportRenderer>& t_viewport_renderer_override_instance) const
-{
-	// Workaround for avoiding dirtying the scene until there is a way to
-	// register overrides without causing dirty.
-	bool is_scene_dirty = true;
-	is_scene_dirty = IsSceneDirty();
-
-	RegisterPlugin(MHWRender::MRenderer::theRenderer(), t_viewport_renderer_override_instance);
-
-	// If the scene was previously unmodified, return it to that state since
-	// there are no changes that need to be saved
-	if (is_scene_dirty == false)
-	{
-		MGlobal::executeCommand("file -modified 0");
-	}
-}
-
-void wmr::PluginMain::Uninitialize(wmr::WispViewportRenderer* const t_viewport_renderer_override_instance) const
-{
-	UnregisterPlugin(MHWRender::MRenderer::theRenderer(), t_viewport_renderer_override_instance);
+	// If the scene was previously unmodified, return it to that state to avoid dirtying
+	ActOnCurrentDirtyState(is_scene_dirty);
 }
 
 bool wmr::PluginMain::IsSceneDirty() const
@@ -42,14 +26,14 @@ bool wmr::PluginMain::IsSceneDirty() const
 	{
 		// Is the scene currently dirty?
 		MCommandResult scene_dirty_result(&status);
-		ThrowIfFailed(status);
+		functions::ThrowIfFailedMaya(status);
 
 		status = MGlobal::executeCommand("file -query -modified", scene_dirty_result);
-		ThrowIfFailed(status);
+		functions::ThrowIfFailedMaya(status);
 
 		int command_result = -1;
 		status = scene_dirty_result.getResult(command_result);
-		ThrowIfFailed(status);
+		functions::ThrowIfFailedMaya(status);
 
 		return (command_result != 0);
 	}
@@ -59,37 +43,48 @@ bool wmr::PluginMain::IsSceneDirty() const
 	}
 }
 
-void wmr::PluginMain::RegisterPlugin(MHWRender::MRenderer* const t_maya_renderer, std::unique_ptr<WispViewportRenderer>& t_viewport_renderer_override_instance) const
+void wmr::PluginMain::CreateViewportRendererOverride()
 {
-	if (!t_maya_renderer)
-	{
-		return;
-	}
+	m_wisp_viewport_renderer = std::make_unique<WispViewportRenderer>("wisp_ViewportBlitOverride");
+}
 
-	if (!t_viewport_renderer_override_instance)
+void wmr::PluginMain::InitializeViewportRendererOverride() const
+{
+	m_wisp_viewport_renderer->Initialize();
+}
+
+void wmr::PluginMain::RegisterOverride() const
+{
+	const auto maya_renderer = MHWRender::MRenderer::theRenderer();
+
+	if (maya_renderer)
 	{
-		t_viewport_renderer_override_instance = std::make_unique<wmr::WispViewportRenderer>("wisp_ViewportBlitOverride");
-		t_maya_renderer->registerOverride(t_viewport_renderer_override_instance.get());
+		maya_renderer->registerOverride(m_wisp_viewport_renderer.get());
 	}
 }
 
-void wmr::PluginMain::ThrowIfFailed(const MStatus& t_status) const
+void wmr::PluginMain::ActOnCurrentDirtyState(const bool& state) const
 {
-	if (t_status != MStatus::kSuccess)
+	// The scene is dirty, no need to set the flag
+	if (!state)
 	{
-		throw std::exception();
+		MGlobal::executeCommand("file -modified 0");
 	}
 }
 
-void wmr::PluginMain::UnregisterPlugin(MHWRender::MRenderer* const t_maya_renderer, WispViewportRenderer* const t_viewport_renderer_override_instance) const
+void wmr::PluginMain::UninitializeViewportRendererOverride() const
 {
-	if (!t_maya_renderer)
-	{
-		return;
-	}
+	m_wisp_viewport_renderer->Destroy();
+}
 
-	if (t_viewport_renderer_override_instance)
+void wmr::PluginMain::Uninitialize() const
+{
+	UninitializeViewportRendererOverride();
+
+	const auto maya_renderer = MHWRender::MRenderer::theRenderer();
+
+	if (maya_renderer)
 	{
-		t_maya_renderer->deregisterOverride(t_viewport_renderer_override_instance);
+		maya_renderer->deregisterOverride(m_wisp_viewport_renderer.get());
 	}
 }

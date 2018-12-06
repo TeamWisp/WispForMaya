@@ -9,17 +9,22 @@ namespace wmr
 	class PluginMain
 	{
 	public:
-		PluginMain();
-		~PluginMain();
+		PluginMain() = default;
+		~PluginMain() = default;
 
-		void Initialize(std::unique_ptr<wmr::WispViewportRenderer>& t_viewport_renderer_override_instance) const;
-		void Uninitialize(wmr::WispViewportRenderer* const t_viewport_renderer_override_instance) const;
+		void Initialize();
+		void Uninitialize() const;
 
 	private:
 		bool IsSceneDirty() const;
+		
+		void CreateViewportRendererOverride();
+		void InitializeViewportRendererOverride() const;
+		void RegisterOverride() const;
+		void ActOnCurrentDirtyState(const bool& state) const;
+		void UninitializeViewportRendererOverride() const;
 
-		void RegisterPlugin(MHWRender::MRenderer* const t_maya_renderer, std::unique_ptr<WispViewportRenderer>& t_viewport_renderer_override_instance) const;
-		void ThrowIfFailed(const MStatus& t_status) const;
-		void UnregisterPlugin(MHWRender::MRenderer* const t_maya_renderer, WispViewportRenderer* const t_viewport_renderer_override_instance) const;
+	private:
+		std::unique_ptr<WispViewportRenderer> m_wisp_viewport_renderer;
 	};
 }

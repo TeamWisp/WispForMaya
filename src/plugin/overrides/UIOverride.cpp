@@ -1,7 +1,7 @@
 #include "UIOverride.hpp"
 
-wmr::WispUIRenderer::WispUIRenderer(const MString & t_name)
-	: MHWRender::MSceneRender(t_name)
+wmr::WispUIRenderer::WispUIRenderer(const MString & name)
+	: MHWRender::MSceneRender(name)
 {
 }
 
@@ -22,6 +22,6 @@ MHWRender::MClearOperation& wmr::WispUIRenderer::clearOperation()
 
 MUint64 wmr::WispUIRenderer::getObjectTypeExclusions()
 {
-	// Exclude the grid and image planes from the final render
-	return (MHWRender::MFrameContext::kExcludeGrid | MHWRender::MFrameContext::kExcludeImagePlane);
+	// Render all UI
+	return 0;
 }

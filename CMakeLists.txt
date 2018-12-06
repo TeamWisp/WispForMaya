@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
+add_compile_definitions(_ENABLE_EXTENDED_ALIGNED_STORAGE)
+
 # The Maya installation directory location is required for this project to work
 if (NOT EXISTS "$ENV{MAYA_2018_DIR}")
     message(FATAL_ERROR "\"MAYA_2018_DIR\" environment variable could not be found!")
@@ -35,14 +37,24 @@ project(${PROJECT_NAME})
 # === Files === #
 file(GLOB HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp")
 file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+file(GLOB MISC_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/miscellaneous/*.hpp")
+file(GLOB MISC_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/miscellaneous/*.cpp")
 file(GLOB PLUGIN_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/*.hpp")
 file(GLOB PLUGIN_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/*.cpp")
 file(GLOB PLUGIN_OVERRIDE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/overrides/*.hpp")
 file(GLOB PLUGIN_OVERRIDE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/overrides/*.cpp")
+file(GLOB PLUGIN_RENDERER_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/renderer/*.hpp")
+file(GLOB PLUGIN_RENDERER_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/renderer/*.cpp")
 
 # === Source groups === #
+source_group("Main" FILES ${HEADERS} ${SOURCES})
+source_group("Miscellaneous" FILES ${MISC_HEADERS} ${MISC_SOURCES})
 source_group("Plugin" FILES ${PLUGIN_HEADERS} ${PLUGIN_SOURCES})
 source_group("Plugin Overrides" FILES ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES})
+source_group("Plugin Renderer" FILES ${PLUGIN_RENDERER_HEADERS} ${PLUGIN_RENDERER_SOURCES})
+
+# === Dependencies === $
+add_subdirectory(deps/Procedural-Ray-Tracing)
 
 # === Maya API === #
 include_directories(${MAYA_INCLUDE_DIR})
@@ -54,11 +66,19 @@ set(LIBRARIES "OpenMaya.lib" "OpenMayaUI.lib" "OpenMayaRender.lib" "Foundation.l
 # A Maya plug-in needs to be built as a shared library, it is not a standalone executable
 add_library(${PROJECT_NAME} SHARED
             ${HEADERS} ${SOURCES}
+            ${MISC_HEADERS} ${MISC_SOURCES}
             ${PLUGIN_HEADERS} ${PLUGIN_SOURCES}
-            ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES})
+            ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES}
+            ${PLUGIN_RENDERER_HEADERS} ${PLUGIN_RENDERER_SOURCES})
+
+target_include_directories(${PROJECT_NAME} PUBLIC src)
 
 # A Maya plug-in needs its own custom (.mll) extension
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ${PLUGIN_EXTENSION})
+
+# === Wisp set-up === #
+target_include_directories(${PROJECT_NAME} PUBLIC deps/Procedural-Ray-Tracing/src)
+target_link_libraries(${PROJECT_NAME} WispRenderer)
 
 # Additional properties
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
