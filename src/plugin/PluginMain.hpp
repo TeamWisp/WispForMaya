@@ -21,7 +21,7 @@ namespace wmr
 		void CreateViewportRendererOverride();
 		void InitializeViewportRendererOverride() const;
 		void RegisterOverride() const;
-		void ActOnCurrentDirtyState(const bool& t_state) const;
+		void ActOnCurrentDirtyState(const bool& state) const;
 		void UninitializeViewportRendererOverride() const;
 
 	private:

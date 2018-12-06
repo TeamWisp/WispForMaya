@@ -20,7 +20,7 @@ namespace wmr::wri
 
 		void Initialize();
 		void Update();
-		void Resize(unsigned int t_new_width, unsigned int t_new_height);
+		void Resize(unsigned int new_width, unsigned int new_height);
 		void Cleanup();
 
 	private:

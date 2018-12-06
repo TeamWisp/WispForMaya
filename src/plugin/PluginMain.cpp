@@ -63,10 +63,10 @@ void wmr::PluginMain::RegisterOverride() const
 	}
 }
 
-void wmr::PluginMain::ActOnCurrentDirtyState(const bool& t_state) const
+void wmr::PluginMain::ActOnCurrentDirtyState(const bool& state) const
 {
 	// The scene is dirty, no need to set the flag
-	if (!t_state)
+	if (!state)
 	{
 		MGlobal::executeCommand("file -modified 0");
 	}
