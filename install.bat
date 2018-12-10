@@ -52,7 +52,7 @@ if "%is_remote%" == "1" (
   set workspace_path="%~df2"  
   set enable_unit_test=1
 ) else (
-  rem echo Do you want unit tests enabled? [Y/N]
+  :: echo Do you want unit tests enabled? [Y/N]
   choice /c yn /m "Do you want unit tests enabled?"
   if errorlevel 2 (
     echo no unit tests will be generated
@@ -91,7 +91,12 @@ REM ##### DOWNLOAD DEPS #####
 call :colorEcho %header_color% "#### Downloading Dependencies ####"
 cd "%workspace_path%"
 git submodule init
-git submodule update 
+git submodule update  --recursive --remote
+:: init and update Procedural ray tracing project deps.
+cd deps\Procedural-Ray-Tracing
+git submodule init
+git submodule update  --recursive --remote
+cd ../../
 EXIT /B 0
 REM ##### DOWNLOAD DEPS #####
 
@@ -100,6 +105,9 @@ REM ##### GEN PROJECTS #####
 call :colorEcho %header_color% "#### Generating Visual Studio 15 2017 Win64 Project. ####"
 cd "%workspace_path%"
 echo current path: "%cd%"
+if exist "./build_vs2017_win64/" (
+  del ".\build_vs2017_win64\CMakeCache.txt"
+)
 mkdir build_vs2017_win64
 cd build_vs2017_win64
 if "%ENABLE_UNIT_TEST%" == "1" (
