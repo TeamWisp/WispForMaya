@@ -1,22 +1,23 @@
 #pragma once
 
-namespace wr
-{
-	class D3D12RenderSystem;
-	class SceneGraph;
-}
+#include <memory>
 
 namespace wmr::wri
 {
+	class Renderer;
+
 	class RendererMain
 	{
 	public:
-		RendererMain() = default;
-		~RendererMain() = default;
+		RendererMain();
+		~RendererMain();
 
 		void Initialize();
 		void Update();
 		void Resize(unsigned int new_width, unsigned int new_height);
 		void Cleanup();
+
+	private:
+		std::unique_ptr<Renderer> m_renderer;
 	};
 }

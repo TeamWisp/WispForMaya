@@ -1,20 +1,25 @@
 #include "RendererMain.hpp"
 
-#include "wisp.hpp"
-#include "render_tasks/d3d12_test_render_task.hpp"
+#include "Renderer.hpp"
 
 namespace wmr::wri
 {
+	RendererMain::RendererMain()
+	{
+	}
+
+	RendererMain::~RendererMain()
+	{
+	}
+
 	void RendererMain::Initialize()
 	{
-		// Create a new thread for the renderer to live on
-		// This allows Maya to render at its own pace without slowing down the renderer
-
+		m_renderer->Initialize(1280, 720);
 	}
 
 	void RendererMain::Update()
 	{
-		// TODO: Update the framework logic in here!
+		m_renderer->Update();
 	}
 
 	void RendererMain::Resize(unsigned int new_width, unsigned int new_height)
@@ -24,5 +29,6 @@ namespace wmr::wri
 
 	void RendererMain::Cleanup()
 	{
+		m_renderer->Destroy();
 	}
 }
