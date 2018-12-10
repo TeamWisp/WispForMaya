@@ -101,8 +101,6 @@ set(INSTALL_GTEST OFF)
     set_target_properties (gtest PROPERTIES FOLDER ThirdParty)
     set_target_properties (gtest_main PROPERTIES FOLDER ThirdParty)
 
-    set_target_properties( gmock PROPERTIES )
-
     if (MSVC)
         target_compile_options(gtest PRIVATE /W0)
     endif()
