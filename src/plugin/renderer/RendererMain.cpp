@@ -16,7 +16,7 @@ void wmr::wri::RendererMain::Update()
 	// TODO: Update the framework logic in here!
 }
 
-void wmr::wri::RendererMain::Resize(unsigned int t_new_width, unsigned int t_new_height)
+void wmr::wri::RendererMain::Resize(unsigned int new_width, unsigned int new_height)
 {
 }
 

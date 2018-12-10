@@ -1,7 +1,7 @@
 #include "UIOverride.hpp"
 
-wmr::WispUIRenderer::WispUIRenderer(const MString & t_name)
-	: MHWRender::MSceneRender(t_name)
+wmr::WispUIRenderer::WispUIRenderer(const MString & name)
+	: MHWRender::MSceneRender(name)
 {
 }
 

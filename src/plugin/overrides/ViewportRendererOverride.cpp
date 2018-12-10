@@ -7,8 +7,8 @@
 #include <maya/MImage.h>
 #include <maya/M3dView.h>
 
-wmr::WispViewportRenderer::WispViewportRenderer(const MString& t_name)
-	: MRenderOverride(t_name)
+wmr::WispViewportRenderer::WispViewportRenderer(const MString& name)
+	: MRenderOverride(name)
 	, m_ui_name(wisp::settings::PRODUCT_NAME)
 	, m_current_render_operation(-1)
 	, m_load_images_from_disk(true)
@@ -105,7 +105,7 @@ MHWRender::MRenderOperation* wmr::WispViewportRenderer::renderOperation()
 	return nullptr;
 }
 
-MStatus wmr::WispViewportRenderer::setup(const MString& t_destination)
+MStatus wmr::WispViewportRenderer::setup(const MString& destination)
 {
 	m_wisp_renderer_instance->Update();
 
@@ -138,7 +138,7 @@ MStatus wmr::WispViewportRenderer::setup(const MString& t_destination)
 
 	// Force the panel display style to smooth shaded if it is not already
 	// this ensures that viewport selection behavior works as if shaded
-	EnsurePanelDisplayShading(t_destination);
+	EnsurePanelDisplayShading(destination);
 
 	return MStatus::kSuccess;
 }
@@ -180,9 +180,9 @@ bool wmr::WispViewportRenderer::nextRenderOperation()
 	return false;
 }
 
-bool wmr::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* t_renderer, MHWRender::MTextureManager* t_texture_manager)
+bool wmr::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* renderer, MHWRender::MTextureManager* texture_manager)
 {
-	if (!t_renderer || !t_texture_manager)
+	if (!renderer || !texture_manager)
 	{
 		return false;
 	}
@@ -190,7 +190,7 @@ bool wmr::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* t_renderer,
 	unsigned int target_width = 0;
 	unsigned int target_height = 0;
 
-	t_renderer->outputTargetSize(target_width, target_height);
+	renderer->outputTargetSize(target_width, target_height);
 
 	bool aquire_new_texture = false;
 	bool force_reload = false;
@@ -209,7 +209,7 @@ bool wmr::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* t_renderer,
 	{
 		if (m_color_texture.texture)
 		{
-			t_texture_manager->releaseTexture(m_color_texture.texture);
+			texture_manager->releaseTexture(m_color_texture.texture);
 			m_color_texture.texture = nullptr;
 		}
 
@@ -235,7 +235,7 @@ bool wmr::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* t_renderer,
 		m_color_texture_desc.fBytesPerSlice = m_color_texture_desc.fBytesPerRow * target_height;
 
 		// Acquire a new texture
-		m_color_texture.texture = t_texture_manager->acquireTexture("", m_color_texture_desc, texture_data);
+		m_color_texture.texture = texture_manager->acquireTexture("", m_color_texture_desc, texture_data);
 
 		if (m_color_texture.texture)
 		{
@@ -264,12 +264,12 @@ bool wmr::WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* t_renderer,
 	}
 }
 
-void wmr::WispViewportRenderer::EnsurePanelDisplayShading(const MString& t_destination)
+void wmr::WispViewportRenderer::EnsurePanelDisplayShading(const MString& destination)
 {
 	M3dView view;
 
-	if (t_destination.length() &&
-		M3dView::getM3dViewFromModelPanel(t_destination, view) == MStatus::kSuccess)
+	if (destination.length() &&
+		M3dView::getM3dViewFromModelPanel(destination, view) == MStatus::kSuccess)
 	{
 		if (view.displayStyle() != M3dView::kGouraudShaded)
 		{

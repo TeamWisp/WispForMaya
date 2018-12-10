@@ -4,5 +4,5 @@
 
 namespace wmr::functions
 {
-	void ThrowIfFailedMaya(const MStatus& t_status);
+	void ThrowIfFailedMaya(const MStatus& status);
 }

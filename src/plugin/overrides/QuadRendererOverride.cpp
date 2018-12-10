@@ -1,7 +1,7 @@
 #include "QuadRendererOverride.hpp"
 
-wmr::WispScreenBlitter::WispScreenBlitter(const MString & t_name)
-	: MQuadRender(t_name)
+wmr::WispScreenBlitter::WispScreenBlitter(const MString & name)
+	: MQuadRender(name)
 	, m_shader_instance(nullptr)
 	, m_color_texture_changed(false)
 {
@@ -75,8 +75,8 @@ MHWRender::MClearOperation& wmr::WispScreenBlitter::clearOperation()
 	return mClearOperation;
 }
 
-void wmr::WispScreenBlitter::SetColorTexture(const MHWRender::MTextureAssignment& t_color_texture)
+void wmr::WispScreenBlitter::SetColorTexture(const MHWRender::MTextureAssignment& color_texture)
 {
-	m_color_texture.texture = t_color_texture.texture;
+	m_color_texture.texture = color_texture.texture;
 	m_color_texture_changed = true;
 }

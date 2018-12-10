@@ -6,10 +6,10 @@ namespace wmr
 	class WispScreenBlitter : public MHWRender::MQuadRender
 	{
 	public:
-		WispScreenBlitter(const MString& t_name);
+		WispScreenBlitter(const MString& name);
 		~WispScreenBlitter() final override;
 
-		void SetColorTexture(const MHWRender::MTextureAssignment& t_color_texture);
+		void SetColorTexture(const MHWRender::MTextureAssignment& color_texture);
 
 	private:
 		const MHWRender::MShaderInstance* shader() final override;

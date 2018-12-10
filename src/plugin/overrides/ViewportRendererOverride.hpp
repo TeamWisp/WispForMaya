@@ -14,7 +14,7 @@ namespace wmr
 	class WispViewportRenderer : public MHWRender::MRenderOverride
 	{
 	public:
-		WispViewportRenderer(const MString& t_name);
+		WispViewportRenderer(const MString& name);
 		~WispViewportRenderer() final override;
 
 		void Initialize();
@@ -37,14 +37,14 @@ namespace wmr
 		MHWRender::MRenderOperation* renderOperation() final override;
 		
 		// Called when the viewport needs to be refreshed (no updates if nothing changes)
-		MStatus setup(const MString& t_destination) final override;
+		MStatus setup(const MString& destination) final override;
 
 		bool AreAllRenderOperationsSetCorrectly() const;
 
 		// Update the Maya color texture
-		bool UpdateTextures(MHWRender::MRenderer* t_renderer, MHWRender::MTextureManager* t_texture_manager);
+		bool UpdateTextures(MHWRender::MRenderer* renderer, MHWRender::MTextureManager* texture_manager);
 
-		void EnsurePanelDisplayShading(const MString& t_destination);
+		void EnsurePanelDisplayShading(const MString& destination);
 
 		MStatus cleanup() final override;
 

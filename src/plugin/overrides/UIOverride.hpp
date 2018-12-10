@@ -6,7 +6,7 @@ namespace wmr
 	class WispUIRenderer : public MHWRender::MSceneRender
 	{
 	public:
-		WispUIRenderer(const MString& t_name);
+		WispUIRenderer(const MString& name);
 		~WispUIRenderer() final override;
 
 	private:

@@ -1,8 +1,8 @@
 #include "Functions.hpp"
 
-void wmr::functions::ThrowIfFailedMaya(const MStatus & t_status)
+void wmr::functions::ThrowIfFailedMaya(const MStatus & status)
 {
-	if (t_status != MStatus::kSuccess)
+	if (status != MStatus::kSuccess)
 	{
 		throw std::exception();
 	}
