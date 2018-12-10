@@ -105,20 +105,20 @@ if(ENABLE_UNIT_TEST)
         target_compile_options(gtest PRIVATE /W0)
     endif()
 
-    add_executable(UnitTest WIN32
+    add_executable(MayaUnitTest WIN32
                     ${HEADERS} ${SOURCES}
                     ${PLUGIN_HEADERS} ${PLUGIN_SOURCES}
                     ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES}
                     ${PLUGIN_RENDERER_HEADERS} ${PLUGIN_RENDERER_SOURCES}
                     ${TEST_HEADERS} ${TEST_SOURCES} )
 
-    target_include_directories(UnitTest PUBLIC src)
-    target_include_directories(UnitTest PUBLIC deps/Procedural-Ray-Tracing/src)
-    target_include_directories(UnitTest PUBLIC deps/googletest/googletest/include)
+    target_include_directories(MayaUnitTest PUBLIC src)
+    target_include_directories(MayaUnitTest PUBLIC deps/Procedural-Ray-Tracing/src)
+    target_include_directories(MayaUnitTest PUBLIC deps/googletest/googletest/include)
     
-    target_link_libraries(UnitTest gtest)
-    target_link_libraries(UnitTest WispRenderer)
-    target_link_libraries(UnitTest ${LIBRARIES})
+    target_link_libraries(MayaUnitTest gtest)
+    target_link_libraries(MayaUnitTest WispRenderer)
+    target_link_libraries(MayaUnitTest ${LIBRARIES})
 
 endif(ENABLE_UNIT_TEST)
 

@@ -1,5 +1,8 @@
 pipeline {
     agent any
+	environment{
+		MAYA_2018_DIR = 'C:/Maya-Devkit'
+	}
     stages {
 		stage('Install'){
 			steps{
@@ -46,7 +49,7 @@ pipeline {
 						bat'''
 						cd "%WORKSPACE%"
 						cd build_vs2017_win64/bin/debug
-						UnitTest.exe
+						MayaUnitTest.exe
 						if errorlevel 1 (
 							EXIT 1
 						)
@@ -63,7 +66,7 @@ pipeline {
 						bat'''
 						cd "%WORKSPACE%"
 						cd build_vs2017_win64/bin/release
-						UnitTest.exe
+						MayaUnitTest.exe
 						if errorlevel 1 (
 							EXIT 1
 						)
