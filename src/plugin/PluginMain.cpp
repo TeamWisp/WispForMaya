@@ -28,6 +28,7 @@ bool wmr::PluginMain::IsSceneDirty() const
 		MCommandResult scene_dirty_result(&status);
 		functions::ThrowIfFailedMaya(status);
 
+		// Workaround for checking if the scene is, in fact, dirty
 		status = MGlobal::executeCommand("file -query -modified", scene_dirty_result);
 		functions::ThrowIfFailedMaya(status);
 
@@ -79,12 +80,15 @@ void wmr::PluginMain::UninitializeViewportRendererOverride() const
 
 void wmr::PluginMain::Uninitialize() const
 {
+	// This makes sure the plug-in itself can be deinitialized
 	UninitializeViewportRendererOverride();
 
+	// Not the Wisp renderer, but the internal Maya renderer
 	const auto maya_renderer = MHWRender::MRenderer::theRenderer();
 
 	if (maya_renderer)
 	{
+		// Deregister the actual plug-in
 		maya_renderer->deregisterOverride(m_wisp_viewport_renderer.get());
 	}
 }
