@@ -94,7 +94,7 @@ endif()
 if(ENABLE_UNIT_TEST)
     set(BUILD_GMOCK OFF)
     set(INSTALL_GTEST OFF)
-    add_subdirectory(deps/googletest/googletest)
+    #add_subdirectory(deps/googletest/googletest)
     file(GLOB TEST_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/test/*.hpp")
     file(GLOB TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/test/*.cpp")
 
