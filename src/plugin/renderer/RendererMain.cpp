@@ -7,10 +7,9 @@ namespace wmr::wri
 {
 	void RendererMain::Initialize()
 	{
-		m_render_system = std::make_unique<wr::D3D12RenderSystem>();
-		m_frame_graph = std::make_unique<wr::FrameGraph>();
+		// Create a new thread for the renderer to live on
+		// This allows Maya to render at its own pace without slowing down the renderer
 
-		m_render_system->Init(std::nullopt);
 	}
 
 	void RendererMain::Update()
@@ -20,13 +19,10 @@ namespace wmr::wri
 
 	void RendererMain::Resize(unsigned int new_width, unsigned int new_height)
 	{
+		// TODO: Resize the renderer!
 	}
 
 	void RendererMain::Cleanup()
 	{
-		// Make sure the GPU has finished executing the final command list before starting the cleanup
-		m_render_system->WaitForAllPreviousWork();
-		m_frame_graph->Destroy();
-		m_render_system.reset();
 	}
 }
