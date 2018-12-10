@@ -75,7 +75,6 @@ echo Windows SDK required: 10.0.17763.0 or newer
 rem ##### install #####
 call :downloadDeps
 call :genVS15Win64 
-call :genVS15Win32 
 
 call :colorEcho %light_green% "Installation Finished!"
 if "%is_remote%" == "1" ( 
@@ -121,20 +120,6 @@ if errorlevel 1 call :colorecho %red% "CMake finished with errors"
 cd ..
 EXIT /B 0
 
-:genVS15Win32
-call :colorEcho %header_color% "#### Generating Visual Studio 15 2017 Win32 Project. ####"
-cd "%workspace_path%"
-echo current path: "%cd%" 
-mkdir build_vs2017_win32
-cd build_vs2017_win32
-if "%ENABLE_UNIT_TEST%" == "1" (
-  cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 15 2017" -DENABLE_UNIT_TEST:BOOL=ON -A Win32 ..
-) else (
-  cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 15 2017" -A Win32 ..
-)
-if errorlevel 1 call :colorecho %red% "CMake finished with errors"
-cd ..
-EXIT /B 0
 REM ##### GEN CMAKE PROJECTS #####
 
 REM ##### COLOR SUPPORT #####
