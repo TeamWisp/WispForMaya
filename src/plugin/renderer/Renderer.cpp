@@ -1,6 +1,6 @@
 #include "Renderer.hpp"
 
-#include "miscellaneous/func.hpp"
+#include "miscellaneous/Functions.hpp"
 
 #include "wisp.hpp"
 #include "render_tasks/d3d12_test_render_task.hpp"

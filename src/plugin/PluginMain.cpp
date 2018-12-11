@@ -1,6 +1,6 @@
 #include "PluginMain.hpp"
 #include "overrides/ViewportRendererOverride.hpp"
-#include "miscellaneous/func.hpp"
+#include "miscellaneous/Functions.hpp"
 
 #include <maya/MGlobal.h>
 #include <maya/MCommandResult.h>
