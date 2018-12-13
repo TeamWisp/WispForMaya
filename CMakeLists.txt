@@ -58,7 +58,7 @@ set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 
 # === Dependencies === $
-add_subdirectory(deps/Procedural-Ray-Tracing)
+add_subdirectory(deps/Procedural-Ray-Tracing ${CMAKE_BINARY_DIR}/proceduralraytracer)
 
 # === Maya API === #
 include_directories(${MAYA_INCLUDE_DIR})
