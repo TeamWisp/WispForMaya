@@ -107,18 +107,28 @@ if(ENABLE_UNIT_TEST)
 
     add_executable(MayaUnitTest WIN32
                     ${HEADERS} ${SOURCES}
+                    ${MISC_HEADERS} ${MISC_SOURCES}
                     ${PLUGIN_HEADERS} ${PLUGIN_SOURCES}
                     ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES}
                     ${PLUGIN_RENDERER_HEADERS} ${PLUGIN_RENDERER_SOURCES}
                     ${TEST_HEADERS} ${TEST_SOURCES} )
 
+    set_target_properties(MayaUnitTest PROPERTIES CXX_STANDARD 17)
+    set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
+    set_target_properties(${PROJECT_NAME} PROPERTIES CMAKE_CXX_STANDARD_REQUIRED ON)
+
     target_include_directories(MayaUnitTest PUBLIC src)
     target_include_directories(MayaUnitTest PUBLIC deps/Procedural-Ray-Tracing/src)
     target_include_directories(MayaUnitTest PUBLIC deps/googletest/googletest/include)
-    
+    target_include_directories(MayaUnitTest PUBLIC ${MAYA_INCLUDE_DIR})
+    link_directories(MayaUnitTest PUBLIC ${MAYA_LIBRARY_DIR})
+
     target_link_libraries(MayaUnitTest gtest)
     target_link_libraries(MayaUnitTest WispRenderer)
     target_link_libraries(MayaUnitTest ${LIBRARIES})
+    if (MSVC)
+	    target_compile_options(MayaUnitTest PRIVATE /W4 /permissive- /MP /Gm-)
+    endif()
 
 endif(ENABLE_UNIT_TEST)
 
