@@ -1,6 +1,6 @@
 #include "wisp.hpp"
 
-#include <gtest\gtest.h>
+#include <gtest/gtest.h>
 
 TEST( sample_test, int_equ )
 {
