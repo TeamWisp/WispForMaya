@@ -1,18 +1,19 @@
 [submodule "deps/Procedural-Ray-Tracing"]
 	path = deps/Procedural-Ray-Tracing
-	url = https://github.com/TeamWisp/Procedural-Ray-Tracing
-[submodule "deps/assimp"]
-	path = deps/assimp
-	url = https://github.com/assimp/assimp
-[submodule "deps/DirectXTex"]
-	path = deps/DirectXTex
-	url = https://github.com/TeamWisp/DirectXTex.git
-[submodule "deps/DXR-Fallback-Layer"]
-	path = deps/DXR-Fallback-Layer
-	url = https://github.com/TeamWisp/DXR-Fallback-Layer.git
+	url = https://github.com/TeamWisp/Procedural-Ray-Tracing.git
 [submodule "deps/fmt"]
 	path = deps/fmt
 	url = https://github.com/fmtlib/fmt.git
 [submodule "deps/googletest"]
 	path = deps/googletest
 	url = https://github.com/abseil/googletest.git
+[submodule "deps/DirectXTex"]
+	path = deps/DirectXTex
+	url = https://github.com/TeamWisp/DirectXTex.git
+	branch = master
+[submodule "deps/assimp"]
+	path = deps/assimp
+	url = https://github.com/assimp/assimp.git
+[submodule "deps/DXR-Fallback-Layer"]
+	path = deps/DXR-Fallback-Layer
+	url = https://github.com/TeamWisp/DXR-Fallback-Layer.git
