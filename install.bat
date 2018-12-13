@@ -1,4 +1,4 @@
-@Echo Off
+@Echo off
 
 REM ##### COLOR SUPPORT #####
 SETLOCAL EnableDelayedExpansion
@@ -17,37 +17,100 @@ SET log_prefix="cmd_log_"
 SET log_suffix=".txt"
 REM ##### LOG NAMES #####
 
+REM ##### local vars #####
+set is_remote=0
+set enable_unit_test=0
+set windows_sdk_version=0
+
+REM if left blank it stays in the root folder of the .bat file
+set workspace_path=""
+
+
 REM ##### MAIN #####
 
 call :colorEcho %title_color% "==================================="
-call :colorEcho %title_color% "           Wisp Installer          "
+call :colorEcho %title_color% "==         Wisp Installer        =="
 call :colorEcho %title_color% "==================================="
 
-call :downloadDeps
+rem ##### argument handeling ######
+if "%1" == "-remote" ( 
+  set is_remote=1
+) 
+if "%1" == "-help" (
+  echo This install.bat is use to complete the setup of the ray tracing git repository.
+  echo It will donwload all dependencies and use CMake to generate a MS Visual Studio project.
+  echo Options:
+  echo  -remote [s]
+  echo          Can be used to make this script run on build servers. It no longer needs any user input
+  echo          remote accepts one argument a directory path to supply your working directory.
+  echo          leave this argument blank to use the default directory.
+  goto :eof
+)
 
+rem ##### pre install settings #####
+if "%is_remote%" == "1" ( 
+  set workspace_path="%~df2"  
+  set enable_unit_test=1
+) else (
+  :: echo Do you want unit tests enabled? [Y/N]
+  choice /c yn /m "Do you want unit tests enabled?"
+  if errorlevel 2 (
+    echo no unit tests will be generated
+  ) else (
+    set enable_unit_test=1
+        echo unit tests will be generated
+  )
+)
+
+FOR /F "delims=" %%i IN ('dir "C:\Program Files (x86)\Windows Kits\10\Include" /b /ad-h /t:c /o-n') DO (
+    SET windows_sdk_version=%%i
+    GOTO :found
+)
+call :colorEcho %red% No Windows SDK found in location: C:\Program Files (x86)\Windows Kits\10\Include
+EXIT 1
+:found
+echo Latest installed Windows SDK: %windows_sdk_version%
+echo Windows SDK required: 10.0.17763.0 or newer
+
+rem ##### install #####
+call :downloadDeps
 call :genVS15Win64 
-REM >> test.txt 2>&1
 
 call :colorEcho %light_green% "Installation Finished!"
-
-pause
+if "%is_remote%" == "1" ( 
+  goto :eof
+) else (
+  pause
+)
 EXIT
 REM ##### MAIN #####
 
 REM ##### DOWNLOAD DEPS #####
 :downloadDeps
 call :colorEcho %header_color% "#### Downloading Dependencies ####"
+cd "%workspace_path%"
 git submodule init
-git submodule update 
+git submodule update --recursive --remote
 EXIT /B 0
 REM ##### DOWNLOAD DEPS #####
 
 REM ##### GEN PROJECTS #####
 :genVS15Win64
 call :colorEcho %header_color% "#### Generating Visual Studio 15 2017 Win64 Project. ####"
+cd "%workspace_path%"
+echo current path: "%cd%"
+if exist "./build_vs2017_win64/" (
+  del ".\build_vs2017_win64\CMakeCache.txt"
+)
 mkdir build_vs2017_win64
 cd build_vs2017_win64
-cmake -G "Visual Studio 15 2017" -A x64 ..
+if "%ENABLE_UNIT_TEST%" == "1" (
+  echo cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 15 2017" -DENABLE_UNIT_TEST:BOOL=ON -A x64 ..
+  cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 15 2017" -DENABLE_UNIT_TEST:BOOL=ON -A x64 ..
+) else (
+  echo cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 15 2017" -A x64 ..
+  cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 15 2017" -A x64 ..
+)
 if errorlevel 1 call :colorecho %red% "CMake finished with errors"
 cd ..
 EXIT /B 0
