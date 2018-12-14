@@ -97,6 +97,7 @@ namespace wmr::wri
 	{
 		window->PollEvents();
 
+		SynchronizeWispWithMayaViewportCamera();
 		SCENE::UpdateScene();
 
 		auto texture = render_system->Render(scene_graph, *fg_ptr);
@@ -111,7 +112,7 @@ namespace wmr::wri
 		render_system.reset();
 	}
 
-	void Renderer::UpdateCamera()
+	void Renderer::SynchronizeWispWithMayaViewportCamera()
 	{
 		M3dView view;
 		MStatus status = M3dView::getM3dViewFromModelPanel(wisp::settings::VIEWPORT_PANEL_NAME, view);

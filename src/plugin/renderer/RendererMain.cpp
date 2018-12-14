@@ -19,7 +19,6 @@ namespace wmr::wri
 
 	void RendererMain::Update()
 	{
-		m_renderer->UpdateCamera();
 		m_renderer->Update();
 	}
 

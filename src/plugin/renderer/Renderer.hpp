@@ -23,7 +23,8 @@ namespace wmr::wri
 		void Update();
 		void Destroy();
 
-		void UpdateCamera();
+	private:
+		void SynchronizeWispWithMayaViewportCamera();
 
 	private:
 		// Camera that mimics the Maya viewport camera
