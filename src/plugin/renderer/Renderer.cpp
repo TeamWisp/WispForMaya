@@ -3,11 +3,14 @@
 #include "miscellaneous/Settings.hpp"
 #include "miscellaneous/Functions.hpp"
 
+#include <memory>
+#include <algorithm>
 #include "wisp.hpp"
 #include "render_tasks/d3d12_test_render_task.hpp"
 #include "render_tasks/d3d12_imgui_render_task.hpp"
 #include "render_tasks/d3d12_deferred_main.hpp"
 #include "render_tasks/d3d12_deferred_composition.hpp"
+#include "render_tasks/d3d12_deferred_render_target_copy.hpp"
 
 #include "../demo/engine_interface.hpp"
 #include "../demo/scene_viknell.hpp"
@@ -24,14 +27,12 @@
 
 std::unique_ptr<wr::D3D12RenderSystem> render_system;
 std::shared_ptr<wr::SceneGraph> scene_graph;
+std::shared_ptr<wr::CameraNode> viewport_camera;
+
+std::shared_ptr<wr::TexturePool> texture_pool;
 
 wr::FrameGraph* fg_ptr = nullptr;
-
-auto window = std::make_unique<wr::Window>(
-	GetModuleHandleA(nullptr),
-	"Wisp Ray-traced Viewport Renderer",
-	1280,
-	720);
+auto window = std::make_unique<wr::Window>(GetModuleHandleA(nullptr), "D3D12 Test App", 1280, 720);
 
 void RenderEditor()
 {
@@ -58,29 +59,14 @@ namespace wmr::wri
 
 		render_system = std::make_unique<wr::D3D12RenderSystem>();
 
-		window->SetKeyCallback([](int key, int action, int mods)
-		{
-			if (action == WM_KEYUP && key == 0xC0)
-			{
-				engine::open_console = !engine::open_console;
-				engine::debug_console.EmptyInput();
-			}
-			if (action == WM_KEYUP && key == VK_F1)
-			{
-				engine::show_imgui = !engine::show_imgui;
-			}
-		});
-
 		render_system->Init(window.get());
 
 		resources::CreateResources(render_system.get());
 
 		scene_graph = std::make_shared<wr::SceneGraph>(render_system.get());
 
-		m_viewport_camera = scene_graph->CreateChild<wr::CameraNode>(
-			nullptr,
-			90.f,
-			(float)window->GetWidth() / (float)window->GetHeight());
+		viewport_camera = scene_graph->CreateChild<wr::CameraNode>(nullptr, 90.f, (float)window->GetWidth() / (float)window->GetHeight());
+		viewport_camera->SetPosition({ 0, 0, -1 });
 
 		SCENE::CreateScene(scene_graph.get(), window.get());
 
@@ -89,14 +75,13 @@ namespace wmr::wri
 		fg_ptr = new wr::FrameGraph();
 		fg_ptr->AddTask(wr::GetDeferredMainTask());
 		fg_ptr->AddTask(wr::GetDeferredCompositionTask());
+		fg_ptr->AddTask(wr::GetRenderTargetCopyTask<wr::DeferredCompositionTaskData>());
 		fg_ptr->AddTask(wr::GetImGuiTask(&RenderEditor));
 		fg_ptr->Setup(*render_system);
 	}
 	
 	void Renderer::Update()
 	{
-		window->PollEvents();
-
 		SynchronizeWispWithMayaViewportCamera();
 		SCENE::UpdateScene();
 
@@ -108,8 +93,9 @@ namespace wmr::wri
 		// Make sure the GPU has finished executing the final command list before starting the cleanup
 		render_system->WaitForAllPreviousWork();
 		fg_ptr->Destroy();
-		delete fg_ptr;
 		render_system.reset();
+
+		delete fg_ptr;
 	}
 
 	void Renderer::SynchronizeWispWithMayaViewportCamera()
@@ -123,10 +109,9 @@ namespace wmr::wri
 			return;
 		}
 
-		MMatrix view_matrix;
-		MMatrix transform_matrix;
-
-		view.modelViewMatrix(view_matrix);
+		// Model view matrix
+		MMatrix mv_matrix;
+		view.modelViewMatrix(mv_matrix);
 
 		MDagPath camera_dag_path;
 		view.getCamera(camera_dag_path);
@@ -134,27 +119,19 @@ namespace wmr::wri
 		// Additional functionality
 		MFnCamera camera_functions(camera_dag_path);
 
-		transform_matrix = camera_dag_path.inclusiveMatrix();
+		MVector center = camera_functions.centerOfInterestPoint(MSpace::kWorld);
+		MVector eye = camera_functions.eyePoint(MSpace::kWorld);
 
-		// The camera matrix is column-major, so the bottom-row can be used to retrieve the position data
-		DirectX::XMVECTOR position = DirectX::XMVectorSet(
-			static_cast<float>(transform_matrix[3][0]),
-			static_cast<float>(transform_matrix[3][1]),
-			static_cast<float>(transform_matrix[3][2]),
-			static_cast<float>(transform_matrix[3][3]));
+		viewport_camera->m_frustum_far = camera_functions.farClippingPlane();
+		viewport_camera->m_frustum_near = camera_functions.nearClippingPlane();
 
-		m_viewport_camera->SetPosition(position);
+		viewport_camera->SetFov(camera_functions.horizontalFieldOfView());
 
-		m_viewport_camera->m_frustum_far = camera_functions.farClippingPlane();
-		m_viewport_camera->m_frustum_near = camera_functions.nearClippingPlane();
+		// Convert the MMatrix into an XMMATRIX and update the view matrix of the Wisp camera
+		DirectX::XMFLOAT4X4 converted_mv_matrix;
+		mv_matrix.get(converted_mv_matrix.m);
+		viewport_camera->m_view = DirectX::XMLoadFloat4x4(&converted_mv_matrix);
 
-		m_viewport_camera->SetFov(camera_functions.horizontalFieldOfView());
-
-		// The matrix is manually transposed by passing it as row-major
-		m_viewport_camera->m_view = DirectX::XMMatrixSet(
-			view_matrix[0][0], view_matrix[1][0], view_matrix[2][0], view_matrix[3][0],
-			view_matrix[0][1], view_matrix[1][1], view_matrix[2][1], view_matrix[3][1],
-			view_matrix[0][2], view_matrix[1][2], view_matrix[2][2], view_matrix[3][2],
-			view_matrix[0][3], view_matrix[1][3], view_matrix[2][3], view_matrix[3][3]);
+		viewport_camera->SetPosition({ (float)-eye.x, (float)eye.y, (float)-eye.z });
 	}
 }
