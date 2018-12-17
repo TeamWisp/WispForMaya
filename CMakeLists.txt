@@ -114,8 +114,8 @@ if(ENABLE_UNIT_TEST)
                     ${TEST_HEADERS} ${TEST_SOURCES} )
 
     set_target_properties(MayaUnitTest PROPERTIES CXX_STANDARD 17)
-    set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
-    set_target_properties(${PROJECT_NAME} PROPERTIES CMAKE_CXX_STANDARD_REQUIRED ON)
+    set_target_properties(MayaUnitTest PROPERTIES CXX_EXTENSIONS OFF)
+    set_target_properties(MayaUnitTest PROPERTIES CMAKE_CXX_STANDARD_REQUIRED ON)
 
     target_include_directories(MayaUnitTest PUBLIC src)
     target_include_directories(MayaUnitTest PUBLIC deps/Procedural-Ray-Tracing/src)
@@ -134,3 +134,4 @@ endif(ENABLE_UNIT_TEST)
 
 # Change the startup project to this project (not the CMake projects)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
+set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/../")
