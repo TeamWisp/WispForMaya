@@ -28,15 +28,15 @@ namespace wmr
 		{
 			// Is the scene currently dirty?
 			MCommandResult scene_dirty_result(&status);
-			functions::ThrowIfFailedMaya(status);
+			func::ThrowIfFailedMaya(status);
 
 			// Workaround for checking if the scene is, in fact, dirty
 			status = MGlobal::executeCommand("file -query -modified", scene_dirty_result);
-			functions::ThrowIfFailedMaya(status);
+			func::ThrowIfFailedMaya(status);
 
 			int command_result = -1;
 			status = scene_dirty_result.getResult(command_result);
-			functions::ThrowIfFailedMaya(status);
+			func::ThrowIfFailedMaya(status);
 
 			return (command_result != 0);
 		}
