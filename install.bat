@@ -20,6 +20,7 @@ REM ##### LOG NAMES #####
 REM ##### local vars #####
 set is_remote=0
 set enable_unit_test=0
+set enable_submodule_update=0
 set windows_sdk_version=0
 
 REM if left blank it stays in the root folder of the .bat file
@@ -51,6 +52,7 @@ rem ##### pre install settings #####
 if "%is_remote%" == "1" ( 
   set workspace_path="%~df2"  
   set enable_unit_test=1
+  set enable_submodule_update=1
 ) else (
   :: echo Do you want unit tests enabled? [Y/N]
   choice /c yn /m "Do you want unit tests enabled?"
@@ -59,6 +61,13 @@ if "%is_remote%" == "1" (
   ) else (
     set enable_unit_test=1
         echo unit tests will be generated
+  )
+  choice /c yn /m "Do you want to update submodules?"
+   if errorlevel 2 (
+    echo submodules will not be updated
+  ) else (
+    set enable_submodule_update=1
+        echo submodules will be updated
   )
 )
 
@@ -73,7 +82,9 @@ echo Latest installed Windows SDK: %windows_sdk_version%
 echo Windows SDK required: 10.0.17763.0 or newer
 
 rem ##### install #####
-call :downloadDeps
+if "%enable_submodule_update%" == "1" (
+  call :downloadDeps
+)
 call :genVS15Win64 
 
 call :colorEcho %light_green% "Installation Finished!"
