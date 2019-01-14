@@ -12,8 +12,8 @@
 #include "render_tasks/d3d12_deferred_main.hpp"
 #include "render_tasks/d3d12_deferred_composition.hpp"
 #include "render_tasks/d3d12_deferred_render_target_copy.hpp"
-#include "scene_graph\camera_node.hpp"
-#include "scene_graph\scene_graph.hpp"
+#include "scene_graph/camera_node.hpp"
+#include "scene_graph/scene_graph.hpp"
 
 #include "../demo/engine_interface.hpp"
 #include "../demo/scene_viknell.hpp"
