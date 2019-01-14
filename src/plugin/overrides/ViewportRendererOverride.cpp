@@ -1,55 +1,96 @@
 #include "ViewportRendererOverride.hpp"
 #include "QuadRendererOverride.hpp"
 #include "UIOverride.hpp"
-#include "plugin/renderer/RendererMain.hpp"
 #include "miscellaneous/Settings.hpp"
+#include "miscellaneous/Functions.hpp"
 
+#include <memory>
+#include <algorithm>
+#include "wisp.hpp"
+#include "renderer.hpp"
+#include "render_tasks/d3d12_imgui_render_task.hpp"
+#include "render_tasks/d3d12_deferred_main.hpp"
+#include "render_tasks/d3d12_deferred_composition.hpp"
+#include "render_tasks/d3d12_deferred_render_target_copy.hpp"
+#include "scene_graph\camera_node.hpp"
+#include "scene_graph\scene_graph.hpp"
+
+#include "../demo/engine_interface.hpp"
+#include "../demo/scene_viknell.hpp"
+#include "../demo/resources.hpp"
+#include "../demo/scene_cubes.hpp"
+
+#include <maya/MString.h>
+#include <maya/M3dView.h>
+#include <maya/MMatrix.h>
+#include <maya/MDagPath.h>
+#include <maya/MFnCamera.h>
 #include <maya/MImage.h>
 #include <maya/M3dView.h>
 
+
+auto window = std::make_unique<wr::Window>( GetModuleHandleA( nullptr ), "D3D12 Test App", 1280, 720 );
+const bool load_images_from_disk = true;
+#define SCENE viknell_scene
+
 namespace wmr
 {
-	WispViewportRenderer::WispViewportRenderer(const MString& name)
+	static void EnsurePanelDisplayShading( const MString& destination )
+	{
+		M3dView view;
+
+		if( destination.length() &&
+			M3dView::getM3dViewFromModelPanel( destination, view ) == MStatus::kSuccess )
+		{
+			if( view.displayStyle() != M3dView::kGouraudShaded )
+			{
+				view.setDisplayStyle( M3dView::kGouraudShaded );
+			}
+		}
+	}
+
+	ViewportRenderer::ViewportRenderer(const MString& name)
 		: MRenderOverride(name)
 		, m_ui_name(wisp::settings::PRODUCT_NAME)
 		, m_current_render_operation(-1)
-		, m_load_images_from_disk(true)
 	{
 		ConfigureRenderOperations();
 		SetDefaultColorTextureState();
 	}
 
-	WispViewportRenderer::~WispViewportRenderer()
+	ViewportRenderer::~ViewportRenderer()
 	{
 		ReleaseColorTextureResources();
 	}
 
-	void WispViewportRenderer::Initialize()
+	void ViewportRenderer::Initialize()
 	{
 		CreateRenderOperations();
-		CreateWispRenderer();
 		InitializeWispRenderer();
 	}
 
-	void WispViewportRenderer::Destroy()
+	void ViewportRenderer::Destroy()
 	{
-		m_wisp_renderer_instance->Cleanup();
+		m_render_system->WaitForAllPreviousWork();
+		m_framegraph->Destroy();
+		m_render_system.reset();
+		m_framegraph.reset();
 	}
 
-	void WispViewportRenderer::ConfigureRenderOperations()
+	void ViewportRenderer::ConfigureRenderOperations()
 	{
 		m_render_operation_names[0] = "wisp_SceneBlit";
 		m_render_operation_names[1] = "wisp_UIDraw";
 		m_render_operation_names[2] = "wisp_Present";
 	}
 
-	void WispViewportRenderer::SetDefaultColorTextureState()
+	void ViewportRenderer::SetDefaultColorTextureState()
 	{
 		m_color_texture.texture = nullptr;
 		m_color_texture_desc.setToDefault2DTexture();
 	}
 
-	void WispViewportRenderer::ReleaseColorTextureResources() const
+	void ViewportRenderer::ReleaseColorTextureResources() const
 	{
 		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
 
@@ -68,7 +109,7 @@ namespace wmr
 		maya_texture_manager->releaseTexture(m_color_texture.texture);
 	}
 
-	void WispViewportRenderer::CreateRenderOperations()
+	void ViewportRenderer::CreateRenderOperations()
 	{
 		if (!m_render_operations[0])
 		{
@@ -79,22 +120,51 @@ namespace wmr
 		}
 	}
 
-	void WispViewportRenderer::CreateWispRenderer()
+	void ViewportRenderer::InitializeWispRenderer()
 	{
-		m_wisp_renderer_instance = std::make_unique<wri::RendererMain>();
+		util::log_callback::impl = [ & ]( std::string const & str )
+		{
+			engine::debug_console.AddLog( str.c_str() );
+		};
+
+		m_render_system = std::make_unique<wr::D3D12RenderSystem>();
+
+		m_model_loader = std::make_unique<wr::AssimpModelLoader>();
+
+		m_render_system->Init( window.get() );
+
+		resources::CreateResources( m_render_system.get() );
+
+		m_scenegraph = std::make_shared<wr::SceneGraph>( m_render_system.get() );
+
+		m_viewport_camera = m_scenegraph->CreateChild<wr::CameraNode>( nullptr, 90.f, ( float )window->GetWidth() / ( float )window->GetHeight() );
+		m_viewport_camera->SetPosition( { 0, 0, -1 } );
+
+		SCENE::CreateScene( m_scenegraph.get(), window.get() );
+
+		m_render_system->InitSceneGraph( *m_scenegraph.get() );
+
+		m_framegraph = std::make_unique<wr::FrameGraph>( 4 );
+		wr::AddDeferredMainTask( *m_framegraph );
+		wr::AddDeferredCompositionTask( *m_framegraph );
+		wr::AddRenderTargetCopyTask<wr::DeferredCompositionTaskData>( *m_framegraph );
+		auto render_editor = [&]()
+		{
+			engine::RenderEngine( m_render_system.get(), m_scenegraph.get() );
+		};
+
+		auto imgui_task = wr::GetImGuiTask( render_editor );
+		
+		m_framegraph->AddTask<wr::ImGuiTaskData>( imgui_task );
+		m_framegraph->Setup( *m_render_system );
 	}
 
-	void WispViewportRenderer::InitializeWispRenderer()
-	{
-		m_wisp_renderer_instance->Initialize();
-	}
-
-	MHWRender::DrawAPI WispViewportRenderer::supportedDrawAPIs() const
+	MHWRender::DrawAPI ViewportRenderer::supportedDrawAPIs() const
 	{
 		return (MHWRender::kOpenGL | MHWRender::kOpenGLCoreProfile | MHWRender::kDirectX11);
 	}
 
-	MHWRender::MRenderOperation* WispViewportRenderer::renderOperation()
+	MHWRender::MRenderOperation* ViewportRenderer::renderOperation()
 	{
 		if (m_current_render_operation >= 0 && m_current_render_operation < 4)
 		{
@@ -107,34 +177,76 @@ namespace wmr
 		return nullptr;
 	}
 
-	MStatus WispViewportRenderer::setup(const MString& destination)
+	void ViewportRenderer::SynchronizeWispWithMayaViewportCamera()
 	{
-		m_wisp_renderer_instance->Update();
+		M3dView view;
+		MStatus status = M3dView::getM3dViewFromModelPanel( wisp::settings::VIEWPORT_PANEL_NAME, view );
 
-		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
+		if( status != MStatus::kSuccess )
+		{
+			// Failure means no camera data for this frame, early-out!
+			return;
+		}
+
+		// Model view matrix
+		MMatrix mv_matrix;
+		view.modelViewMatrix( mv_matrix );
+
+		MDagPath camera_dag_path;
+		view.getCamera( camera_dag_path );
+
+		// Additional functionality
+		MFnCamera camera_functions( camera_dag_path );
+
+		MVector center = camera_functions.centerOfInterestPoint( MSpace::kWorld );
+		MVector eye = camera_functions.eyePoint( MSpace::kWorld );
+
+		m_viewport_camera->m_frustum_far = camera_functions.farClippingPlane();
+		m_viewport_camera->m_frustum_near = camera_functions.nearClippingPlane();
+
+		m_viewport_camera->SetFov( camera_functions.horizontalFieldOfView() );
+
+		// Convert the MMatrix into an XMMATRIX and update the view matrix of the Wisp camera
+		DirectX::XMFLOAT4X4 converted_mv_matrix;
+		mv_matrix.get( converted_mv_matrix.m );
+		m_viewport_camera->m_view = DirectX::XMLoadFloat4x4( &converted_mv_matrix );
+
+		m_viewport_camera->SetPosition( { ( float )-eye.x, ( float )eye.y, ( float )-eye.z } );
+	}
+
+	MStatus ViewportRenderer::setup(const MString& destination)
+	{
+		SynchronizeWispWithMayaViewportCamera();
+		SCENE::UpdateScene();
+
+		auto texture = m_render_system->Render( m_scenegraph, *m_framegraph );
+
+		auto* const maya_renderer = MHWRender::MRenderer::theRenderer();
 
 		if (!maya_renderer)
 		{
+			assert( false ); 
 			return MStatus::kFailure;
 		}
 
-		const auto maya_texture_manager = maya_renderer->getTextureManager();
+		auto* const maya_texture_manager = maya_renderer->getTextureManager();
 
 		if (!maya_texture_manager)
 		{
+			assert( false );
 			return MStatus::kFailure;
 		}
 
-		const auto render_operations_set = AreAllRenderOperationsSetCorrectly();
-
-		if (render_operations_set)
+		if ( AreAllRenderOperationsSetCorrectly() )
 		{
+			assert( false );
 			return MStatus::kFailure;
 		}
 
 		// Update textures used for scene blit
 		if (!UpdateTextures(maya_renderer, maya_texture_manager))
 		{
+			assert( false );
 			return MStatus::kFailure;
 		}
 
@@ -145,7 +257,7 @@ namespace wmr
 		return MStatus::kSuccess;
 	}
 
-	bool WispViewportRenderer::AreAllRenderOperationsSetCorrectly() const
+	bool ViewportRenderer::AreAllRenderOperationsSetCorrectly() const
 	{
 		return (!m_render_operations[0] ||
 			!m_render_operations[1] ||
@@ -153,24 +265,24 @@ namespace wmr
 			!m_render_operations[3]);
 	}
 
-	MStatus WispViewportRenderer::cleanup()
+	MStatus ViewportRenderer::cleanup()
 	{
 		m_current_render_operation = -1;
 		return MStatus::kSuccess;
 	}
 
-	MString WispViewportRenderer::uiName() const
+	MString ViewportRenderer::uiName() const
 	{
 		return m_ui_name;
 	}
 
-	bool WispViewportRenderer::startOperationIterator()
+	bool ViewportRenderer::startOperationIterator()
 	{
 		m_current_render_operation = 0;
 		return true;
 	}
 
-	bool WispViewportRenderer::nextRenderOperation()
+	bool ViewportRenderer::nextRenderOperation()
 	{
 		++m_current_render_operation;
 
@@ -182,7 +294,35 @@ namespace wmr
 		return false;
 	}
 
-	bool WispViewportRenderer::UpdateTextures(MHWRender::MRenderer* renderer, MHWRender::MTextureManager* texture_manager)
+	static void loadImageFromDisk( MString& image_location, MHWRender::MTextureDescription& color_texture_desc, MHWRender::MTextureAssignment& color_texture, MHWRender::MTextureManager* texture_manager )
+	{
+		unsigned char* texture_data = nullptr;
+
+		MImage image;
+
+		unsigned int target_width, target_height;
+
+		image.readFromFile( image_location );
+		image.getSize( target_width, target_height );
+
+		texture_data = image.pixels();
+
+		color_texture_desc.fWidth = target_width;
+		color_texture_desc.fHeight = target_height;
+		color_texture_desc.fDepth = 1;
+		color_texture_desc.fBytesPerRow = 4 * target_width;
+		color_texture_desc.fBytesPerSlice = color_texture_desc.fBytesPerRow * target_height;
+
+		// Acquire a new texture
+		color_texture.texture = texture_manager->acquireTexture( "", color_texture_desc, texture_data );
+
+		if( color_texture.texture )
+		{
+			color_texture.texture->textureDescription( color_texture_desc );
+		}
+	}
+
+	bool ViewportRenderer::UpdateTextures(MHWRender::MRenderer* renderer, MHWRender::MTextureManager* texture_manager)
 	{
 		if (!renderer || !texture_manager)
 		{
@@ -205,9 +345,9 @@ namespace wmr
 
 		// If a resize occurred, or a texture has not been allocated yet, create new textures that match the output size
 		// Any existing textures will be released
-		if (force_reload ||
-			!m_color_texture.texture ||
-			texture_resized)
+		if ( force_reload ||
+			 !m_color_texture.texture ||
+			 texture_resized )
 		{
 			if (m_color_texture.texture)
 			{
@@ -221,28 +361,7 @@ namespace wmr
 
 		if (!m_color_texture.texture)
 		{
-			unsigned char* texture_data = nullptr;
-
-			MImage image;
-
-			image.readFromFile(image_location);
-			image.getSize(target_width, target_height);
-
-			texture_data = image.pixels();
-
-			m_color_texture_desc.fWidth = target_width;
-			m_color_texture_desc.fHeight = target_height;
-			m_color_texture_desc.fDepth = 1;
-			m_color_texture_desc.fBytesPerRow = 4 * target_width;
-			m_color_texture_desc.fBytesPerSlice = m_color_texture_desc.fBytesPerRow * target_height;
-
-			// Acquire a new texture
-			m_color_texture.texture = texture_manager->acquireTexture("", m_color_texture_desc, texture_data);
-
-			if (m_color_texture.texture)
-			{
-				m_color_texture.texture->textureDescription(m_color_texture_desc);
-			}
+			loadImageFromDisk( image_location, m_color_texture_desc, m_color_texture, texture_manager );
 		}
 		else
 		{
@@ -266,17 +385,5 @@ namespace wmr
 		}
 	}
 
-	void WispViewportRenderer::EnsurePanelDisplayShading(const MString& destination)
-	{
-		M3dView view;
-
-		if (destination.length() &&
-			M3dView::getM3dViewFromModelPanel(destination, view) == MStatus::kSuccess)
-		{
-			if (view.displayStyle() != M3dView::kGouraudShaded)
-			{
-				view.setDisplayStyle(M3dView::kGouraudShaded);
-			}
-		}
-	}
+	
 }

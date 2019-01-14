@@ -5,6 +5,8 @@
 #include <maya/MGlobal.h>
 #include <maya/MCommandResult.h>
 
+#include <assert.h>
+
 namespace wmr
 {
 	void PluginMain::Initialize()
@@ -12,12 +14,24 @@ namespace wmr
 		// Workaround for avoiding dirtying the scene when registering overrides
 		const auto is_scene_dirty = IsSceneDirty();
 
-		CreateViewportRendererOverride();
-		InitializeViewportRendererOverride();
-		RegisterOverride();
-
+		m_wisp_viewport_renderer = std::make_unique<ViewportRenderer>( "wisp_ViewportBlitOverride" );
+		m_wisp_viewport_renderer->Initialize();
+		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
+		if( maya_renderer )
+		{
+			maya_renderer->registerOverride( m_wisp_viewport_renderer.get() );
+		}
+		else
+		{
+			assert( false );
+		}
 		// If the scene was previously unmodified, return it to that state to avoid dirtying
 		ActOnCurrentDirtyState(is_scene_dirty);
+
+
+
+
+
 	}
 
 	bool PluginMain::IsSceneDirty() const
@@ -46,26 +60,6 @@ namespace wmr
 		}
 	}
 
-	void PluginMain::CreateViewportRendererOverride()
-	{
-		m_wisp_viewport_renderer = std::make_unique<WispViewportRenderer>("wisp_ViewportBlitOverride");
-	}
-
-	void PluginMain::InitializeViewportRendererOverride() const
-	{
-		m_wisp_viewport_renderer->Initialize();
-	}
-
-	void PluginMain::RegisterOverride() const
-	{
-		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
-
-		if (maya_renderer)
-		{
-			maya_renderer->registerOverride(m_wisp_viewport_renderer.get());
-		}
-	}
-
 	void PluginMain::ActOnCurrentDirtyState(const bool& state) const
 	{
 		// The scene is dirty, no need to set the flag
@@ -75,15 +69,10 @@ namespace wmr
 		}
 	}
 
-	void PluginMain::UninitializeViewportRendererOverride() const
-	{
-		m_wisp_viewport_renderer->Destroy();
-	}
-
 	void PluginMain::Uninitialize() const
 	{
 		// This makes sure the plug-in itself can be deinitialized
-		UninitializeViewportRendererOverride();
+		m_wisp_viewport_renderer->Destroy();
 
 		// Not the Wisp renderer, but the internal Maya renderer
 		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
