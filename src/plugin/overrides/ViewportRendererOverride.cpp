@@ -32,13 +32,8 @@
 #include <maya\MQuaternion.h>
 #include <maya\MEulerRotation.h>
 
-
-#include <sstream>
-
-
 #include <sstream>
 #include <maya/MGlobal.h>
-
 
 auto window = std::make_unique<wr::Window>( GetModuleHandleA( nullptr ), "D3D12 Test App", 1280, 720 );
 const bool load_images_from_disk = true;
@@ -347,10 +342,6 @@ namespace wmr
 	{
 		if (!maya_renderer || !texture_manager)
 			return false;
-
-		std::stringstream strs;
-		strs << "Width: " << cpu_texture.m_buffer_width << " Height: " << cpu_texture.m_buffer_height << " BBP: " << cpu_texture.m_bytes_per_pixel << std::endl;
-		MGlobal::displayInfo(std::string(strs.str()).c_str());
 
 		// Early exit, no texture data from Wisp available just yet
 		if (cpu_texture.m_buffer_width == 0 ||
