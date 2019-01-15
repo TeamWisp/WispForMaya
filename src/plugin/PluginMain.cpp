@@ -71,16 +71,15 @@ namespace wmr
 
 	void PluginMain::Uninitialize() const
 	{
-		// This makes sure the plug-in itself can be deinitialized
-		m_wisp_viewport_renderer->Destroy();
-
 		// Not the Wisp renderer, but the internal Maya renderer
 		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
-
 		if (maya_renderer)
 		{
 			// Deregister the actual plug-in
 			maya_renderer->deregisterOverride(m_wisp_viewport_renderer.get());
 		}
+
+		// This makes sure the plug-in itself can be deinitialized
+		m_wisp_viewport_renderer->Destroy();
 	}
 }
