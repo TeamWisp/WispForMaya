@@ -12,6 +12,7 @@
 #include "render_tasks/d3d12_deferred_main.hpp"
 #include "render_tasks/d3d12_deferred_composition.hpp"
 #include "render_tasks/d3d12_deferred_render_target_copy.hpp"
+#include "render_tasks/d3d12_deferred_readback.hpp"
 #include "scene_graph/camera_node.hpp"
 #include "scene_graph/scene_graph.hpp"
 
@@ -29,8 +30,13 @@
 #include <maya/M3dView.h>
 
 
+#include <sstream>
+#include <maya/MGlobal.h>
+
+
 auto window = std::make_unique<wr::Window>( GetModuleHandleA( nullptr ), "D3D12 Test App", 1280, 720 );
 const bool load_images_from_disk = true;
+
 #define SCENE viknell_scene
 
 namespace wmr
@@ -145,8 +151,9 @@ namespace wmr
 		m_render_system->InitSceneGraph( *m_scenegraph.get() );
 
 		m_framegraph = std::make_unique<wr::FrameGraph>( 4 );
-		wr::AddDeferredMainTask( *m_framegraph );
-		wr::AddDeferredCompositionTask( *m_framegraph );
+		wr::AddDeferredMainTask( *m_framegraph, std::nullopt, std::nullopt );
+		wr::AddDeferredCompositionTask( *m_framegraph, std::nullopt, std::nullopt );
+		wr::AddRenderTargetReadBackTask<wr::DeferredCompositionTaskData>(*m_framegraph, std::nullopt, std::nullopt);
 		wr::AddRenderTargetCopyTask<wr::DeferredCompositionTaskData>( *m_framegraph );
 		auto render_editor = [&]()
 		{
@@ -244,7 +251,7 @@ namespace wmr
 		}
 
 		// Update textures used for scene blit
-		if (!UpdateTextures(maya_renderer, maya_texture_manager))
+		if (!UpdateTextures(maya_renderer, maya_texture_manager, texture))
 		{
 			assert( false );
 			return MStatus::kFailure;
@@ -260,9 +267,9 @@ namespace wmr
 	bool ViewportRenderer::AreAllRenderOperationsSetCorrectly() const
 	{
 		return (!m_render_operations[0] ||
-			!m_render_operations[1] ||
-			!m_render_operations[2] ||
-			!m_render_operations[3]);
+				!m_render_operations[1] ||
+				!m_render_operations[2] ||
+				!m_render_operations[3]);
 	}
 
 	MStatus ViewportRenderer::cleanup()
@@ -322,68 +329,86 @@ namespace wmr
 		}
 	}
 
-	bool ViewportRenderer::UpdateTextures(MHWRender::MRenderer* renderer, MHWRender::MTextureManager* texture_manager)
+	bool ViewportRenderer::UpdateTextures(MHWRender::MRenderer* maya_renderer, MHWRender::MTextureManager* texture_manager, const wr::CPUTexture& cpu_texture)
 	{
-		if (!renderer || !texture_manager)
-		{
+		if (!maya_renderer || !texture_manager)
 			return false;
-		}
 
+		std::stringstream strs;
+		strs << "Width: " << cpu_texture.m_buffer_width << " Height: " << cpu_texture.m_buffer_height << " BBP: " << cpu_texture.m_bytes_per_pixel << std::endl;
+		MGlobal::displayInfo(std::string(strs.str()).c_str());
+
+		// Early exit, no texture data from Wisp available just yet
+		if (cpu_texture.m_buffer_width == 0 ||
+			cpu_texture.m_buffer_height == 0 ||
+			cpu_texture.m_bytes_per_pixel == 0)
+			return true;
+
+		// Get current output size.
 		unsigned int target_width = 0;
 		unsigned int target_height = 0;
-
-		renderer->outputTargetSize(target_width, target_height);
+		maya_renderer->outputTargetSize(target_width, target_height);
 
 		bool aquire_new_texture = false;
-		bool force_reload = false;
+		bool force_reload = true;
 
-		bool texture_resized = (m_color_texture_desc.fWidth != target_width ||
-			m_color_texture_desc.fHeight != target_height);
-
-		MString image_location(MString(getenv("MAYA_2018_DIR")) + MString("\\devkit\\plug-ins\\viewImageBlitOverride\\"));
-		image_location += MString("renderedImage.iff");
-
-		// If a resize occurred, or a texture has not been allocated yet, create new textures that match the output size
-		// Any existing textures will be released
-		if ( force_reload ||
-			 !m_color_texture.texture ||
-			 texture_resized )
+		// If a resize occurred, or we haven't allocated any texture yet,
+		// then create new textures which match the output size. 
+		// Release any existing textures.
+		//
+		if (force_reload || !m_color_texture.texture ||
+			(m_color_texture_desc.fWidth != target_width || m_color_texture_desc.fHeight != target_height))
 		{
 			if (m_color_texture.texture)
 			{
 				texture_manager->releaseTexture(m_color_texture.texture);
-				m_color_texture.texture = nullptr;
+				m_color_texture.texture = NULL;
 			}
-
+			
 			aquire_new_texture = true;
 			force_reload = false;
 		}
 
 		if (!m_color_texture.texture)
 		{
-			loadImageFromDisk( image_location, m_color_texture_desc, m_color_texture, texture_manager );
+			// Grab the Wisp texture data
+			auto* texture_data = new unsigned char[cpu_texture.m_buffer_width * cpu_texture.m_buffer_height * cpu_texture.m_bytes_per_pixel];
+			memcpy(texture_data, cpu_texture.m_data, cpu_texture.m_buffer_width * cpu_texture.m_buffer_height * cpu_texture.m_bytes_per_pixel);
+
+			m_color_texture_desc.fWidth = cpu_texture.m_buffer_width;
+			m_color_texture_desc.fHeight = cpu_texture.m_buffer_height;
+			m_color_texture_desc.fDepth = 1;
+			m_color_texture_desc.fBytesPerRow = cpu_texture.m_bytes_per_pixel * cpu_texture.m_buffer_width;
+			m_color_texture_desc.fBytesPerSlice = m_color_texture_desc.fBytesPerRow * cpu_texture.m_buffer_height;
+
+			// Acquire a new texture.
+			m_color_texture.texture = texture_manager->acquireTexture("", m_color_texture_desc, texture_data);
+
+			if (m_color_texture.texture)
+				m_color_texture.texture->textureDescription(m_color_texture_desc);
+
+			// Don't need the data any more after upload to texture
+			delete[] texture_data;
 		}
 		else
 		{
-			// TODO: Update the texture data here!
+			unsigned char* texture_data = nullptr;
+
+			// Grab the Wisp texture data
+			texture_data = new unsigned char[cpu_texture.m_buffer_width * cpu_texture.m_buffer_height * cpu_texture.m_bytes_per_pixel];
+
+			m_color_texture.texture->update(texture_data, false);
+			delete[] texture_data;
 		}
 
-		// Update the textures for the blit operation
+		// Update the textures used for the blit operation.
+		//
 		if (aquire_new_texture)
 		{
-			auto blit = (WispScreenBlitter*)m_render_operations[0].get();
-			blit->SetColorTexture(m_color_texture);
+			auto* custom_blit = (WispScreenBlitter*)m_render_operations[0].get();
+			custom_blit->SetColorTexture(m_color_texture);
 		}
 
-		if (m_color_texture.texture)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return m_color_texture.texture ? true : false;
 	}
-
-	
 }
