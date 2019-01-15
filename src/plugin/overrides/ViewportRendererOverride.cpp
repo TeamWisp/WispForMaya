@@ -28,6 +28,12 @@
 #include <maya/MFnCamera.h>
 #include <maya/MImage.h>
 #include <maya/M3dView.h>
+#include <maya\MGlobal.h>
+#include <maya\MQuaternion.h>
+#include <maya\MEulerRotation.h>
+
+
+#include <sstream>
 
 
 #include <sstream>
@@ -79,8 +85,10 @@ namespace wmr
 	{
 		m_render_system->WaitForAllPreviousWork();
 		m_framegraph->Destroy();
+		m_model_loader.reset();
 		m_render_system.reset();
 		m_framegraph.reset();
+
 	}
 
 	void ViewportRenderer::ConfigureRenderOperations()
@@ -186,8 +194,8 @@ namespace wmr
 
 	void ViewportRenderer::SynchronizeWispWithMayaViewportCamera()
 	{
-		M3dView view;
-		MStatus status = M3dView::getM3dViewFromModelPanel( wisp::settings::VIEWPORT_PANEL_NAME, view );
+		M3dView maya_view;
+		MStatus status = M3dView::getM3dViewFromModelPanel( wisp::settings::VIEWPORT_PANEL_NAME, maya_view );
 
 		if( status != MStatus::kSuccess )
 		{
@@ -197,28 +205,34 @@ namespace wmr
 
 		// Model view matrix
 		MMatrix mv_matrix;
-		view.modelViewMatrix( mv_matrix );
+		maya_view.modelViewMatrix( mv_matrix );
 
 		MDagPath camera_dag_path;
-		view.getCamera( camera_dag_path );
+		maya_view.getCamera( camera_dag_path );
 
 		// Additional functionality
+		
+		MEulerRotation view_rotation = MEulerRotation::decompose(mv_matrix.inverse(), MEulerRotation::RotationOrder::kXYZ);
+		
+		std::stringstream strs;
+		strs << "X: " << view_rotation.x << " Y: " << view_rotation.y << " Z: " << view_rotation.z << std::endl;
+		MGlobal::displayInfo(std::string(strs.str()).c_str());
+		
+		m_viewport_camera->SetRotation( {  ( float )view_rotation.x,( float )view_rotation.y, ( float )view_rotation.z } );
+
+		
+		MMatrix cameraPos = camera_dag_path.inclusiveMatrix();
+		MVector eye = MVector( static_cast<float>( cameraPos(3,0)), static_cast< float >( cameraPos( 3, 1 ) ), static_cast< float >( cameraPos( 3, 2 ) ) );
+		m_viewport_camera->SetPosition( { ( float )-eye.x, ( float )-eye.y, ( float )-eye.z } );
+
+		
 		MFnCamera camera_functions( camera_dag_path );
-
-		MVector center = camera_functions.centerOfInterestPoint( MSpace::kWorld );
-		MVector eye = camera_functions.eyePoint( MSpace::kWorld );
-
 		m_viewport_camera->m_frustum_far = camera_functions.farClippingPlane();
 		m_viewport_camera->m_frustum_near = camera_functions.nearClippingPlane();
+		
+		m_viewport_camera->SetFov( AI_RAD_TO_DEG( camera_functions.horizontalFieldOfView()) );
 
-		m_viewport_camera->SetFov( camera_functions.horizontalFieldOfView() );
 
-		// Convert the MMatrix into an XMMATRIX and update the view matrix of the Wisp camera
-		DirectX::XMFLOAT4X4 converted_mv_matrix;
-		mv_matrix.get( converted_mv_matrix.m );
-		m_viewport_camera->m_view = DirectX::XMLoadFloat4x4( &converted_mv_matrix );
-
-		m_viewport_camera->SetPosition( { ( float )-eye.x, ( float )eye.y, ( float )-eye.z } );
 	}
 
 	MStatus ViewportRenderer::setup(const MString& destination)
