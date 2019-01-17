@@ -34,7 +34,7 @@ void main_cs(int3 dispatch_thread_id : SV_DispatchThreadID)
 	output.GetDimensions(screen_size.x, screen_size.y);
 	float2 uv = float2(dispatch_thread_id.x / screen_size.x, 1.f - (dispatch_thread_id.y / screen_size.y));
 
-	float2 screen_coord = int2(dispatch_thread_id.x, screen_size.y - dispatch_thread_id.y);
+	float2 screen_coord = int2(dispatch_thread_id.x, dispatch_thread_id.y);
 
 	// GBuffer contents
 	const float3 albedo = gbuffer_albedo_roughness[screen_coord].xyz;
