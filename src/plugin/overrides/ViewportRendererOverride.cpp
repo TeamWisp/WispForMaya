@@ -31,7 +31,11 @@
 #include <maya\MGlobal.h>
 #include <maya\MQuaternion.h>
 #include <maya\MEulerRotation.h>
+#include <maya\MFnTransform.h>
 
+//std include
+#include <algorithm>
+#include <memory>
 #include <sstream>
 #include <maya/MGlobal.h>
 
@@ -204,11 +208,13 @@ namespace wmr
 
 		MDagPath camera_dag_path;
 		maya_view.getCamera( camera_dag_path );
-
+		MFnTransform camera_transform( camera_dag_path.transform() );
 		// Additional functionality
 		
-		MEulerRotation view_rotation = MEulerRotation::decompose(mv_matrix.inverse(), MEulerRotation::RotationOrder::kXYZ);
-		
+		MEulerRotation view_rotation;// = MEulerRotation::decompose( mv_matrix.inverse(), MEulerRotation::RotationOrder::kXYZ );
+		camera_transform.getRotation( view_rotation );
+
+
 		std::stringstream strs;
 		strs << "X: " << view_rotation.x << " Y: " << view_rotation.y << " Z: " << view_rotation.z << std::endl;
 		MGlobal::displayInfo(std::string(strs.str()).c_str());
