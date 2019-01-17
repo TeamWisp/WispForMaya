@@ -11,13 +11,14 @@ namespace wmr::wri
 
 namespace wr
 {
-	class AssimpModelLoader;
 	struct CameraNode;
+	struct CPUTextures;
+
+	class AssimpModelLoader;
 	class D3D12RenderSystem;
 	class FrameGraph;
 	class SceneGraph;
 	class TexturePool;
-	class CPUTexture;
 }
 
 namespace wmr
@@ -52,7 +53,7 @@ namespace wmr
 		bool AreAllRenderOperationsSetCorrectly() const;
 
 		// Update the Maya color texture
-		bool UpdateTextures(MHWRender::MRenderer* maya_renderer, MHWRender::MTextureManager* texture_manager, const wr::CPUTexture& cpu_texture);
+		bool UpdateTextures(MHWRender::MRenderer* maya_renderer, MHWRender::MTextureManager* texture_manager, const wr::CPUTextures& cpu_textures);
 
 		MStatus cleanup() override;
 

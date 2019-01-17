@@ -12,7 +12,8 @@
 #include "render_tasks/d3d12_deferred_main.hpp"
 #include "render_tasks/d3d12_deferred_composition.hpp"
 #include "render_tasks/d3d12_deferred_render_target_copy.hpp"
-#include "render_tasks/d3d12_deferred_readback.hpp"
+#include "render_tasks/d3d12_pixel_data_readback.hpp"
+#include "render_tasks/d3d12_depth_data_readback.hpp"
 #include "scene_graph/camera_node.hpp"
 #include "scene_graph/scene_graph.hpp"
 
@@ -158,10 +159,23 @@ namespace wmr
 		m_render_system->InitSceneGraph( *m_scenegraph.get() );
 
 		m_framegraph = std::make_unique<wr::FrameGraph>( 4 );
+
+		// Construct the G-buffer
 		wr::AddDeferredMainTask( *m_framegraph, std::nullopt, std::nullopt );
+		
+		// Save the depth buffer CPU pointer
+		wr::AddDepthDataReadBackTask<wr::DeferredMainTaskData>(*m_framegraph, std::nullopt, std::nullopt);
+
+		// Merge the G-buffer into one final texture
 		wr::AddDeferredCompositionTask( *m_framegraph, std::nullopt, std::nullopt );
-		wr::AddRenderTargetReadBackTask<wr::DeferredCompositionTaskData>(*m_framegraph, std::nullopt, std::nullopt);
+
+		// Save the final texture CPU pointer
+		wr::AddPixelDataReadBackTask<wr::DeferredCompositionTaskData>(*m_framegraph, std::nullopt, std::nullopt);
+
+		// Copy the composition pixel data to the final render target
 		wr::AddRenderTargetCopyTask<wr::DeferredCompositionTaskData>( *m_framegraph );
+
+		// ImGui
 		auto render_editor = [&]()
 		{
 			engine::RenderEngine( m_render_system.get(), m_scenegraph.get() );
@@ -241,7 +255,7 @@ namespace wmr
 		SynchronizeWispWithMayaViewportCamera();
 		SCENE::UpdateScene();
 
-		auto texture = m_render_system->Render( m_scenegraph, *m_framegraph );
+		auto textures = m_render_system->Render( m_scenegraph, *m_framegraph );
 
 		auto* const maya_renderer = MHWRender::MRenderer::theRenderer();
 
@@ -266,7 +280,7 @@ namespace wmr
 		}
 
 		// Update textures used for scene blit
-		if (!UpdateTextures(maya_renderer, maya_texture_manager, texture))
+		if (!UpdateTextures(maya_renderer, maya_texture_manager, textures))
 		{
 			assert( false );
 			return MStatus::kFailure;
@@ -344,15 +358,14 @@ namespace wmr
 		}
 	}
 
-	bool ViewportRenderer::UpdateTextures(MHWRender::MRenderer* maya_renderer, MHWRender::MTextureManager* texture_manager, const wr::CPUTexture& cpu_texture)
+	bool ViewportRenderer::UpdateTextures(MHWRender::MRenderer* maya_renderer, MHWRender::MTextureManager* texture_manager, const wr::CPUTextures& cpu_textures)
 	{
 		if (!maya_renderer || !texture_manager)
 			return false;
 
 		// Early exit, no texture data from Wisp available just yet
-		if (cpu_texture.m_buffer_width == 0 ||
-			cpu_texture.m_buffer_height == 0 ||
-			cpu_texture.m_bytes_per_pixel == 0)
+		if (cpu_textures.pixel_data == std::nullopt ||
+			cpu_textures.depth_data == std::nullopt)
 			return true;
 
 		// Get current output size.
@@ -383,14 +396,14 @@ namespace wmr
 		if (!m_color_texture.texture)
 		{
 			// Grab the Wisp texture data
-			auto* texture_data = new unsigned char[cpu_texture.m_buffer_width * cpu_texture.m_buffer_height * cpu_texture.m_bytes_per_pixel];
-			memcpy(texture_data, cpu_texture.m_data, cpu_texture.m_buffer_width * cpu_texture.m_buffer_height * cpu_texture.m_bytes_per_pixel);
+			auto* texture_data = new unsigned char[cpu_textures.pixel_data.value().m_buffer_width * cpu_textures.pixel_data.value().m_buffer_height * cpu_textures.pixel_data.value().m_bytes_per_pixel];
+			memcpy(texture_data, cpu_textures.pixel_data.value().m_data, cpu_textures.pixel_data.value().m_buffer_width * cpu_textures.pixel_data.value().m_buffer_height * cpu_textures.pixel_data.value().m_bytes_per_pixel);
 
-			m_color_texture_desc.fWidth = cpu_texture.m_buffer_width;
-			m_color_texture_desc.fHeight = cpu_texture.m_buffer_height;
+			m_color_texture_desc.fWidth = cpu_textures.pixel_data.value().m_buffer_width;
+			m_color_texture_desc.fHeight = cpu_textures.pixel_data.value().m_buffer_height;
 			m_color_texture_desc.fDepth = 1;
-			m_color_texture_desc.fBytesPerRow = cpu_texture.m_bytes_per_pixel * cpu_texture.m_buffer_width;
-			m_color_texture_desc.fBytesPerSlice = m_color_texture_desc.fBytesPerRow * cpu_texture.m_buffer_height;
+			m_color_texture_desc.fBytesPerRow = cpu_textures.pixel_data.value().m_bytes_per_pixel * cpu_textures.pixel_data.value().m_buffer_width;
+			m_color_texture_desc.fBytesPerSlice = m_color_texture_desc.fBytesPerRow * cpu_textures.pixel_data.value().m_buffer_height;
 
 			// Acquire a new texture.
 			m_color_texture.texture = texture_manager->acquireTexture("", m_color_texture_desc, texture_data);
@@ -406,7 +419,7 @@ namespace wmr
 			unsigned char* texture_data = nullptr;
 
 			// Grab the Wisp texture data
-			texture_data = new unsigned char[cpu_texture.m_buffer_width * cpu_texture.m_buffer_height * cpu_texture.m_bytes_per_pixel];
+			texture_data = new unsigned char[cpu_textures.pixel_data.value().m_buffer_width * cpu_textures.pixel_data.value().m_buffer_height * cpu_textures.pixel_data.value().m_bytes_per_pixel];
 
 			m_color_texture.texture->update(texture_data, false);
 			delete[] texture_data;
