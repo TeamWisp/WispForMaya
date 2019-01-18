@@ -43,15 +43,14 @@ file(GLOB PLUGIN_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/*.hpp")
 file(GLOB PLUGIN_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/*.cpp")
 file(GLOB PLUGIN_OVERRIDE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/overrides/*.hpp")
 file(GLOB PLUGIN_OVERRIDE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/overrides/*.cpp")
-file(GLOB PLUGIN_RENDERER_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/renderer/*.hpp")
-file(GLOB PLUGIN_RENDERER_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/renderer/*.cpp")
-
+file(GLOB PLUGIN_SCENEGRAPH_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/scenegraph/*.hpp")
+file(GLOB PLUGIN_SCENEGRAPH_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/scenegraph/*.cpp")
 # === Source groups === #
 source_group("Main" FILES ${HEADERS} ${SOURCES})
 source_group("Miscellaneous" FILES ${MISC_HEADERS} ${MISC_SOURCES})
 source_group("Plugin" FILES ${PLUGIN_HEADERS} ${PLUGIN_SOURCES})
 source_group("Plugin Overrides" FILES ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES})
-source_group("Plugin Renderer" FILES ${PLUGIN_RENDERER_HEADERS} ${PLUGIN_RENDERER_SOURCES})
+source_group("Plugin Scenegraph" FILES ${PLUGIN_SCENEGRAPH_HEADERS} ${PLUGIN_SCENEGRAPH_SOURCES})
 
 # === CXX FLAGS === #
 set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
@@ -73,7 +72,8 @@ add_library(${PROJECT_NAME} SHARED
             ${MISC_HEADERS} ${MISC_SOURCES}
             ${PLUGIN_HEADERS} ${PLUGIN_SOURCES}
             ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES}
-            ${PLUGIN_RENDERER_HEADERS} ${PLUGIN_RENDERER_SOURCES})
+            ${PLUGIN_SCENEGRAPH_HEADERS} ${PLUGIN_SCENEGRAPH_SOURCES})
+
 
 target_include_directories(${PROJECT_NAME} PUBLIC src)
 target_include_directories(${PROJECT_NAME} PUBLIC deps/Procedural-Ray-Tracing/src)
@@ -111,8 +111,8 @@ if(ENABLE_UNIT_TEST)
                     ${MISC_HEADERS} ${MISC_SOURCES}
                     ${PLUGIN_HEADERS} ${PLUGIN_SOURCES}
                     ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES}
-                    ${PLUGIN_RENDERER_HEADERS} ${PLUGIN_RENDERER_SOURCES}
-                    ${TEST_HEADERS} ${TEST_SOURCES} )
+                    ${TEST_HEADERS} ${TEST_SOURCES} 
+                    ${PLUGIN_SCENEGRAPH_HEADERS} ${PLUGIN_SCENEGRAPH_SOURCES})
 
     set_target_properties(MayaUnitTest PROPERTIES CXX_STANDARD 17)
     set_target_properties(MayaUnitTest PROPERTIES CXX_EXTENSIONS OFF)

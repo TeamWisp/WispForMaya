@@ -4,7 +4,7 @@
 
 namespace wmr
 {
-	class WispViewportRenderer;
+	class ViewportRenderer;
 
 	class PluginMain
 	{
@@ -17,14 +17,9 @@ namespace wmr
 
 	private:
 		bool IsSceneDirty() const;
-		
-		void CreateViewportRendererOverride();
-		void InitializeViewportRendererOverride() const;
-		void RegisterOverride() const;
 		void ActOnCurrentDirtyState(const bool& state) const;
-		void UninitializeViewportRendererOverride() const;
 
 	private:
-		std::unique_ptr<WispViewportRenderer> m_wisp_viewport_renderer;
+		std::unique_ptr<ViewportRenderer> m_wisp_viewport_renderer;
 	};
 }
