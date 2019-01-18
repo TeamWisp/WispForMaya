@@ -34,7 +34,7 @@ void main_cs(int3 dispatch_thread_id : SV_DispatchThreadID)
 {
 	float2 screen_size = float2(0.f, 0.f);
 	output.GetDimensions(screen_size.x, screen_size.y);
-	float2 uv = float2(dispatch_thread_id.x / screen_size.x, 1.f - (dispatch_thread_id.y / screen_size.y));
+	float2 uv = float2(dispatch_thread_id.x / screen_size.x, dispatch_thread_id.y / screen_size.y);
 
 	float2 screen_coord = int2(dispatch_thread_id.x, dispatch_thread_id.y);
 	
@@ -63,9 +63,13 @@ void main_cs(int3 dispatch_thread_id : SV_DispatchThreadID)
 		retval = skybox.SampleLevel(s0, cdir , 0);
 	}
 	
+	// Tone mapping
 	float gamma = 1;
 	float exposure = 1;
 	retval = linearToneMapping(retval, exposure, gamma);
+
+	// Gamma correction
+	retval = pow(retval, float3(2.2, 2.2, 2.2));
 	
 	//Do shading
 	output[int2(dispatch_thread_id.xy)] = float4(retval, 1.f);
