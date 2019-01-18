@@ -1,12 +1,13 @@
 #include "ViewportRendererOverride.hpp"
-#include "QuadRendererOverride.hpp"
-#include "UIOverride.hpp"
+
+//plugin includes
 #include "miscellaneous/Settings.hpp"
 #include "miscellaneous/Functions.hpp"
+#include "QuadRendererOverride.hpp"
+#include "../scenegraph/ScenegraphParser.hpp"
+#include "UIOverride.hpp"
 
-#include <memory>
-#include <algorithm>
-#include "wisp.hpp"
+//wisp include
 #include "renderer.hpp"
 #include "render_tasks/d3d12_imgui_render_task.hpp"
 #include "render_tasks/d3d12_deferred_main.hpp"
@@ -14,12 +15,15 @@
 #include "render_tasks/d3d12_deferred_render_target_copy.hpp"
 #include "scene_graph\camera_node.hpp"
 #include "scene_graph\scene_graph.hpp"
+#include "wisp.hpp"
 
+//demo include
 #include "../demo/engine_interface.hpp"
 #include "../demo/scene_viknell.hpp"
 #include "../demo/resources.hpp"
 #include "../demo/scene_cubes.hpp"
 
+// maya include
 #include <maya/MString.h>
 #include <maya/M3dView.h>
 #include <maya/MMatrix.h>
@@ -58,6 +62,30 @@ namespace wmr
 		}
 	}
 
+	static void CreateScene( wr::SceneGraph* scene_graph, wr::Window* window )
+	{
+		static std::shared_ptr<DebugCamera> camera = scene_graph->CreateChild<DebugCamera>( nullptr, 90.f, ( float )window->GetWidth() / ( float )window->GetHeight() );
+		camera->SetPosition( { 0, 0, -1 } );
+
+		// Lights
+		auto point_light_0 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
+		point_light_0->SetRadius( 3.0f );
+		point_light_0->SetPosition( { 0, 0, 0 } );
+
+		auto point_light_1 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 0, 0 } );
+		point_light_1->SetRadius( 2.0f );
+		point_light_1->SetPosition( { 0.5, 0, 0 } );
+
+		auto point_light_2 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 0, 0, 5 } );
+		point_light_2->SetRadius( 3.0f );
+		point_light_2->SetPosition( { -0.7, 0.5, 0 } );
+
+		auto dir_light = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::DIRECTIONAL, DirectX::XMVECTOR{ 1, 1, 1 } );
+		dir_light->SetRotation( { 1,1,1 } );
+		dir_light->SetPosition( { -0.7, 0.5, 0 } );
+
+	}
+
 	ViewportRenderer::ViewportRenderer(const MString& name)
 		: MRenderOverride(name)
 		, m_ui_name(wisp::settings::PRODUCT_NAME)
@@ -76,6 +104,12 @@ namespace wmr
 	{
 		CreateRenderOperations();
 		InitializeWispRenderer();
+		
+		m_scenegraph_parser = std::make_unique<ScenegraphParser>(*m_render_system, *m_scenegraph);
+		m_scenegraph_parser->initialize();
+
+		CreateScene( m_scenegraph.get(), window.get() );
+		m_render_system->InitSceneGraph( *m_scenegraph.get() );
 	}
 
 	void ViewportRenderer::Destroy()
@@ -144,16 +178,14 @@ namespace wmr
 
 		m_render_system->Init( window.get() );
 
-		resources::CreateResources( m_render_system.get() );
-
 		m_scenegraph = std::make_shared<wr::SceneGraph>( m_render_system.get() );
 
 		m_viewport_camera = m_scenegraph->CreateChild<wr::CameraNode>( nullptr, 90.f, ( float )window->GetWidth() / ( float )window->GetHeight() );
 		m_viewport_camera->SetPosition( { 0, 0, -1 } );
 
-		SCENE::CreateScene( m_scenegraph.get(), window.get() );
+		/*CreateScene( m_scenegraph.get(), window.get() );
 
-		m_render_system->InitSceneGraph( *m_scenegraph.get() );
+		m_render_system->InitSceneGraph( *m_scenegraph.get() );*/
 
 		m_framegraph = std::make_unique<wr::FrameGraph>( 4 );
 		wr::AddDeferredMainTask( *m_framegraph );
@@ -208,9 +240,8 @@ namespace wmr
 		MFnTransform camera_transform( camera_dag_path.transform() );
 		// Additional functionality
 		
-		MEulerRotation view_rotation;// = MEulerRotation::decompose( mv_matrix.inverse(), MEulerRotation::RotationOrder::kXYZ );
+		MEulerRotation view_rotation;
 		camera_transform.getRotation( view_rotation );
-
 
 		std::stringstream strs;
 		strs << "X: " << view_rotation.x << " Y: " << view_rotation.y << " Z: " << view_rotation.z << std::endl;
@@ -236,7 +267,6 @@ namespace wmr
 	MStatus ViewportRenderer::setup(const MString& destination)
 	{
 		SynchronizeWispWithMayaViewportCamera();
-		SCENE::UpdateScene();
 
 		auto texture = m_render_system->Render( m_scenegraph, *m_framegraph );
 

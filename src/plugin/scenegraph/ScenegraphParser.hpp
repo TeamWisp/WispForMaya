@@ -1,13 +1,27 @@
 #pragma once
-
-class ScenegraphParser
+#include <maya\MFnMesh.h>
+namespace wr
 {
-public:
-	ScenegraphParser();
-	~ScenegraphParser();
+	class SceneGraph;
+	class D3D12RenderSystem;
+}
 
-	void initialize( );
+//class MFnMesh;
 
-private:
+namespace wmr
+{
+	class ScenegraphParser
+	{
+	public:
+		ScenegraphParser( wr::D3D12RenderSystem& render_system, wr::SceneGraph& scene_graph );
+		~ScenegraphParser();
 
-};
+		void initialize();
+
+	private:
+		void meshAdded( MFnMesh& fnmesh );
+
+		wr::SceneGraph& m_scenegraph;
+		wr::D3D12RenderSystem& m_render_system;
+	};
+}

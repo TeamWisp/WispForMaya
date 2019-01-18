@@ -21,6 +21,9 @@ namespace wr
 
 namespace wmr
 {
+	class ScenegraphParser;
+
+
 	class ViewportRenderer final : public MHWRender::MRenderOverride
 	{
 	public:
@@ -83,5 +86,7 @@ namespace wmr
 		std::unique_ptr<wr::FrameGraph> m_framegraph;
 		std::shared_ptr<wr::SceneGraph> m_scenegraph;
 		std::shared_ptr<wr::TexturePool> m_texture_pool;
+
+		std::unique_ptr<wmr::ScenegraphParser> m_scenegraph_parser;
 	};
 }
