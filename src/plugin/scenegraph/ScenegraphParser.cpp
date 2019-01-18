@@ -75,10 +75,10 @@ wmr::ScenegraphParser::~ScenegraphParser()
 {
 }
 
-void wmr::ScenegraphParser::initialize()
+void wmr::ScenegraphParser::initialize( std::shared_ptr<wr::TexturePool> t_pool, std::shared_ptr<wr::MaterialPool> m_pool)
 {
-	texture_pool = m_render_system.CreateTexturePool( 16, 14 );
-	material_pool = m_render_system.CreateMaterialPool( 8 );
+	texture_pool = t_pool;
+	material_pool = m_pool;
 
 	wr::TextureHandle metal_splotchy_albedo = texture_pool->Load( "resources/materials/metal-splotchy-albedo.png", false, true );
 	wr::TextureHandle metal_splotchy_normal = texture_pool->Load( "resources/materials/metal-splotchy-normal-dx.png", false, true );

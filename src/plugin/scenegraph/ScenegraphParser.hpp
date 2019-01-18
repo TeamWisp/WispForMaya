@@ -4,6 +4,8 @@ namespace wr
 {
 	class SceneGraph;
 	class D3D12RenderSystem;
+	class TexturePool;
+	class MaterialPool;
 }
 
 //class MFnMesh;
@@ -16,7 +18,7 @@ namespace wmr
 		ScenegraphParser( wr::D3D12RenderSystem& render_system, wr::SceneGraph& scene_graph );
 		~ScenegraphParser();
 
-		void initialize();
+		void initialize( std::shared_ptr<wr::TexturePool> texture_pool, std::shared_ptr<wr::MaterialPool> material_pool);
 
 	private:
 		void meshAdded( MFnMesh& fnmesh );

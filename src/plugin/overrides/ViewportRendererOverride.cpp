@@ -47,6 +47,11 @@
 
 auto window = std::make_unique<wr::Window>( GetModuleHandleA( nullptr ), "D3D12 Test App", 1280, 720 );
 
+static std::shared_ptr<wr::TexturePool> texture_pool;
+static std::shared_ptr<wr::MaterialPool> material_pool;
+static wr::TextureHandle loaded_skybox;
+static wr::TextureHandle loaded_skybox2;
+
 #define SCENE viknell_scene
 
 namespace wmr
@@ -69,6 +74,14 @@ namespace wmr
 	{
 		static std::shared_ptr<DebugCamera> camera = scene_graph->CreateChild<DebugCamera>( nullptr, 90.f, ( float )window->GetWidth() / ( float )window->GetHeight() );
 		camera->SetPosition( { 0, 0, -1 } );
+
+
+		loaded_skybox2 = texture_pool->Load( "resources/materials/LA_Downtown_Afternoon_Fishing_3k.hdr", false, false );
+		loaded_skybox = texture_pool->Load( "resources/materials/skybox.dds", false, false );
+
+		scene_graph->m_skybox = loaded_skybox2;
+
+		auto skybox = scene_graph->CreateChild<wr::SkyboxNode>( nullptr, loaded_skybox );
 
 		// Lights
 		auto point_light_0 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
@@ -109,7 +122,7 @@ namespace wmr
 		InitializeWispRenderer();
 		
 		m_scenegraph_parser = std::make_unique<ScenegraphParser>(*m_render_system, *m_scenegraph);
-		m_scenegraph_parser->initialize();
+		m_scenegraph_parser->initialize(texture_pool, material_pool);
 
 		CreateScene( m_scenegraph.get(), window.get() );
 		m_render_system->InitSceneGraph( *m_scenegraph.get() );
@@ -182,6 +195,10 @@ namespace wmr
 		m_model_loader = std::make_unique<wr::AssimpModelLoader>();
 
 		m_render_system->Init( window.get() );
+
+		texture_pool = m_render_system->CreateTexturePool( 16, 14 );
+		material_pool = m_render_system->CreateMaterialPool( 8 );
+
 
 		m_scenegraph = std::make_shared<wr::SceneGraph>( m_render_system.get() );
 
