@@ -11,8 +11,11 @@ namespace wmr::wri
 
 namespace wr
 {
-	class AssimpModelLoader;
 	struct CameraNode;
+	struct CPUTexture;
+	struct CPUTextures;
+
+	class AssimpModelLoader;
 	class D3D12RenderSystem;
 	class FrameGraph;
 	class SceneGraph;
@@ -23,6 +26,11 @@ namespace wmr
 {
 	class ScenegraphParser;
 
+	enum class WispBufferType
+	{
+		COLOR,
+		DEPTH
+	};
 
 	class ViewportRenderer final : public MHWRender::MRenderOverride
 	{
@@ -37,8 +45,8 @@ namespace wmr
 		// Set the names of the render operations
 		void ConfigureRenderOperations();
 
-		void SetDefaultColorTextureState();
-		void ReleaseColorTextureResources() const;
+		void SetDefaultTextureState();
+		void ReleaseTextureResources() const;
 		void CreateRenderOperations();
 		void InitializeWispRenderer();
 
@@ -54,7 +62,10 @@ namespace wmr
 		bool AreAllRenderOperationsSetCorrectly() const;
 
 		// Update the Maya color texture
-		bool UpdateTextures(MHWRender::MRenderer* renderer, MHWRender::MTextureManager* texture_manager);
+		bool UpdateTextures(MHWRender::MRenderer* maya_renderer, MHWRender::MTextureManager* texture_manager, const wr::CPUTextures& cpu_textures);
+
+		// Update the texture pixel data
+		void UpdateTextureData(MHWRender::MTextureAssignment& texture_to_update, WispBufferType type, const wr::CPUTexture& cpu_texture, MHWRender::MTextureManager* texture_manager);
 
 		MStatus cleanup() override;
 
@@ -70,16 +81,20 @@ namespace wmr
 
 		MString m_ui_name;
 
-		//render operations
+		// Render operations
 		std::array<std::unique_ptr<MHWRender::MRenderOperation>, 4> m_render_operations;
 		MString m_render_operation_names[3];
 		int m_current_render_operation;
 
-		//texture displayed in maya
+		// Wisp render output color
 		MHWRender::MTextureDescription m_color_texture_desc;
 		MHWRender::MTextureAssignment m_color_texture;
 
-		//render system 
+		// Wisp render output depth
+		MHWRender::MTextureDescription m_depth_texture_desc;
+		MHWRender::MTextureAssignment m_depth_texture;
+
+		// Render system 
 		std::unique_ptr<wr::AssimpModelLoader> m_model_loader;
 		std::shared_ptr<wr::CameraNode> m_viewport_camera;
 		std::unique_ptr<wr::D3D12RenderSystem> m_render_system;
