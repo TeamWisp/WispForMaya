@@ -7,20 +7,27 @@
 #include <memory>
 #include <algorithm>
 #include "wisp.hpp"
-#include "renderer.hpp"
+#include "frame_graph/frame_graph.hpp"
 #include "render_tasks/d3d12_imgui_render_task.hpp"
 #include "render_tasks/d3d12_deferred_main.hpp"
 #include "render_tasks/d3d12_deferred_composition.hpp"
 #include "render_tasks/d3d12_deferred_render_target_copy.hpp"
-#include "render_tasks/d3d12_pixel_data_readback.hpp"
+#include "render_tasks/d3d12_raytracing_task.hpp"
+#include "render_tasks/d3d12_rt_hybrid_task.hpp"
+#include "render_tasks/d3d12_equirect_to_cubemap.hpp"
+#include "render_tasks/d3d12_cubemap_convolution.hpp"
+#include "../demo/resources.hpp"
+#include "render_tasks/d3d12_post_processing.hpp"
+#include "render_tasks/d3d12_build_acceleration_structures.hpp"
 #include "render_tasks/d3d12_depth_data_readback.hpp"
-#include "scene_graph/camera_node.hpp"
-#include "scene_graph/scene_graph.hpp"
+#include "render_tasks/d3d12_pixel_data_readback.hpp"
 
 #include "../demo/engine_interface.hpp"
 #include "../demo/scene_viknell.hpp"
-#include "../demo/resources.hpp"
 #include "../demo/scene_cubes.hpp"
+
+#include "scene_graph/camera_node.hpp"
+#include "scene_graph/scene_graph.hpp"
 
 #include <maya/MString.h>
 #include <maya/M3dView.h>
@@ -159,32 +166,32 @@ namespace wmr
 
 		m_render_system->InitSceneGraph( *m_scenegraph.get() );
 
-		m_framegraph = std::make_unique<wr::FrameGraph>( 4 );
+		m_framegraph = std::make_unique<wr::FrameGraph>(6);
 
-		// Construct the G-buffer
-		wr::AddDeferredMainTask( *m_framegraph, std::nullopt, std::nullopt );
-		
-		// Save the depth buffer CPU pointer
-		wr::AddDepthDataReadBackTask<wr::DeferredMainTaskData>(*m_framegraph, std::nullopt, std::nullopt);
-
-		// Merge the G-buffer into one final texture
-		wr::AddDeferredCompositionTask( *m_framegraph, std::nullopt, std::nullopt );
-
-		// Save the final texture CPU pointer
-		wr::AddPixelDataReadBackTask<wr::DeferredCompositionTaskData>(*m_framegraph, std::nullopt, std::nullopt);
-
-		// Copy the composition pixel data to the final render target
-		wr::AddRenderTargetCopyTask<wr::DeferredCompositionTaskData>( *m_framegraph );
-
-		// ImGui
-		auto render_editor = [&]()
+		// Hybrid ray tracing
 		{
-			engine::RenderEngine( m_render_system.get(), m_scenegraph.get() );
-		};
+			// Construct the G-buffer
+			wr::AddDeferredMainTask(*m_framegraph, std::nullopt, std::nullopt);
 
-		auto imgui_task = wr::GetImGuiTask( render_editor );
-		
-		m_framegraph->AddTask<wr::ImGuiTaskData>( imgui_task );
+			// Save the depth buffer CPU pointer
+			wr::AddDepthDataReadBackTask<wr::DeferredMainTaskData>(*m_framegraph, std::nullopt, std::nullopt);
+
+			// Build acceleration structure
+			wr::AddBuildAccelerationStructuresTask(*m_framegraph);
+
+			// Ray tracing
+			wr::AddRTHybridTask(*m_framegraph);
+
+			// Do some post processing
+			wr::AddPostProcessingTask<wr::RTHybridData>(*m_framegraph);
+
+			// Save the ray tracing pixel data CPU pointer
+			wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*m_framegraph, std::nullopt, std::nullopt);
+
+			// Copy the ray tracing pixel data to the final render target
+			wr::AddRenderTargetCopyTask<wr::PostProcessingData>(*m_framegraph);
+		}
+
 		m_framegraph->Setup( *m_render_system );
 	}
 
@@ -254,7 +261,6 @@ namespace wmr
 	MStatus ViewportRenderer::setup(const MString& destination)
 	{
 		SynchronizeWispWithMayaViewportCamera();
-		SCENE::UpdateScene();
 
 		auto textures = m_render_system->Render( m_scenegraph, *m_framegraph );
 
