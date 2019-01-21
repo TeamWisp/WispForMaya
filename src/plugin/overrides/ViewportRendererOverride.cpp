@@ -278,11 +278,7 @@ namespace wmr
 		
 		MEulerRotation view_rotation;
 		camera_transform.getRotation( view_rotation );
-
-		std::stringstream strs;
-		strs << "X: " << view_rotation.x << " Y: " << view_rotation.y << " Z: " << view_rotation.z << std::endl;
-		MGlobal::displayInfo(std::string(strs.str()).c_str());
-		
+	
 		m_viewport_camera->SetRotation( {  ( float )view_rotation.x,( float )view_rotation.y, ( float )view_rotation.z } );
 
 		
@@ -295,7 +291,16 @@ namespace wmr
 		m_viewport_camera->m_frustum_far = camera_functions.farClippingPlane();
 		m_viewport_camera->m_frustum_near = camera_functions.nearClippingPlane();
 		
-		m_viewport_camera->SetFov( AI_RAD_TO_DEG( camera_functions.horizontalFieldOfView()) );
+
+		unsigned int target_width = 0;
+		unsigned int target_height = 0;
+		MHWRender::MRenderer::theRenderer()->outputTargetSize( target_width, target_height );
+
+		double hfov = camera_functions.horizontalFieldOfView();
+		double vfov = camera_functions.verticalFieldOfView();
+		m_viewport_camera->SetAspectRatio( 1.0f );
+
+		m_viewport_camera->SetFov( AI_RAD_TO_DEG(hfov) );
 
 
 	}

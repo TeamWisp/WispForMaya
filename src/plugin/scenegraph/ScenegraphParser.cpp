@@ -8,6 +8,8 @@
 #include "d3d12\d3d12_renderer.hpp"
 #include "d3d12\d3d12_model_pool.hpp" 
 
+#include "plugin\CallbackManager.hpp"
+
 
 #include <maya\MDagPath.h>
 #include <maya\MEulerRotation.h>
@@ -22,6 +24,11 @@
 #include <maya\MQuaternion.h>
 #include <maya\MStatus.h>
 #include <maya\MFnDagNode.h>
+#include <maya\MNodeMessage.h>
+#include <maya\MPlug.h>
+#include <maya\MUuid.h>
+
+#include <sstream>
 
 
 //namespace resources
@@ -34,8 +41,89 @@ static std::shared_ptr<wr::MaterialPool> material_pool;
 
 static wr::MaterialHandle rusty_metal_material;
 
+std::vector<std::pair<MObject, std::shared_ptr<wr::MeshNode>>> modelTransformVector;
 
 
+static void updateTransform( MFnTransform& transform, std::shared_ptr<wr::MeshNode> mesh_node )
+{
+	MStatus status = MS::kSuccess;
+	MVector pos = transform.getTranslation( MSpace::kTransform, &status );
+	if( status != MS::kSuccess )
+	{
+		MGlobal::displayError( "Error: " + status.errorString() );
+	}
+	MQuaternion qrot;
+	status = transform.getRotation( qrot, MSpace::kTransform );
+	if( status != MS::kSuccess )
+	{
+		MGlobal::displayError( "Error: " + status.errorString() );
+	}
+
+	qrot.normalizeIt();
+	MEulerRotation rot = qrot.asEulerRotation();
+	rot.reorderIt( MEulerRotation::kZXY );
+	double3 scale;
+
+	std::stringstream strs;
+	strs << "euler: " << rot.x << " " << rot.y << " " << rot.z << std::endl;
+	MGlobal::displayInfo( std::string( strs.str() ).c_str() );
+
+	transform.getScale( scale );
+	mesh_node->SetPosition( { -static_cast< float >( pos.x ), -static_cast< float >( pos.y ), -static_cast< float >( pos.z ) } );
+	mesh_node->SetRotation( { static_cast< float >( rot.z ), static_cast< float >( rot.x ), static_cast< float >( rot.y ) } );
+	//mesh_node->rot
+	
+	
+	
+	mesh_node->SetScale( { static_cast< float >( scale[0] ), static_cast< float >( scale[1] ),static_cast< float >( scale[2] ) } );
+}
+
+
+void attributeMeshTransformCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData )
+{
+
+	// Check if attribute was set
+	if( msg & MNodeMessage::kAttributeSet )
+	{
+
+		MStatus status = MS::kSuccess;
+
+		// Create transform from the MObject
+		MFnTransform transform( plug.node(), &status );
+
+		if( status == MS::kSuccess )
+		{
+
+			auto findTransform = [&transform]( std::pair<MObject, std::shared_ptr<wr::MeshNode>> pair) -> bool
+			{
+				if( transform.object() == pair.first )
+				{
+					return true;
+				}
+				return false;
+			};
+
+			std::vector<std::pair<MObject, std::shared_ptr<wr::MeshNode>>>::iterator it = 
+				std::find_if( modelTransformVector.begin(), modelTransformVector.end(), findTransform );
+
+			updateTransform( transform, it->second );
+			
+		}
+
+		else
+		{
+
+			MGlobal::displayInfo( status.errorString() );
+		}
+
+	}
+
+	else
+	{
+
+		return;
+	}
+}
 
 static MIntArray GetLocalIndex( MIntArray & getVertices, MIntArray & getTriangle )
 {
@@ -293,33 +381,35 @@ void wmr::ScenegraphParser::meshAdded( MFnMesh & fnmesh )
 	//MStatus status;
 
 
+	//CallbackManager::GetInstance().RegisterCallback()
+
 	MFnDagNode dagnode = fnmesh.parent( 0 , &status );
 	if( status != MS::kSuccess )
 	{
 		MGlobal::displayError( "Error: " + status.errorString() );
 	}
+
+	MObject object = dagnode.object();
+
+	MCallbackId attributeId = MNodeMessage::addAttributeChangedCallback(
+		object,
+		attributeMeshTransformCallback,
+		NULL,
+		&status
+	);
+	CallbackManager::GetInstance().RegisterCallback( attributeId );
+
 	MFnTransform transform(dagnode.object(), &status );
 	if( status != MS::kSuccess )
 	{
 		MGlobal::displayError( "Error: " + status.errorString() );
 	}
 
-	MVector pos = transform.getTranslation( MSpace::kTransform , &status );
-	if( status != MS::kSuccess )
-	{
-		MGlobal::displayError( "Error: " + status.errorString() );
-	}
-	MQuaternion qrot;
-	status = transform.getRotation( qrot, MSpace::kTransform );
-	if( status != MS::kSuccess )
-	{
-		MGlobal::displayError( "Error: " + status.errorString() );
-	}
-	MEulerRotation rot = qrot.asEulerRotation();
-	
-	model_node->SetPosition( { static_cast<float>( pos.x ), static_cast< float >( pos.y ), static_cast< float >( pos.z ) } );
-	model_node->SetRotation( { static_cast< float >( rot.x ), static_cast< float >( rot.y ), static_cast< float >( rot.z ) } );
+	updateTransform( transform, model_node );
 
 	model->m_meshes[0].second = &rusty_metal_material;
+
+	modelTransformVector.push_back( std::make_pair( transform.object(), model_node ) );
+
 
 }
