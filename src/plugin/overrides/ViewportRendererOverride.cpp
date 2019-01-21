@@ -1,6 +1,7 @@
 #include "ViewportRendererOverride.hpp"
 #include "QuadRendererOverride.hpp"
 #include "UIOverride.hpp"
+#include "plugin/FrameGraphManager.hpp"
 #include "miscellaneous/Settings.hpp"
 #include "miscellaneous/Functions.hpp"
 
@@ -8,19 +9,7 @@
 #include <algorithm>
 #include "wisp.hpp"
 #include "frame_graph/frame_graph.hpp"
-#include "render_tasks/d3d12_imgui_render_task.hpp"
-#include "render_tasks/d3d12_deferred_main.hpp"
-#include "render_tasks/d3d12_deferred_composition.hpp"
-#include "render_tasks/d3d12_deferred_render_target_copy.hpp"
-#include "render_tasks/d3d12_raytracing_task.hpp"
-#include "render_tasks/d3d12_rt_hybrid_task.hpp"
-#include "render_tasks/d3d12_equirect_to_cubemap.hpp"
-#include "render_tasks/d3d12_cubemap_convolution.hpp"
 #include "../demo/resources.hpp"
-#include "render_tasks/d3d12_post_processing.hpp"
-#include "render_tasks/d3d12_build_acceleration_structures.hpp"
-#include "render_tasks/d3d12_depth_data_readback.hpp"
-#include "render_tasks/d3d12_pixel_data_readback.hpp"
 
 #include "../demo/engine_interface.hpp"
 #include "../demo/scene_viknell.hpp"
@@ -90,10 +79,9 @@ namespace wmr
 	void ViewportRenderer::Destroy()
 	{
 		m_render_system->WaitForAllPreviousWork();
-		m_framegraph->Destroy();
 		m_model_loader.reset();
 		m_render_system.reset();
-		m_framegraph.reset();
+		m_frame_graph_manager.reset();
 	}
 
 	void ViewportRenderer::ConfigureRenderOperations()
@@ -166,33 +154,9 @@ namespace wmr
 
 		m_render_system->InitSceneGraph( *m_scenegraph.get() );
 
-		m_framegraph = std::make_unique<wr::FrameGraph>(6);
-
-		// Hybrid ray tracing
-		{
-			// Construct the G-buffer
-			wr::AddDeferredMainTask(*m_framegraph, std::nullopt, std::nullopt);
-
-			// Save the depth buffer CPU pointer
-			wr::AddDepthDataReadBackTask<wr::DeferredMainTaskData>(*m_framegraph, std::nullopt, std::nullopt);
-
-			// Build acceleration structure
-			wr::AddBuildAccelerationStructuresTask(*m_framegraph);
-
-			// Ray tracing
-			wr::AddRTHybridTask(*m_framegraph);
-
-			// Do some post processing
-			wr::AddPostProcessingTask<wr::RTHybridData>(*m_framegraph);
-
-			// Save the ray tracing pixel data CPU pointer
-			wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*m_framegraph, std::nullopt, std::nullopt);
-
-			// Copy the ray tracing pixel data to the final render target
-			wr::AddRenderTargetCopyTask<wr::PostProcessingData>(*m_framegraph);
-		}
-
-		m_framegraph->Setup( *m_render_system );
+		// Create the frame graphs and start out using the deferred rendering pipeline
+		m_frame_graph_manager = std::make_unique<FrameGraphManager>();
+		m_frame_graph_manager->Create(*m_render_system, RendererFrameGraphType::DEFERRED);
 	}
 
 	MHWRender::DrawAPI ViewportRenderer::supportedDrawAPIs() const
@@ -254,15 +218,13 @@ namespace wmr
 		m_viewport_camera->m_frustum_near = camera_functions.nearClippingPlane();
 		
 		m_viewport_camera->SetFov( AI_RAD_TO_DEG( camera_functions.horizontalFieldOfView()) );
-
-
 	}
 
 	MStatus ViewportRenderer::setup(const MString& destination)
 	{
 		SynchronizeWispWithMayaViewportCamera();
 
-		auto textures = m_render_system->Render( m_scenegraph, *m_framegraph );
+		auto textures = m_render_system->Render( m_scenegraph, *m_frame_graph_manager->Get());
 
 		auto* const maya_renderer = MHWRender::MRenderer::theRenderer();
 
