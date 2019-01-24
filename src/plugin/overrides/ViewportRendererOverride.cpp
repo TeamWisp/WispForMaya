@@ -18,6 +18,7 @@
 #include "wisp.hpp"
 #include "render_tasks/d3d12_pixel_data_readback.hpp"
 #include "render_tasks/d3d12_depth_data_readback.hpp"
+#include "render_tasks\d3d12_post_processing.hpp"
 
 
 //demo include
@@ -85,20 +86,16 @@ namespace wmr
 
 		// Lights
 		auto point_light_0 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
-		point_light_0->SetRadius( 3.0f );
-		point_light_0->SetPosition( { 0, 0, 0 } );
+		point_light_0->SetRadius( 30.0f );
+		point_light_0->SetPosition( { -10, 0, 0 } );
 
-		auto point_light_1 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 0, 0 } );
-		point_light_1->SetRadius( 2.0f );
-		point_light_1->SetPosition( { 0.5, 0, 0 } );
+		auto point_light_1 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
+		point_light_1->SetRadius( 20.0f );
+		point_light_1->SetPosition( { 0, 0, 10.0 } );
 
-		auto point_light_2 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 0, 0, 5 } );
-		point_light_2->SetRadius( 3.0f );
-		point_light_2->SetPosition( { -0.7, 0.5, 0 } );
-
-		auto dir_light = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::DIRECTIONAL, DirectX::XMVECTOR{ 1, 1, 1 } );
-		dir_light->SetRotation( { 1,1,1 } );
-		dir_light->SetPosition( { -0.7, 0.5, 0 } );
+		auto point_light_2 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
+		point_light_2->SetRadius( 12.0f );
+		point_light_2->SetPosition( { -0.7, 3.5, 0 } );
 
 	}
 
@@ -209,7 +206,11 @@ namespace wmr
 
 		m_render_system->InitSceneGraph( *m_scenegraph.get() );*/
 
-		m_framegraph = std::make_unique<wr::FrameGraph>( 4 );
+		m_framegraph = std::make_unique<wr::FrameGraph>( 7 );
+
+		wr::AddEquirectToCubemapTask( *m_framegraph );
+
+		wr::AddCubemapConvolutionTask( *m_framegraph );
 
 		// Construct the G-buffer
 		wr::AddDeferredMainTask( *m_framegraph, std::nullopt, std::nullopt );
@@ -220,11 +221,13 @@ namespace wmr
 		// Merge the G-buffer into one final texture
 		wr::AddDeferredCompositionTask( *m_framegraph, std::nullopt, std::nullopt );
 
+		wr::AddPostProcessingTask<wr::DeferredCompositionTaskData>( *m_framegraph );
+
 		// Save the final texture CPU pointer
-		wr::AddPixelDataReadBackTask<wr::DeferredCompositionTaskData>(*m_framegraph, std::nullopt, std::nullopt);
+		wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*m_framegraph, std::nullopt, std::nullopt);
 
 		// Copy the composition pixel data to the final render target
-		wr::AddRenderTargetCopyTask<wr::DeferredCompositionTaskData>( *m_framegraph );
+		wr::AddRenderTargetCopyTask<wr::PostProcessingData>( *m_framegraph );
 
 		// ImGui
 		auto render_editor = [&]()
