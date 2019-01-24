@@ -28,6 +28,8 @@ namespace wmr
 
 	void FrameGraphManager::Create(wr::RenderSystem& render_system, RendererFrameGraphType initial_type) noexcept
 	{
+		m_current_rendering_pipeline_type = initial_type;
+
 		CreateDeferredPipeline();
 		CreateHybridRTPipeline();
 		CreateFullRTPipeline();
@@ -118,6 +120,9 @@ namespace wmr
 
 		// Do some post processing
 		wr::AddPostProcessingTask<wr::RaytracingData>(*frame_graph);
+
+		// Save the ray tracing pixel data CPU pointer
+		wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*frame_graph, std::nullopt, std::nullopt);
 
 		// Copy the scene render pixel data to the final render target
 		wr::AddRenderTargetCopyTask<wr::PostProcessingData>(*frame_graph);
