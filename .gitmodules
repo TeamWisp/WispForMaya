@@ -1,19 +1,25 @@
 [submodule "deps/Procedural-Ray-Tracing"]
 	path = deps/Procedural-Ray-Tracing
 	url = https://github.com/TeamWisp/Procedural-Ray-Tracing.git
+	ignore = untracked
 [submodule "deps/fmt"]
 	path = deps/fmt
 	url = https://github.com/fmtlib/fmt.git
+	ignore = untracked
 [submodule "deps/googletest"]
 	path = deps/googletest
 	url = https://github.com/abseil/googletest.git
+	ignore = untracked
 [submodule "deps/DirectXTex"]
 	path = deps/DirectXTex
 	url = https://github.com/TeamWisp/DirectXTex.git
 	branch = master
+	ignore = untracked
 [submodule "deps/assimp"]
 	path = deps/assimp
 	url = https://github.com/assimp/assimp.git
+	ignore = untracked
 [submodule "deps/fallback"]
 	path = deps/fallback
 	url = https://github.com/TeamWisp/DXR-Fallback-Layer.git
+	ignore = untracked
