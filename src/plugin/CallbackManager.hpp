@@ -11,7 +11,7 @@ namespace wmr
 {
 	//! Centralized place to manage the callbacks used throughout this application
 	/*! This class is responsible for registering and unregistering any callbacks needed by the application. All callbacks
-	 *! provided by Maya should be registered in here. */
+	 *  provided by Maya should be registered in here. */
 	class CallbackManager
 	{
 	public:
@@ -19,9 +19,9 @@ namespace wmr
 
 		//! Automatically reset the callback manager upon destruction
 		/*! When the callback manager is destroyed, the destructor always calls Reset() to make sure every callback has
-		 *! been reset before the plug-in quits.
-		 *! 
-		 *! \sa Reset()*/
+		 *  been reset before the plug-in quits.
+		 *  
+		 *  \sa Reset()*/
 		~CallbackManager();
 
 		//! Get a hold of the Singleton instance
@@ -30,14 +30,14 @@ namespace wmr
 
 		//! Register a callback
 		/*! Used to registers callbacks using a MCallbackId structure.
-		 *! 
-		 *! \param msid Callback id. */
+		 *
+		 *  \param msid Callback id. */
 		void RegisterCallback(MCallbackId mcid);
 
 		//! Reset the callback manager
 		/*! If any callbacks have been set, this function will make sure that they are properly disposed of.
-		 *! 
-		 *! \sa ~CallbackManager()*/
+		 *  
+		 *  \sa ~CallbackManager()*/
 		void Reset();
 
 	private:
