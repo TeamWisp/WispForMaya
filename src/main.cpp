@@ -23,7 +23,7 @@ wmr::PluginMain plugin_instance;
 MStatus initializePlugin(MObject object)
 {
 	// Register the plug-in to Maya, using the name and version data from the settings header file
-	MFnPlugin plugin(object, wisp::settings::COMPANY_NAME, wisp::settings::PRODUCT_VERSION, "Any");
+	MFnPlugin plugin(object, wmr::settings::COMPANY_NAME, wmr::settings::PRODUCT_VERSION, "Any");
 
 	// Initialization of the plug-in
 	plugin_instance.Initialize();

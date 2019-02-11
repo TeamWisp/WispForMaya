@@ -58,7 +58,7 @@ namespace wmr
 
 	ViewportRenderer::ViewportRenderer(const MString& name)
 		: MRenderOverride(name)
-		, m_ui_name(wisp::settings::PRODUCT_NAME)
+		, m_ui_name(wmr::settings::PRODUCT_NAME)
 		, m_current_render_operation(-1)
 	{
 		ConfigureRenderOperations();
@@ -180,7 +180,7 @@ namespace wmr
 	void ViewportRenderer::SynchronizeWispWithMayaViewportCamera()
 	{
 		M3dView maya_view;
-		MStatus status = M3dView::getM3dViewFromModelPanel( wisp::settings::VIEWPORT_PANEL_NAME, maya_view );
+		MStatus status = M3dView::getM3dViewFromModelPanel( wmr::settings::VIEWPORT_PANEL_NAME, maya_view );
 
 		if( status != MStatus::kSuccess )
 		{
