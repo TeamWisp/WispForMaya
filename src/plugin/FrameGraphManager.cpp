@@ -1,23 +1,26 @@
 #include "FrameGraphManager.hpp"
 
+// Wisp plug-in
 #include "frame_graph/frame_graph.hpp"
 
-#include "render_tasks/d3d12_deferred_main.hpp"
+// Wisp rendering framework
+#include "render_tasks/d3d12_build_acceleration_structures.hpp"
+#include "render_tasks/d3d12_cubemap_convolution.hpp"
 #include "render_tasks/d3d12_deferred_composition.hpp"
+#include "render_tasks/d3d12_deferred_main.hpp"
 #include "render_tasks/d3d12_deferred_render_target_copy.hpp"
+#include "render_tasks/d3d12_depth_data_readback.hpp"
+#include "render_tasks/d3d12_equirect_to_cubemap.hpp"
+#include "render_tasks/d3d12_pixel_data_readback.hpp"
+#include "render_tasks/d3d12_post_processing.hpp"
 #include "render_tasks/d3d12_raytracing_task.hpp"
 #include "render_tasks/d3d12_rt_hybrid_task.hpp"
-#include "render_tasks/d3d12_equirect_to_cubemap.hpp"
-#include "render_tasks/d3d12_cubemap_convolution.hpp"
-#include "render_tasks/d3d12_post_processing.hpp"
-#include "render_tasks/d3d12_pixel_data_readback.hpp"
-#include "render_tasks/d3d12_depth_data_readback.hpp"
-#include "render_tasks/d3d12_build_acceleration_structures.hpp"
 
 namespace wmr
 {
 	FrameGraphManager::~FrameGraphManager()
 	{
+		// Clean up the allocated frame graphs
 		for (auto& frame_graph : m_renderer_frame_graphs)
 		{
 			frame_graph->Destroy();
@@ -30,10 +33,12 @@ namespace wmr
 	{
 		m_current_rendering_pipeline_type = initial_type;
 
+		// Add required tasks to each frame graph
 		CreateDeferredPipeline();
 		CreateHybridRTPipeline();
 		CreateFullRTPipeline();
 
+		// Set-up the rendering pipelines (frame graph configuration)
 		for (auto& frame_graph : m_renderer_frame_graphs)
 		{
 			frame_graph->Setup(render_system);
