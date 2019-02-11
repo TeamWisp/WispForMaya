@@ -27,6 +27,7 @@
 #include <maya\MNodeMessage.h>
 #include <maya\MPlug.h>
 #include <maya\MUuid.h>
+#include <maya\MDGMessage.h>
 
 #include <sstream>
 
@@ -40,6 +41,9 @@ static std::shared_ptr<wr::TexturePool> texture_pool;
 static std::shared_ptr<wr::MaterialPool> material_pool;
 
 static wr::MaterialHandle rusty_metal_material;
+
+wmr::ScenegraphParser* wmr::ScenegraphParser::m_instance = nullptr;
+
 
 std::vector<std::pair<MObject, std::shared_ptr<wr::MeshNode>>> modelTransformVector;
 
@@ -125,6 +129,44 @@ void attributeMeshTransformCallback( MNodeMessage::AttributeMessage msg, MPlug &
 	}
 }
 
+void wmr::ScenegraphParser::addedCallback( MObject &node, void *clientData )
+{
+
+	// First validate the node types
+	// Then add callbacks for the verified node
+
+	// Check if the added node is a mesh
+	if( node.apiType() == MFn::Type::kMesh )
+	{
+
+		MStatus status = MS::kSuccess;
+
+		// Get the dag node
+		MFnDagNode dagNode( node, &status );
+
+		if( status == MS::kSuccess )
+		{
+			MFnMesh mesh( node );
+			MGlobal::displayInfo( "The mesh " + dagNode.name() + " has been added!" );
+			m_instance->meshAdded( mesh );
+			// Create an attribute changed callback to use in order to wait for the mesh to be ready
+			//CreateChangedAttributeMeshCallback( node, attributeMeshAddedCallback );
+		}
+
+		else
+		{
+
+			MGlobal::displayInfo( status.errorString() );
+		}
+
+	}
+}
+
+wmr::ScenegraphParser * wmr::ScenegraphParser::getInstance()
+{
+	return m_instance;
+}
+
 static MIntArray GetLocalIndex( MIntArray & getVertices, MIntArray & getTriangle )
 {
 	// MItMeshPolygon::getTriangle() returns object-relative vertex indices
@@ -156,7 +198,7 @@ wmr::ScenegraphParser::ScenegraphParser( wr::D3D12RenderSystem& render_system, w
 	: m_render_system(render_system)
 	, m_scenegraph(scene_graph)
 {
-
+	m_instance = this;
 }
 
 wmr::ScenegraphParser::~ScenegraphParser()
@@ -165,6 +207,16 @@ wmr::ScenegraphParser::~ScenegraphParser()
 
 void wmr::ScenegraphParser::initialize( std::shared_ptr<wr::TexturePool> t_pool, std::shared_ptr<wr::MaterialPool> m_pool)
 {
+
+	MStatus status;
+
+	MCallbackId addedId = MDGMessage::addNodeAddedCallback(
+		addedCallback,
+		"mesh",
+		NULL,
+		&status
+	);
+
 	texture_pool = t_pool;
 	material_pool = m_pool;
 
@@ -391,13 +443,6 @@ void wmr::ScenegraphParser::meshAdded( MFnMesh & fnmesh )
 
 	MObject object = dagnode.object();
 
-	MCallbackId attributeId = MNodeMessage::addAttributeChangedCallback(
-		object,
-		attributeMeshTransformCallback,
-		NULL,
-		&status
-	);
-	CallbackManager::GetInstance().RegisterCallback( attributeId );
 
 	MFnTransform transform(dagnode.object(), &status );
 	if( status != MS::kSuccess )
@@ -412,4 +457,11 @@ void wmr::ScenegraphParser::meshAdded( MFnMesh & fnmesh )
 	modelTransformVector.push_back( std::make_pair( transform.object(), model_node ) );
 
 
+	MCallbackId attributeId = MNodeMessage::addAttributeChangedCallback(
+		object,
+		attributeMeshTransformCallback,
+		NULL,
+		&status
+	);
+	CallbackManager::GetInstance().RegisterCallback( attributeId );
 }

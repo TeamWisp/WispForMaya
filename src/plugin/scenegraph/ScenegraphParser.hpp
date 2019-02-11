@@ -22,8 +22,12 @@ namespace wmr
 
 	private:
 		void meshAdded( MFnMesh& fnmesh );
-
+		static void addedCallback( MObject &node, void *clientData );
 		wr::SceneGraph& m_scenegraph;
 		wr::D3D12RenderSystem& m_render_system;
+
+		static ScenegraphParser* getInstance();
+
+		static ScenegraphParser* m_instance;
 	};
 }
