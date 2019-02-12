@@ -1,40 +1,41 @@
 #include "ViewportRendererOverride.hpp"
+
+// Wisp plug-in
+#include "miscellaneous/Functions.hpp"
+#include "miscellaneous/Settings.hpp"
+#include "plugin/FrameGraphManager.hpp"
 #include "QuadRendererOverride.hpp"
 #include "UIOverride.hpp"
-#include "plugin/FrameGraphManager.hpp"
-#include "miscellaneous/Settings.hpp"
-#include "miscellaneous/Functions.hpp"
 
-#include <memory>
-#include <algorithm>
-#include "wisp.hpp"
-#include "frame_graph/frame_graph.hpp"
-#include "../demo/resources.hpp"
-
+// Wisp rendering framework demo
 #include "../demo/engine_interface.hpp"
-#include "../demo/scene_viknell.hpp"
+#include "../demo/resources.hpp"
 #include "../demo/scene_cubes.hpp"
+#include "../demo/scene_viknell.hpp"
 
+// Wisp rendering framework
+#include "frame_graph/frame_graph.hpp"
 #include "scene_graph/camera_node.hpp"
 #include "scene_graph/scene_graph.hpp"
+#include "wisp.hpp"
 
-#include <maya/MString.h>
+// Maya API
 #include <maya/M3dView.h>
-#include <maya/MMatrix.h>
 #include <maya/MDagPath.h>
+#include <maya/MEulerRotation.h>
 #include <maya/MFnCamera.h>
+#include <maya/MFnTransform.h>
+#include <maya/MGlobal.h>
 #include <maya/MImage.h>
-#include <maya/M3dView.h>
-#include <maya\MGlobal.h>
-#include <maya\MQuaternion.h>
-#include <maya\MEulerRotation.h>
-#include <maya\MFnTransform.h>
+#include <maya/MMatrix.h>
+#include <maya/MQuaternion.h>
+#include <maya/MString.h>
 
-//std include
+// C++ standard
 #include <algorithm>
 #include <memory>
+#include <memory>
 #include <sstream>
-#include <maya/MGlobal.h>
 
 auto window = std::make_unique<wr::Window>( GetModuleHandleA( nullptr ), "D3D12 Test App", 1280, 720 );
 
@@ -78,10 +79,14 @@ namespace wmr
 
 	void ViewportRenderer::Destroy()
 	{
+		// Wait for the GPU to finish all work
 		m_render_system->WaitForAllPreviousWork();
 		m_model_loader.reset();
 		m_render_system.reset();
 		m_frame_graph_manager.reset();
+
+		// Release Maya textures
+		ReleaseTextureResources();
 	}
 
 	void ViewportRenderer::ConfigureRenderOperations()
