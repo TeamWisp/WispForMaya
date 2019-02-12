@@ -1,4 +1,6 @@
 #pragma once
+
+// Maya API
 #include <maya/MShaderManager.h>
 
 //! Generic plug-in namespace (Wisp Maya Renderer)
