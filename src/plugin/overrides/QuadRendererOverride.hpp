@@ -6,7 +6,7 @@ namespace wmr
 {
 	//! Full screen quad renderer override implementation
 	/*! Implementation of a Maya MQuadRender. It inherits from the Maya API base class and implements all methods needed
-	 *  to make the override work. THe code style for functions is a bit different here because our style guide differs
+	 *  to make the override work. The code style for functions is a bit different here because our style guide differs
 	 *  from the style used for the Maya API. */
 	class WispScreenBlitter : public MHWRender::MQuadRender
 	{
