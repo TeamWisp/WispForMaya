@@ -1,47 +1,40 @@
 #include "ViewportRendererOverride.hpp"
 
-//plugin includes
-#include "../scenegraph/ScenegraphParser.hpp"
-#include "miscellaneous/Settings.hpp"
+// Wisp plug-in
 #include "miscellaneous/Functions.hpp"
+#include "miscellaneous/Settings.hpp"
 #include "plugin/FrameGraphManager.hpp"
+#include "plugin/scenegraph/ScenegraphParser.hpp"
 #include "QuadRendererOverride.hpp"
 #include "UIOverride.hpp"
 
-//wisp include
-#include "renderer.hpp"
-//#include "render_tasks/d3d12_imgui_render_task.hpp"
-//#include "render_tasks/d3d12_deferred_main.hpp"
-//#include "render_tasks/d3d12_deferred_composition.hpp"
-//#include "render_tasks/d3d12_deferred_render_target_copy.hpp"
-#include "scene_graph\camera_node.hpp"
-#include "scene_graph\scene_graph.hpp"
-//#include "render_tasks/d3d12_pixel_data_readback.hpp"
-//#include "render_tasks/d3d12_depth_data_readback.hpp"
-//#include "render_tasks\d3d12_post_processing.hpp"
-//#include "frame_graph/frame_graph.hpp"
-#include "wisp.hpp"
-
-//demo include
+// Wisp rendering framework demo
 #include "../demo/engine_interface.hpp"
 #include "../demo/resources.hpp"
 #include "../demo/scene_cubes.hpp"
 #include "../demo/scene_viknell.hpp"
 
-// maya include
+// Wisp rendering framework
+#include "frame_graph/frame_graph.hpp"
+#include "scene_graph/camera_node.hpp"
+#include "scene_graph/scene_graph.hpp"
+#include "wisp.hpp"
+
+// Maya API
 #include <maya/M3dView.h>
 #include <maya/MDagPath.h>
-#include <maya\MEulerRotation.h>
+#include <maya/MEulerRotation.h>
 #include <maya/MFnCamera.h>
-#include <maya\MFnTransform.h>
+#include <maya/MFnTransform.h>
+#include <maya/MGlobal.h>
 #include <maya/MImage.h>
-#include <maya\MGlobal.h>
 #include <maya/MMatrix.h>
+#include <maya/MQuaternion.h>
 #include <maya/MString.h>
-#include <maya\MQuaternion.h>
 
-//std include
+// C++ standard
 #include <algorithm>
+#include <memory>
 #include <memory>
 #include <sstream>
 
@@ -100,7 +93,7 @@ namespace wmr
 
 	ViewportRenderer::ViewportRenderer(const MString& name)
 		: MRenderOverride(name)
-		, m_ui_name(wisp::settings::PRODUCT_NAME)
+		, m_ui_name(wmr::settings::PRODUCT_NAME)
 		, m_current_render_operation(-1)
 	{
 		ConfigureRenderOperations();
@@ -126,10 +119,14 @@ namespace wmr
 
 	void ViewportRenderer::Destroy()
 	{
+		// Wait for the GPU to finish all work
 		m_render_system->WaitForAllPreviousWork();
 		m_model_loader.reset();
 		m_render_system.reset();
 		m_frame_graph_manager.reset();
+
+		// Release Maya textures
+		ReleaseTextureResources();
 	}
 
 	void ViewportRenderer::ConfigureRenderOperations()
@@ -263,7 +260,7 @@ namespace wmr
 	void ViewportRenderer::SynchronizeWispWithMayaViewportCamera()
 	{
 		M3dView maya_view;
-		MStatus status = M3dView::getM3dViewFromModelPanel( wisp::settings::VIEWPORT_PANEL_NAME, maya_view );
+		MStatus status = M3dView::getM3dViewFromModelPanel( wmr::settings::VIEWPORT_PANEL_NAME, maya_view );
 
 		if( status != MStatus::kSuccess )
 		{

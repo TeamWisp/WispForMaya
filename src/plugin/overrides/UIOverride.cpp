@@ -18,6 +18,7 @@ namespace wmr
 
 	MHWRender::MClearOperation& WispUIRenderer::clearOperation()
 	{
+		// Do not clear anything
 		mClearOperation.setMask(static_cast<unsigned int>(MHWRender::MClearOperation::kClearNone));
 		return mClearOperation;
 	}
