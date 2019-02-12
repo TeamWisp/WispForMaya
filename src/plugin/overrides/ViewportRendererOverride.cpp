@@ -1,50 +1,49 @@
 #include "ViewportRendererOverride.hpp"
 
 //plugin includes
+#include "../scenegraph/ScenegraphParser.hpp"
 #include "miscellaneous/Settings.hpp"
 #include "miscellaneous/Functions.hpp"
+#include "plugin/FrameGraphManager.hpp"
 #include "QuadRendererOverride.hpp"
-#include "../scenegraph/ScenegraphParser.hpp"
 #include "UIOverride.hpp"
 
 //wisp include
 #include "renderer.hpp"
-#include "render_tasks/d3d12_imgui_render_task.hpp"
-#include "render_tasks/d3d12_deferred_main.hpp"
-#include "render_tasks/d3d12_deferred_composition.hpp"
-#include "render_tasks/d3d12_deferred_render_target_copy.hpp"
+//#include "render_tasks/d3d12_imgui_render_task.hpp"
+//#include "render_tasks/d3d12_deferred_main.hpp"
+//#include "render_tasks/d3d12_deferred_composition.hpp"
+//#include "render_tasks/d3d12_deferred_render_target_copy.hpp"
 #include "scene_graph\camera_node.hpp"
 #include "scene_graph\scene_graph.hpp"
+//#include "render_tasks/d3d12_pixel_data_readback.hpp"
+//#include "render_tasks/d3d12_depth_data_readback.hpp"
+//#include "render_tasks\d3d12_post_processing.hpp"
+//#include "frame_graph/frame_graph.hpp"
 #include "wisp.hpp"
-#include "render_tasks/d3d12_pixel_data_readback.hpp"
-#include "render_tasks/d3d12_depth_data_readback.hpp"
-#include "render_tasks\d3d12_post_processing.hpp"
-
 
 //demo include
 #include "../demo/engine_interface.hpp"
-#include "../demo/scene_viknell.hpp"
 #include "../demo/resources.hpp"
 #include "../demo/scene_cubes.hpp"
+#include "../demo/scene_viknell.hpp"
 
 // maya include
-#include <maya/MString.h>
 #include <maya/M3dView.h>
-#include <maya/MMatrix.h>
 #include <maya/MDagPath.h>
-#include <maya/MFnCamera.h>
-#include <maya/MImage.h>
-#include <maya/M3dView.h>
-#include <maya\MGlobal.h>
-#include <maya\MQuaternion.h>
 #include <maya\MEulerRotation.h>
+#include <maya/MFnCamera.h>
 #include <maya\MFnTransform.h>
+#include <maya/MImage.h>
+#include <maya\MGlobal.h>
+#include <maya/MMatrix.h>
+#include <maya/MString.h>
+#include <maya\MQuaternion.h>
 
 //std include
 #include <algorithm>
 #include <memory>
 #include <sstream>
-#include <maya/MGlobal.h>
 
 auto window = std::make_unique<wr::Window>( GetModuleHandleA( nullptr ), "D3D12 Test App", 1280, 720 );
 
@@ -128,10 +127,9 @@ namespace wmr
 	void ViewportRenderer::Destroy()
 	{
 		m_render_system->WaitForAllPreviousWork();
-		m_framegraph->Destroy();
 		m_model_loader.reset();
 		m_render_system.reset();
-		m_framegraph.reset();
+		m_frame_graph_manager.reset();
 	}
 
 	void ViewportRenderer::ConfigureRenderOperations()
@@ -206,39 +204,42 @@ namespace wmr
 
 		m_render_system->InitSceneGraph( *m_scenegraph.get() );*/
 
-		m_framegraph = std::make_unique<wr::FrameGraph>( 7 );
+		//m_framegraph = std::make_unique<wr::FrameGraph>( 7 );
 
-		wr::AddEquirectToCubemapTask( *m_framegraph );
+		//wr::AddEquirectToCubemapTask( *m_framegraph );
 
-		wr::AddCubemapConvolutionTask( *m_framegraph );
+	//	wr::AddCubemapConvolutionTask( *m_framegraph );
 
 		// Construct the G-buffer
-		wr::AddDeferredMainTask( *m_framegraph, std::nullopt, std::nullopt );
+		//wr::AddDeferredMainTask( *m_framegraph, std::nullopt, std::nullopt );
 		
 		// Save the depth buffer CPU pointer
-		wr::AddDepthDataReadBackTask<wr::DeferredMainTaskData>(*m_framegraph, std::nullopt, std::nullopt);
+	//	wr::AddDepthDataReadBackTask<wr::DeferredMainTaskData>(*m_framegraph, std::nullopt, std::nullopt);
 
 		// Merge the G-buffer into one final texture
-		wr::AddDeferredCompositionTask( *m_framegraph, std::nullopt, std::nullopt );
+	//	wr::AddDeferredCompositionTask( *m_framegraph, std::nullopt, std::nullopt );
 
-		wr::AddPostProcessingTask<wr::DeferredCompositionTaskData>( *m_framegraph );
+	//	wr::AddPostProcessingTask<wr::DeferredCompositionTaskData>( *m_framegraph );
 
 		// Save the final texture CPU pointer
-		wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*m_framegraph, std::nullopt, std::nullopt);
+	//	wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*m_framegraph, std::nullopt, std::nullopt);
 
 		// Copy the composition pixel data to the final render target
-		wr::AddRenderTargetCopyTask<wr::PostProcessingData>( *m_framegraph );
+	//	wr::AddRenderTargetCopyTask<wr::PostProcessingData>( *m_framegraph );
 
 		// ImGui
-		auto render_editor = [&]()
+		/*auto render_editor = [&]()
 		{
 			engine::RenderEngine( m_render_system.get(), m_scenegraph.get() );
 		};
 
-		auto imgui_task = wr::GetImGuiTask( render_editor );
+		auto imgui_task = wr::GetImGuiTask( render_editor );*/
 		
-		m_framegraph->AddTask<wr::ImGuiTaskData>( imgui_task );
-		m_framegraph->Setup( *m_render_system );
+		//m_framegraph->AddTask<wr::ImGuiTaskData>( imgui_task );
+		//m_framegraph->Setup( *m_render_system );
+		// Create the frame graphs and start out using the deferred rendering pipeline
+		m_frame_graph_manager = std::make_unique<FrameGraphManager>();
+		m_frame_graph_manager->Create(*m_render_system, RendererFrameGraphType::DEFERRED);
 	}
 
 	MHWRender::DrawAPI ViewportRenderer::supportedDrawAPIs() const
@@ -306,13 +307,14 @@ namespace wmr
 		m_viewport_camera->SetFov( AI_RAD_TO_DEG(hfov) );
 
 
+		m_viewport_camera->SetFov( AI_RAD_TO_DEG( camera_functions.horizontalFieldOfView()) );
 	}
 
 	MStatus ViewportRenderer::setup(const MString& destination)
 	{
 		SynchronizeWispWithMayaViewportCamera();
 
-		auto textures = m_render_system->Render( m_scenegraph, *m_framegraph );
+		auto textures = m_render_system->Render( m_scenegraph, *m_frame_graph_manager->Get());
 
 		auto* const maya_renderer = MHWRender::MRenderer::theRenderer();
 

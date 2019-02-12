@@ -32,6 +32,8 @@ namespace wmr
 		DEPTH
 	};
 
+	class FrameGraphManager;
+
 	class ViewportRenderer final : public MHWRender::MRenderOverride
 	{
 	public:
@@ -78,6 +80,8 @@ namespace wmr
 	private:
 		void SynchronizeWispWithMayaViewportCamera();
 
+		// Frame graph manager to set the correct Wisp frame graph type
+		std::unique_ptr<FrameGraphManager> m_frame_graph_manager;
 
 		MString m_ui_name;
 
@@ -98,7 +102,6 @@ namespace wmr
 		std::unique_ptr<wr::AssimpModelLoader> m_model_loader;
 		std::shared_ptr<wr::CameraNode> m_viewport_camera;
 		std::unique_ptr<wr::D3D12RenderSystem> m_render_system;
-		std::unique_ptr<wr::FrameGraph> m_framegraph;
 		std::shared_ptr<wr::SceneGraph> m_scenegraph;
 		std::shared_ptr<wr::TexturePool> m_texture_pool;
 
