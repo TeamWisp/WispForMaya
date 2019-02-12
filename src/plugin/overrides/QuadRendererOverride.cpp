@@ -14,12 +14,11 @@ namespace wmr
 
 	WispScreenBlitter::~WispScreenBlitter()
 	{
+		// Get a hold of the Maya renderer instance
 		MHWRender::MRenderer* maya_renderer = MHWRender::MRenderer::theRenderer();
 
 		if (!maya_renderer)
-		{
 			return;
-		}
 
 		// Release the shader
 		if (m_shader_instance)
@@ -46,16 +45,20 @@ namespace wmr
 	{
 		if (!m_shader_instance)
 		{
+			// Get a hold of the Maya renderer
 			MHWRender::MRenderer* maya_renderer = MHWRender::MRenderer::theRenderer();
+			
+			// Get a hold of the Maya shader manager
 			const MHWRender::MShaderManager* maya_shader_manager = maya_renderer ? maya_renderer->getShaderManager() : nullptr;
 
 			if (maya_shader_manager)
 			{
-				// TODO: Write a custom shader that does not use the depth buffer
+				// TODO: Write a custom shader that does not flip the texture and performs a color correction
 				m_shader_instance = maya_shader_manager->getEffectsFileShader("mayaBlitColorDepth", "");
 			}
 		}
 
+		// Assume the operation failed
 		MStatus status = MStatus::kFailure;
 
 		if (m_shader_instance)
@@ -65,29 +68,31 @@ namespace wmr
 
 			if (m_color_texture_changed)
 			{
+				// Use this color texture to render the scene
 				status = m_shader_instance->setParameter("gColorTex", m_color_texture);
 				m_color_texture_changed = false;
 			}
 
 			if (m_depth_texture_changed)
 			{
+				// Use this depth texture to render the scene
 				status = m_shader_instance->setParameter("gDepthTex", m_depth_texture);
 				m_depth_texture_changed = false;
 			}
 		}
 
+		// If the operation succeeded, return the shader instance, else, nullptr
 		if (status != MStatus::kSuccess)
-		{
 			return nullptr;
-		}
-
-		return m_shader_instance;
+		else
+			return m_shader_instance;
 	}
 
-	const MHWRender::MDepthStencilState * WispScreenBlitter::depthStencilStateOverride()
+	const MHWRender::MDepthStencilState* WispScreenBlitter::depthStencilStateOverride()
 	{
 		if (!m_depth_stencil_state)
 		{
+			// A description provides Maya with all the necessary information it needs to know about the depth texture
 			MHWRender::MDepthStencilStateDesc ds_state_desc;
 			ds_state_desc.depthEnable = true;
 			ds_state_desc.depthWriteEnable = true;
@@ -101,7 +106,10 @@ namespace wmr
 
 	MHWRender::MClearOperation& WispScreenBlitter::clearOperation()
 	{
+		// Just use a solid color everywhere, no gradient
 		mClearOperation.setClearGradient(false);
+
+		// Clear everything there is
 		mClearOperation.setMask(static_cast<unsigned int>(MHWRender::MClearOperation::kClearAll));
 
 		return mClearOperation;
