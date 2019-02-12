@@ -1,10 +1,14 @@
 #include "PluginMain.hpp"
-#include "overrides/ViewportRendererOverride.hpp"
+
+// Wisp plug-in
 #include "miscellaneous/Functions.hpp"
+#include "overrides/ViewportRendererOverride.hpp"
 
-#include <maya/MGlobal.h>
+// Maya API
 #include <maya/MCommandResult.h>
+#include <maya/MGlobal.h>
 
+// C++ standard
 #include <assert.h>
 
 namespace wmr
@@ -27,11 +31,6 @@ namespace wmr
 		}
 		// If the scene was previously unmodified, return it to that state to avoid dirtying
 		ActOnCurrentDirtyState(is_scene_dirty);
-
-
-
-
-
 	}
 
 	bool PluginMain::IsSceneDirty() const
