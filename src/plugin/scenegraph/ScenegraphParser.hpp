@@ -1,13 +1,33 @@
 #pragma once
-
-class ScenegraphParser
+#include <maya\MFnMesh.h>
+namespace wr
 {
-public:
-	ScenegraphParser();
-	~ScenegraphParser();
+	class SceneGraph;
+	class D3D12RenderSystem;
+	class TexturePool;
+	class MaterialPool;
+}
 
-	void initialize( );
+//class MFnMesh;
 
-private:
+namespace wmr
+{
+	class ScenegraphParser
+	{
+	public:
+		ScenegraphParser( wr::D3D12RenderSystem& render_system, wr::SceneGraph& scene_graph );
+		~ScenegraphParser();
 
-};
+		void initialize( std::shared_ptr<wr::TexturePool> texture_pool, std::shared_ptr<wr::MaterialPool> material_pool);
+
+	private:
+		void meshAdded( MFnMesh& fnmesh );
+		static void addedCallback( MObject &node, void *clientData );
+		wr::SceneGraph& m_scenegraph;
+		wr::D3D12RenderSystem& m_render_system;
+
+		static ScenegraphParser* getInstance();
+
+		static ScenegraphParser* m_instance;
+	};
+}

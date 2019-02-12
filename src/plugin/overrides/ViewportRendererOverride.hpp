@@ -25,6 +25,9 @@ namespace wr
 //! Generic plug-in namespace (Wisp Maya Renderer)
 namespace wmr
 {
+    // Forward declarations
+	class ScenegraphParser;
+
 	//! Indicates which buffer should be used to save the Wisp renderer output data
 	enum class WispBufferType
 	{
@@ -221,5 +224,7 @@ namespace wmr
 
 		//! Wisp framework texture pool
 		std::shared_ptr<wr::TexturePool> m_texture_pool;
+
+		std::unique_ptr<wmr::ScenegraphParser> m_scenegraph_parser;
 	};
 }
