@@ -34,6 +34,11 @@ namespace wmr
 		 *  \return Returns the clear operation data structure as seen in the Maya API. */
 		MHWRender::MClearOperation& clearOperation() final override;
 		
+		//! Configure what the renderer should render
+		/*! Please note that this is an implementation of a Maya API function. Please refer to the Autodesk documentation
+		 *  for more information.
+		 *  
+		 *  return Flag value, check the Autodesk documentation for specific values that can be used here. */
 		MUint64 getObjectTypeExclusions() final override;
 	};
 }
