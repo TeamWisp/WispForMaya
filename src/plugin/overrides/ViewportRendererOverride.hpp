@@ -24,6 +24,8 @@ namespace wr
 
 namespace wmr
 {
+	class ScenegraphParser;
+
 	enum class WispBufferType
 	{
 		COLOR,
@@ -102,5 +104,7 @@ namespace wmr
 		std::unique_ptr<wr::D3D12RenderSystem> m_render_system;
 		std::shared_ptr<wr::SceneGraph> m_scenegraph;
 		std::shared_ptr<wr::TexturePool> m_texture_pool;
+
+		std::unique_ptr<wmr::ScenegraphParser> m_scenegraph_parser;
 	};
 }

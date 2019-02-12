@@ -1,42 +1,56 @@
 #include "ViewportRendererOverride.hpp"
-#include "QuadRendererOverride.hpp"
-#include "UIOverride.hpp"
-#include "plugin/FrameGraphManager.hpp"
+
+//plugin includes
+#include "../scenegraph/ScenegraphParser.hpp"
 #include "miscellaneous/Settings.hpp"
 #include "miscellaneous/Functions.hpp"
+#include "plugin/FrameGraphManager.hpp"
+#include "QuadRendererOverride.hpp"
+#include "UIOverride.hpp"
 
-#include <memory>
-#include <algorithm>
+//wisp include
+#include "renderer.hpp"
+//#include "render_tasks/d3d12_imgui_render_task.hpp"
+//#include "render_tasks/d3d12_deferred_main.hpp"
+//#include "render_tasks/d3d12_deferred_composition.hpp"
+//#include "render_tasks/d3d12_deferred_render_target_copy.hpp"
+#include "scene_graph\camera_node.hpp"
+#include "scene_graph\scene_graph.hpp"
+//#include "render_tasks/d3d12_pixel_data_readback.hpp"
+//#include "render_tasks/d3d12_depth_data_readback.hpp"
+//#include "render_tasks\d3d12_post_processing.hpp"
+//#include "frame_graph/frame_graph.hpp"
 #include "wisp.hpp"
-#include "frame_graph/frame_graph.hpp"
-#include "../demo/resources.hpp"
 
+//demo include
 #include "../demo/engine_interface.hpp"
-#include "../demo/scene_viknell.hpp"
+#include "../demo/resources.hpp"
 #include "../demo/scene_cubes.hpp"
+#include "../demo/scene_viknell.hpp"
 
-#include "scene_graph/camera_node.hpp"
-#include "scene_graph/scene_graph.hpp"
-
-#include <maya/MString.h>
+// maya include
 #include <maya/M3dView.h>
-#include <maya/MMatrix.h>
 #include <maya/MDagPath.h>
-#include <maya/MFnCamera.h>
-#include <maya/MImage.h>
-#include <maya/M3dView.h>
-#include <maya\MGlobal.h>
-#include <maya\MQuaternion.h>
 #include <maya\MEulerRotation.h>
+#include <maya/MFnCamera.h>
 #include <maya\MFnTransform.h>
+#include <maya/MImage.h>
+#include <maya\MGlobal.h>
+#include <maya/MMatrix.h>
+#include <maya/MString.h>
+#include <maya\MQuaternion.h>
 
 //std include
 #include <algorithm>
 #include <memory>
 #include <sstream>
-#include <maya/MGlobal.h>
 
 auto window = std::make_unique<wr::Window>( GetModuleHandleA( nullptr ), "D3D12 Test App", 1280, 720 );
+
+static std::shared_ptr<wr::TexturePool> texture_pool;
+static std::shared_ptr<wr::MaterialPool> material_pool;
+static wr::TextureHandle loaded_skybox;
+static wr::TextureHandle loaded_skybox2;
 
 #define SCENE viknell_scene
 
@@ -54,6 +68,34 @@ namespace wmr
 				view.setDisplayStyle( M3dView::kGouraudShaded );
 			}
 		}
+	}
+
+	static void CreateScene( wr::SceneGraph* scene_graph, wr::Window* window )
+	{
+		static std::shared_ptr<DebugCamera> camera = scene_graph->CreateChild<DebugCamera>( nullptr, 90.f, ( float )window->GetWidth() / ( float )window->GetHeight() );
+		camera->SetPosition( { 0, 0, -1 } );
+
+
+		loaded_skybox2 = texture_pool->Load( "resources/materials/LA_Downtown_Afternoon_Fishing_3k.hdr", false, false );
+		loaded_skybox = texture_pool->Load( "resources/materials/skybox.dds", false, false );
+
+		scene_graph->m_skybox = loaded_skybox2;
+
+		auto skybox = scene_graph->CreateChild<wr::SkyboxNode>( nullptr, loaded_skybox );
+
+		// Lights
+		auto point_light_0 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
+		point_light_0->SetRadius( 30.0f );
+		point_light_0->SetPosition( { -10, 0, 0 } );
+
+		auto point_light_1 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
+		point_light_1->SetRadius( 20.0f );
+		point_light_1->SetPosition( { 0, 0, 10.0 } );
+
+		auto point_light_2 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
+		point_light_2->SetRadius( 12.0f );
+		point_light_2->SetPosition( { -0.7, 3.5, 0 } );
+
 	}
 
 	ViewportRenderer::ViewportRenderer(const MString& name)
@@ -74,6 +116,12 @@ namespace wmr
 	{
 		CreateRenderOperations();
 		InitializeWispRenderer();
+		
+		m_scenegraph_parser = std::make_unique<ScenegraphParser>(*m_render_system, *m_scenegraph);
+		m_scenegraph_parser->initialize(texture_pool, material_pool);
+
+		CreateScene( m_scenegraph.get(), window.get() );
+		m_render_system->InitSceneGraph( *m_scenegraph.get() );
 	}
 
 	void ViewportRenderer::Destroy()
@@ -143,17 +191,52 @@ namespace wmr
 
 		m_render_system->Init( window.get() );
 
-		resources::CreateResources( m_render_system.get() );
+		texture_pool = m_render_system->CreateTexturePool( 16, 14 );
+		material_pool = m_render_system->CreateMaterialPool( 8 );
+
 
 		m_scenegraph = std::make_shared<wr::SceneGraph>( m_render_system.get() );
 
 		m_viewport_camera = m_scenegraph->CreateChild<wr::CameraNode>( nullptr, 90.f, ( float )window->GetWidth() / ( float )window->GetHeight() );
 		m_viewport_camera->SetPosition( { 0, 0, -1 } );
 
-		SCENE::CreateScene( m_scenegraph.get(), window.get() );
+		/*CreateScene( m_scenegraph.get(), window.get() );
 
-		m_render_system->InitSceneGraph( *m_scenegraph.get() );
+		m_render_system->InitSceneGraph( *m_scenegraph.get() );*/
 
+		//m_framegraph = std::make_unique<wr::FrameGraph>( 7 );
+
+		//wr::AddEquirectToCubemapTask( *m_framegraph );
+
+	//	wr::AddCubemapConvolutionTask( *m_framegraph );
+
+		// Construct the G-buffer
+		//wr::AddDeferredMainTask( *m_framegraph, std::nullopt, std::nullopt );
+		
+		// Save the depth buffer CPU pointer
+	//	wr::AddDepthDataReadBackTask<wr::DeferredMainTaskData>(*m_framegraph, std::nullopt, std::nullopt);
+
+		// Merge the G-buffer into one final texture
+	//	wr::AddDeferredCompositionTask( *m_framegraph, std::nullopt, std::nullopt );
+
+	//	wr::AddPostProcessingTask<wr::DeferredCompositionTaskData>( *m_framegraph );
+
+		// Save the final texture CPU pointer
+	//	wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*m_framegraph, std::nullopt, std::nullopt);
+
+		// Copy the composition pixel data to the final render target
+	//	wr::AddRenderTargetCopyTask<wr::PostProcessingData>( *m_framegraph );
+
+		// ImGui
+		/*auto render_editor = [&]()
+		{
+			engine::RenderEngine( m_render_system.get(), m_scenegraph.get() );
+		};
+
+		auto imgui_task = wr::GetImGuiTask( render_editor );*/
+		
+		//m_framegraph->AddTask<wr::ImGuiTaskData>( imgui_task );
+		//m_framegraph->Setup( *m_render_system );
 		// Create the frame graphs and start out using the deferred rendering pipeline
 		m_frame_graph_manager = std::make_unique<FrameGraphManager>();
 		m_frame_graph_manager->Create(*m_render_system, RendererFrameGraphType::DEFERRED);
@@ -197,14 +280,9 @@ namespace wmr
 		MFnTransform camera_transform( camera_dag_path.transform() );
 		// Additional functionality
 		
-		MEulerRotation view_rotation;// = MEulerRotation::decompose( mv_matrix.inverse(), MEulerRotation::RotationOrder::kXYZ );
+		MEulerRotation view_rotation;
 		camera_transform.getRotation( view_rotation );
-
-
-		std::stringstream strs;
-		strs << "X: " << view_rotation.x << " Y: " << view_rotation.y << " Z: " << view_rotation.z << std::endl;
-		MGlobal::displayInfo(std::string(strs.str()).c_str());
-		
+	
 		m_viewport_camera->SetRotation( {  ( float )view_rotation.x,( float )view_rotation.y, ( float )view_rotation.z } );
 
 		
@@ -217,6 +295,18 @@ namespace wmr
 		m_viewport_camera->m_frustum_far = camera_functions.farClippingPlane();
 		m_viewport_camera->m_frustum_near = camera_functions.nearClippingPlane();
 		
+
+		unsigned int target_width = 0;
+		unsigned int target_height = 0;
+		MHWRender::MRenderer::theRenderer()->outputTargetSize( target_width, target_height );
+
+		double hfov = camera_functions.horizontalFieldOfView();
+		double vfov = camera_functions.verticalFieldOfView();
+		m_viewport_camera->SetAspectRatio( 1.0f );
+
+		m_viewport_camera->SetFov( AI_RAD_TO_DEG(hfov) );
+
+
 		m_viewport_camera->SetFov( AI_RAD_TO_DEG( camera_functions.horizontalFieldOfView()) );
 	}
 
