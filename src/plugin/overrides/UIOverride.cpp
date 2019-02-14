@@ -7,10 +7,6 @@ namespace wmr
 	{
 	}
 
-	WispUIRenderer::~WispUIRenderer()
-	{
-	}
-
 	MHWRender::MSceneRender::MSceneFilterOption WispUIRenderer::renderFilterOverride()
 	{
 		return MHWRender::MSceneRender::kRenderNonShadedItems;
