@@ -3,18 +3,19 @@
 // Wisp plug-in
 #include "frame_graph/frame_graph.hpp"
 
+// TODO: Find the best order of include in alphabetical order without breaking the dependencies
 // Wisp rendering framework
-#include "render_tasks/d3d12_build_acceleration_structures.hpp"
-#include "render_tasks/d3d12_cubemap_convolution.hpp"
 #include "render_tasks/d3d12_deferred_composition.hpp"
 #include "render_tasks/d3d12_deferred_main.hpp"
 #include "render_tasks/d3d12_deferred_render_target_copy.hpp"
-#include "render_tasks/d3d12_depth_data_readback.hpp"
-#include "render_tasks/d3d12_equirect_to_cubemap.hpp"
-#include "render_tasks/d3d12_pixel_data_readback.hpp"
-#include "render_tasks/d3d12_post_processing.hpp"
 #include "render_tasks/d3d12_raytracing_task.hpp"
 #include "render_tasks/d3d12_rt_hybrid_task.hpp"
+#include "render_tasks/d3d12_equirect_to_cubemap.hpp"
+#include "render_tasks/d3d12_cubemap_convolution.hpp"
+#include "render_tasks/d3d12_depth_data_readback.hpp"
+#include "render_tasks/d3d12_pixel_data_readback.hpp"
+#include "render_tasks/d3d12_post_processing.hpp"
+#include "render_tasks/d3d12_build_acceleration_structures.hpp"
 
 namespace wmr
 {
