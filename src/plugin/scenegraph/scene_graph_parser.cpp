@@ -8,7 +8,7 @@
 #include "d3d12\d3d12_renderer.hpp"
 #include "d3d12\d3d12_model_pool.hpp" 
 
-#include "plugin\CallbackManager.hpp"
+#include "plugin\callback_manager.hpp"
 
 
 #include <maya\MDagPath.h>

@@ -57,7 +57,7 @@ namespace wmr
 		//! Releases the texture resources
 		/*! Makes sure that the Maya texture resources are always released.
 		 *  \sa ReleaseTextureResources() */
-		~ViewportRenderer() override;
+		virtual ~ViewportRenderer();
 
 		//! Initialize the renderer override
 		/*! This function has to be called to make this class work! It creates the necessary render operations, and it

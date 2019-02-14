@@ -19,7 +19,7 @@ namespace wmr
 		//! Clean-up after the plug-in
 		/*! Releases the resources used in the plug-in. Loaded shaders will be unloaded and cleaned up, render and depth 
 		 *  textures are deallocated.*/
-		~WispScreenBlitter() final override;
+		virtual ~WispScreenBlitter();
 
 		//! Set the active color texture
 		/*! Sets the color texture resource to whatever texture is passed as an argument. Triggers the
