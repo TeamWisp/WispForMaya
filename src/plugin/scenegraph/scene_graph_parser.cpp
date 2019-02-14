@@ -1,4 +1,4 @@
-#include "ScenegraphParser.hpp"
+#include "scene_graph_parser.hpp"
 
 #include "model_pool.hpp"
 #include "vertex.hpp"

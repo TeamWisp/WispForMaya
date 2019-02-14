@@ -4,7 +4,7 @@
 #include "miscellaneous/functions.hpp"
 #include "miscellaneous/settings.hpp"
 #include "plugin/FrameGraphManager.hpp"
-#include "plugin/scenegraph/ScenegraphParser.hpp"
+#include "plugin/scenegraph/scene_graph_parser.hpp"
 #include "quad_renderer_override.hpp"
 #include "ui_override.hpp"
 
