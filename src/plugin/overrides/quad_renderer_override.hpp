@@ -10,7 +10,7 @@ namespace wmr
 	/*! Implementation of a Maya MQuadRender. It inherits from the Maya API base class and implements all methods needed
 	 *  to make the override work. The code style for functions is a bit different here because our style guide differs
 	 *  from the style used for the Maya API. */
-	class WispScreenBlitter : public MHWRender::MQuadRender
+	class WispScreenBlitter final : public MHWRender::MQuadRender
 	{
 	public:
 		//! Sets all variables to their default values
@@ -19,7 +19,7 @@ namespace wmr
 		//! Clean-up after the plug-in
 		/*! Releases the resources used in the plug-in. Loaded shaders will be unloaded and cleaned up, render and depth 
 		 *  textures are deallocated.*/
-		virtual ~WispScreenBlitter();
+		~WispScreenBlitter() override;
 
 		//! Set the active color texture
 		/*! Sets the color texture resource to whatever texture is passed as an argument. Triggers the
@@ -43,21 +43,21 @@ namespace wmr
 		 *  is an override of a Maya API function, so check the Autodesk documentation for more information.
 		 *  
 		 *  \return Returns the current shader instance stored in the class, nullptr is returned when the shader member is unassigned. */
-		const MHWRender::MShaderInstance* shader() final override;
+		const MHWRender::MShaderInstance* shader() override;
 
 		//! Sets the depth stencil buffer description
 		/*! Please note that this is a function override from the Maya API, so check the Autodesk documentation for more
 		 *  information.
 		 *  
 		 *  \return Returns the depth stencil buffer description. */
-		const MHWRender::MDepthStencilState* depthStencilStateOverride() final override;
+		const MHWRender::MDepthStencilState* depthStencilStateOverride() override;
 
 		//! Configure the clear operation for the fullscreen quad renderer
 		/*! Please note that this is a function override from the Maya API, so check the Autodesk documentation for more
 		 *  information.
 		 *  
 		 *  \return Returns the clear operation data structure as seen in the Maya API. */
-		MHWRender::MClearOperation& clearOperation() final override;
+		MHWRender::MClearOperation& clearOperation() override;
 
 	private:
 		// Hardware shader used to render the fullscreen quad
