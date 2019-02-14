@@ -1,12 +1,12 @@
-#include "ViewportRendererOverride.hpp"
+#include "viewport_renderer_override.hpp"
 
 // Wisp plug-in
-#include "miscellaneous/Functions.hpp"
-#include "miscellaneous/Settings.hpp"
-#include "plugin/FrameGraphManager.hpp"
-#include "plugin/scenegraph/ScenegraphParser.hpp"
-#include "QuadRendererOverride.hpp"
-#include "UIOverride.hpp"
+#include "miscellaneous/functions.hpp"
+#include "miscellaneous/settings.hpp"
+#include "plugin/frame_graph_manager.hpp"
+#include "plugin/scenegraph/scene_graph_parser.hpp"
+#include "quad_renderer_override.hpp"
+#include "ui_override.hpp"
 
 // Wisp rendering framework demo
 #include "../demo/engine_interface.hpp"

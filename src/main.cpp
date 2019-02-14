@@ -1,8 +1,7 @@
 // Wisp plug-in
-#include "miscellaneous/Settings.hpp"
-
-#include "plugin/PluginMain.hpp"
-#include "plugin/overrides/ViewportRendererOverride.hpp"
+#include "miscellaneous/settings.hpp"
+#include "plugin/plugin_main.hpp"
+#include "plugin/overrides/viewport_renderer_override.hpp"
 
 // Maya API
 #include <maya/MFnPlugin.h>

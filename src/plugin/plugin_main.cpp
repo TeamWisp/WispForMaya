@@ -1,8 +1,8 @@
-#include "PluginMain.hpp"
+#include "plugin_main.hpp"
 
 // Wisp plug-in
-#include "miscellaneous/Functions.hpp"
-#include "overrides/ViewportRendererOverride.hpp"
+#include "miscellaneous/functions.hpp"
+#include "overrides/viewport_renderer_override.hpp"
 
 // Maya API
 #include <maya/MCommandResult.h>
