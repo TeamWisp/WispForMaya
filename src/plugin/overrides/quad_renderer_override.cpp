@@ -1,4 +1,4 @@
-#include "QuadRendererOverride.hpp"
+#include "quad_renderer_override.hpp"
 
 namespace wmr
 {
