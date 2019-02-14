@@ -1,8 +1,8 @@
 #include "ViewportRendererOverride.hpp"
 
 // Wisp plug-in
-#include "miscellaneous/Functions.hpp"
-#include "miscellaneous/Settings.hpp"
+#include "miscellaneous/functions.hpp"
+#include "miscellaneous/settings.hpp"
 #include "plugin/FrameGraphManager.hpp"
 #include "plugin/scenegraph/ScenegraphParser.hpp"
 #include "QuadRendererOverride.hpp"

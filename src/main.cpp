@@ -1,5 +1,5 @@
 // Wisp plug-in
-#include "miscellaneous/Settings.hpp"
+#include "miscellaneous/settings.hpp"
 
 #include "plugin/PluginMain.hpp"
 #include "plugin/overrides/ViewportRendererOverride.hpp"

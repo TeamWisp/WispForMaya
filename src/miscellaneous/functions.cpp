@@ -1,4 +1,4 @@
-#include "Functions.hpp"
+#include "functions.hpp"
 
 // Windows
 #include <Windows.h>
