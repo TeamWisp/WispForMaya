@@ -1,4 +1,4 @@
-#include "PluginMain.hpp"
+#include "plugin_main.hpp"
 
 // Wisp plug-in
 #include "miscellaneous/functions.hpp"

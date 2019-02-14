@@ -1,4 +1,4 @@
-#include "CallbackManager.hpp"
+#include "callback_manager.hpp"
 
 // Maya API
 #include <maya/MCallbackIdArray.h>

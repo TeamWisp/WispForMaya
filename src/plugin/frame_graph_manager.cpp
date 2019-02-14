@@ -1,4 +1,4 @@
-#include "FrameGraphManager.hpp"
+#include "frame_graph_manager.hpp"
 
 // Wisp plug-in
 #include "frame_graph/frame_graph.hpp"
