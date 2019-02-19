@@ -98,26 +98,18 @@ namespace wmr
 	{
 		ConfigureRenderOperations();
 		SetDefaultTextureState();
-	}
 
-	ViewportRenderer::~ViewportRenderer()
-	{
-		ReleaseTextureResources();
-	}
-
-	void ViewportRenderer::Initialize()
-	{
 		CreateRenderOperations();
 		InitializeWispRenderer();
-		
+
 		m_scenegraph_parser = std::make_unique<ScenegraphParser>(*m_render_system, *m_scenegraph);
 		m_scenegraph_parser->initialize(texture_pool, material_pool);
 
-		CreateScene( m_scenegraph.get(), window.get() );
-		m_render_system->InitSceneGraph( *m_scenegraph.get() );
+		CreateScene(m_scenegraph.get(), window.get());
+		m_render_system->InitSceneGraph(*m_scenegraph.get());
 	}
 
-	void ViewportRenderer::Destroy()
+	ViewportRenderer::~ViewportRenderer()
 	{
 		// Wait for the GPU to finish all work
 		m_render_system->WaitForAllPreviousWork();

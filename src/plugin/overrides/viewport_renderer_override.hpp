@@ -45,35 +45,23 @@ namespace wmr
 	class ViewportRenderer final : public MHWRender::MRenderOverride
 	{
 	public:
-		//! Prepares the object for initialization
+		//! Prepares the override for initialization and initializes
 		/*! When creating an instance of this class, the parent constructor is called, as well as two functions that will
 		 *  prepare the member variables for the initialization function later on.
 		 *  
 		 *  \param name The name of this renderer override.
 		 *  \sa ConfigureRenderOperations()
-		 *  \sa SetDefaultTextureState() */
+		 *  \sa SetDefaultTextureState()
+		 *  \sa InitializeWispRenderer()*/
 		ViewportRenderer(const MString& name);
-
-		//! Releases the texture resources
-		/*! Makes sure that the Maya texture resources are always released.
-		 *  \sa ReleaseTextureResources() */
-		~ViewportRenderer() override;
-
-		//! Initialize the renderer override
-		/*! This function has to be called to make this class work! It creates the necessary render operations, and it
-		 *  initializes the Wisp renderer.
-		 *  
-		 *  \sa CreateRenderOperations()
-		 *  \sa InitializeWispRenderer() */
-		void Initialize();
 
 		//! Stop the Wisp renderer and release any Maya textures
 		/*! When the override is destroyed, the Wisp renderer has to be killed first. To avoid nasty errors, this function
 		 *  first stops the Wisp renderer (synchronizes CPU and GPU) before removing its model loader object, render system,
 		 *  and frame graph manager. Afterwards, all remaining Maya textures will be released.
-		 *  
+		 *
 		 *  \sa ReleaseTextureResources()*/
-		void Destroy();
+		~ViewportRenderer() override;
 
 	private:
 		//! Set the names of the render operations

@@ -18,8 +18,9 @@ namespace wmr
 		// Workaround for avoiding dirtying the scene when registering overrides
 		const auto is_scene_dirty = IsSceneDirty();
 
-		m_wisp_viewport_renderer = std::make_unique<ViewportRenderer>( "wisp_ViewportBlitOverride" );
-		m_wisp_viewport_renderer->Initialize();
+		// Initialize the renderer override
+		m_wisp_viewport_renderer = std::make_unique<ViewportRenderer>("wisp_ViewportBlitOverride");
+
 		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
 		if( maya_renderer )
 		{
@@ -27,8 +28,9 @@ namespace wmr
 		}
 		else
 		{
-			assert( false );
+			assert(false);
 		}
+
 		// If the scene was previously unmodified, return it to that state to avoid dirtying
 		ActOnCurrentDirtyState(is_scene_dirty);
 	}
@@ -72,13 +74,11 @@ namespace wmr
 	{
 		// Not the Wisp renderer, but the internal Maya renderer
 		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
+
 		if (maya_renderer)
 		{
-			// Deregister the actual plug-in
+			// De-register the actual plug-in
 			maya_renderer->deregisterOverride(m_wisp_viewport_renderer.get());
 		}
-
-		// This makes sure the plug-in itself can be deinitialized
-		m_wisp_viewport_renderer->Destroy();
 	}
 }
