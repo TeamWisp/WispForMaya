@@ -1,8 +1,8 @@
-#include "quad_renderer_override.hpp"
+#include "screen_render_operation.hpp"
 
 namespace wmr
 {
-	WispScreenBlitter::WispScreenBlitter(const MString & name)
+	ScreenRenderOperation::ScreenRenderOperation(const MString & name)
 		: MQuadRender(name)
 		, m_shader_instance(nullptr)
 		, m_color_texture_changed(false)
@@ -12,7 +12,7 @@ namespace wmr
 		m_depth_texture.texture = nullptr;
 	}
 
-	WispScreenBlitter::~WispScreenBlitter()
+	ScreenRenderOperation::~ScreenRenderOperation()
 	{
 		// Get a hold of the Maya renderer instance
 		MHWRender::MRenderer* maya_renderer = MHWRender::MRenderer::theRenderer();
@@ -41,7 +41,7 @@ namespace wmr
 		}
 	}
 
-	const MHWRender::MShaderInstance* WispScreenBlitter::shader()
+	const MHWRender::MShaderInstance* ScreenRenderOperation::shader()
 	{
 		if (!m_shader_instance)
 		{
@@ -88,7 +88,7 @@ namespace wmr
 			return m_shader_instance;
 	}
 
-	const MHWRender::MDepthStencilState* WispScreenBlitter::depthStencilStateOverride()
+	const MHWRender::MDepthStencilState* ScreenRenderOperation::depthStencilStateOverride()
 	{
 		if (!m_depth_stencil_state)
 		{
@@ -104,7 +104,7 @@ namespace wmr
 		return m_depth_stencil_state;
 	}
 
-	MHWRender::MClearOperation& WispScreenBlitter::clearOperation()
+	MHWRender::MClearOperation& ScreenRenderOperation::clearOperation()
 	{
 		// Just use a solid color everywhere, no gradient
 		mClearOperation.setClearGradient(false);
@@ -115,13 +115,13 @@ namespace wmr
 		return mClearOperation;
 	}
 
-	void WispScreenBlitter::SetColorTexture(const MHWRender::MTextureAssignment& color_texture)
+	void ScreenRenderOperation::SetColorTexture(const MHWRender::MTextureAssignment& color_texture)
 	{
 		m_color_texture.texture = color_texture.texture;
 		m_color_texture_changed = true;
 	}
 
-	void WispScreenBlitter::SetDepthTexture(const MHWRender::MTextureAssignment& depth_texture)
+	void ScreenRenderOperation::SetDepthTexture(const MHWRender::MTextureAssignment& depth_texture)
 	{
 		m_depth_texture.texture = depth_texture.texture;
 		m_depth_texture_changed = true;

@@ -10,16 +10,16 @@ namespace wmr
 	/*! Implementation of a Maya MQuadRender. It inherits from the Maya API base class and implements all methods needed
 	 *  to make the override work. The code style for functions is a bit different here because our style guide differs
 	 *  from the style used for the Maya API. */
-	class WispScreenBlitter final : public MHWRender::MQuadRender
+	class ScreenRenderOperation final : public MHWRender::MQuadRender
 	{
 	public:
 		//! Sets all variables to their default values
-		WispScreenBlitter(const MString& name);
+		ScreenRenderOperation(const MString& name);
 
 		//! Clean-up after the plug-in
 		/*! Releases the resources used in the plug-in. Loaded shaders will be unloaded and cleaned up, render and depth 
 		 *  textures are deallocated.*/
-		~WispScreenBlitter() override;
+		~ScreenRenderOperation() override;
 
 		//! Set the active color texture
 		/*! Sets the color texture resource to whatever texture is passed as an argument. Triggers the

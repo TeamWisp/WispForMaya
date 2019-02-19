@@ -81,8 +81,8 @@ namespace wmr
 		/*! The names specified by the ConfigureRenderOperations() function indicate the order in which the render
 		 *  operations are expected.
 		 *  
-		 *  \sa WispScreenBlitter
-		 *  \sa WispUIRenderer */
+		 *  \sa ScreenRenderOperation
+		 *  \sa GizmoRenderOperation */
 		void CreateRenderOperations();
 
 		//! Initializes the Wisp rendering framework

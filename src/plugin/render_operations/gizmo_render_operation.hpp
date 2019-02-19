@@ -10,14 +10,14 @@ namespace wmr
 	/*! Implementation of a Maya MSceneRender. It inherits from the Maya API base class and implements all methods needed
 	 *  to make the override work. The code style for functions is a bit different here because our style guide differs
 	 *  from the style used for the Maya API. */
-	class WispUIRenderer final : public MHWRender::MSceneRender
+	class GizmoRenderOperation final : public MHWRender::MSceneRender
 	{
 	public:
 		//! Sets the name of the base class to the argument value
-		WispUIRenderer(const MString& name);
+		GizmoRenderOperation(const MString& name);
 
 		//! Unused
-		~WispUIRenderer() override = default;
+		~GizmoRenderOperation() override = default;
 
 	private:
 		//! Filter used to render the user-interface

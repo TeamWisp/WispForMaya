@@ -5,8 +5,8 @@
 #include "miscellaneous/settings.hpp"
 #include "plugin/frame_graph_manager.hpp"
 #include "plugin/parsers/scene_graph_parser.hpp"
-#include "render_operations\quad_renderer_override.hpp"
-#include "render_operations\ui_override.hpp"
+#include "render_operations\screen_render_operation.hpp"
+#include "render_operations\gizmo_render_operation.hpp"
 
 // Wisp rendering framework demo
 #include "../demo/engine_interface.hpp"
@@ -160,8 +160,8 @@ namespace wmr
 	{
 		if (!m_render_operations[0])
 		{
-			m_render_operations[0] = std::make_unique<WispScreenBlitter>(m_render_operation_names[0]);
-			m_render_operations[1] = std::make_unique<WispUIRenderer>(m_render_operation_names[1]);
+			m_render_operations[0] = std::make_unique<ScreenRenderOperation>(m_render_operation_names[0]);
+			m_render_operations[1] = std::make_unique<GizmoRenderOperation>(m_render_operation_names[1]);
 			m_render_operations[2] = std::make_unique<MHWRender::MHUDRender>();
 			m_render_operations[3] = std::make_unique<MHWRender::MPresentTarget>(m_render_operation_names[2]);
 		}
@@ -495,7 +495,7 @@ namespace wmr
 		// Update the textures used for the blit operation.
 		if (aquire_new_texture)
 		{
-			auto* custom_blit = (WispScreenBlitter*)m_render_operations[0].get();
+			auto* custom_blit = (ScreenRenderOperation*)m_render_operations[0].get();
 			custom_blit->SetColorTexture(m_color_texture);
 			custom_blit->SetDepthTexture(m_depth_texture);
 		}
