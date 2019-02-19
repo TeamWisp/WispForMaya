@@ -3,7 +3,7 @@
 // Wisp plug-in
 #include "miscellaneous/functions.hpp"
 #include "miscellaneous/settings.hpp"
-#include "plugin/frame_graph_manager.hpp"
+#include "plugin/framegraph/frame_graph_manager.hpp"
 #include "plugin/parsers/scene_graph_parser.hpp"
 #include "render_operations\screen_render_operation.hpp"
 #include "render_operations\gizmo_render_operation.hpp"
