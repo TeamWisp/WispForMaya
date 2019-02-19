@@ -41,16 +41,16 @@ file(GLOB MISC_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/miscellaneous/*.hpp")
 file(GLOB MISC_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/miscellaneous/*.cpp")
 file(GLOB PLUGIN_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/*.hpp")
 file(GLOB PLUGIN_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/*.cpp")
-file(GLOB PLUGIN_OVERRIDE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/overrides/*.hpp")
-file(GLOB PLUGIN_OVERRIDE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/overrides/*.cpp")
-file(GLOB PLUGIN_SCENEGRAPH_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/scenegraph/*.hpp")
-file(GLOB PLUGIN_SCENEGRAPH_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/scenegraph/*.cpp")
+file(GLOB PLUGIN_RENDER_OPERATIONS_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/render_operations/*.hpp")
+file(GLOB PLUGIN_RENDER_OPERATIONS_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/render_operations/*.cpp")
+file(GLOB PLUGIN_PARSERS_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/parsers/*.hpp")
+file(GLOB PLUGIN_PARSERS_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/parsers/*.cpp")
 # === Source groups === #
 source_group("Main" FILES ${HEADERS} ${SOURCES})
 source_group("Miscellaneous" FILES ${MISC_HEADERS} ${MISC_SOURCES})
 source_group("Plugin" FILES ${PLUGIN_HEADERS} ${PLUGIN_SOURCES})
-source_group("Plugin Overrides" FILES ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES})
-source_group("Plugin Scenegraph" FILES ${PLUGIN_SCENEGRAPH_HEADERS} ${PLUGIN_SCENEGRAPH_SOURCES})
+source_group("Plugin Render Operations" FILES ${PLUGIN_RENDER_OPERATIONS_HEADERS} ${PLUGIN_RENDER_OPERATIONS_SOURCES})
+source_group("Plugin Parsers" FILES ${PLUGIN_PARSERS_HEADERS} ${PLUGIN_PARSERS_SOURCES})
 
 # === CXX FLAGS === #
 set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
@@ -71,8 +71,8 @@ add_library(${PROJECT_NAME} SHARED
             ${HEADERS} ${SOURCES}
             ${MISC_HEADERS} ${MISC_SOURCES}
             ${PLUGIN_HEADERS} ${PLUGIN_SOURCES}
-            ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES}
-            ${PLUGIN_SCENEGRAPH_HEADERS} ${PLUGIN_SCENEGRAPH_SOURCES})
+            ${PLUGIN_RENDER_OPERATIONS_HEADERS} ${PLUGIN_RENDER_OPERATIONS_SOURCES}
+            ${PLUGIN_PARSERS_HEADERS} ${PLUGIN_PARSERS_SOURCES})
 
 
 target_include_directories(${PROJECT_NAME} PUBLIC src)
@@ -110,9 +110,9 @@ if(ENABLE_UNIT_TEST)
                     ${HEADERS} ${SOURCES}
                     ${MISC_HEADERS} ${MISC_SOURCES}
                     ${PLUGIN_HEADERS} ${PLUGIN_SOURCES}
-                    ${PLUGIN_OVERRIDE_HEADERS} ${PLUGIN_OVERRIDE_SOURCES}
+                    ${PLUGIN_RENDER_OPERATIONS_HEADERS} ${PLUGIN_RENDER_OPERATIONS_SOURCES}
                     ${TEST_HEADERS} ${TEST_SOURCES} 
-                    ${PLUGIN_SCENEGRAPH_HEADERS} ${PLUGIN_SCENEGRAPH_SOURCES})
+                    ${PLUGIN_PARSERS_HEADERS} ${PLUGIN_PARSERS_SOURCES})
 
     set_target_properties(MayaUnitTest PROPERTIES CXX_STANDARD 17)
     set_target_properties(MayaUnitTest PROPERTIES CXX_EXTENSIONS OFF)
