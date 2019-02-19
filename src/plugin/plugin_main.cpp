@@ -2,7 +2,7 @@
 
 // Wisp plug-in
 #include "miscellaneous/functions.hpp"
-#include "viewport_renderer.hpp"
+#include "viewport_renderer_override.hpp"
 
 // Maya API
 #include <maya/MCommandResult.h>
@@ -19,7 +19,7 @@ namespace wmr
 		const auto is_scene_dirty = IsSceneDirty();
 
 		// Initialize the renderer override
-		m_wisp_viewport_renderer = std::make_unique<ViewportRenderer>("wisp_ViewportBlitOverride");
+		m_wisp_viewport_renderer = std::make_unique<ViewportRendererOverride>("wisp_ViewportBlitOverride");
 
 		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
 		if( maya_renderer )

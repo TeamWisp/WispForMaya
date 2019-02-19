@@ -42,7 +42,7 @@ namespace wmr
 	/*! Implementation of a Maya MRenderOverride. It inherits from the Maya API base class and implements all methods
 	 *  needed to make the override work. The code style for functions is a bit different here because our style guide
 	 *  differs from the style used for the Maya API. */
-	class ViewportRenderer final : public MHWRender::MRenderOverride
+	class ViewportRendererOverride final : public MHWRender::MRenderOverride
 	{
 	public:
 		//! Prepares the override for initialization and initializes
@@ -53,7 +53,7 @@ namespace wmr
 		 *  \sa ConfigureRenderOperations()
 		 *  \sa SetDefaultTextureState()
 		 *  \sa InitializeWispRenderer()*/
-		ViewportRenderer(const MString& name);
+		ViewportRendererOverride(const MString& name);
 
 		//! Stop the Wisp renderer and release any Maya textures
 		/*! When the override is destroyed, the Wisp renderer has to be killed first. To avoid nasty errors, this function
@@ -61,7 +61,7 @@ namespace wmr
 		 *  and frame graph manager. Afterwards, all remaining Maya textures will be released.
 		 *
 		 *  \sa ReleaseTextureResources()*/
-		~ViewportRenderer() override;
+		~ViewportRendererOverride() override;
 
 	private:
 		//! Set the names of the render operations

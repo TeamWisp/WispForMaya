@@ -1,4 +1,4 @@
-#include "viewport_renderer.hpp"
+#include "viewport_renderer_override.hpp"
 
 // Wisp plug-in
 #include "miscellaneous/functions.hpp"
@@ -91,7 +91,7 @@ namespace wmr
 
 	}
 
-	ViewportRenderer::ViewportRenderer(const MString& name)
+	ViewportRendererOverride::ViewportRendererOverride(const MString& name)
 		: MRenderOverride(name)
 		, m_ui_name(wmr::settings::PRODUCT_NAME)
 		, m_current_render_operation(-1)
@@ -109,7 +109,7 @@ namespace wmr
 		m_render_system->InitSceneGraph(*m_scenegraph.get());
 	}
 
-	ViewportRenderer::~ViewportRenderer()
+	ViewportRendererOverride::~ViewportRendererOverride()
 	{
 		// Wait for the GPU to finish all work
 		m_render_system->WaitForAllPreviousWork();
@@ -121,14 +121,14 @@ namespace wmr
 		ReleaseTextureResources();
 	}
 
-	void ViewportRenderer::ConfigureRenderOperations()
+	void ViewportRendererOverride::ConfigureRenderOperations()
 	{
 		m_render_operation_names[0] = "wisp_SceneBlit";
 		m_render_operation_names[1] = "wisp_UIDraw";
 		m_render_operation_names[2] = "wisp_Present";
 	}
 
-	void ViewportRenderer::SetDefaultTextureState()
+	void ViewportRendererOverride::SetDefaultTextureState()
 	{
 		m_color_texture.texture = nullptr;
 		m_color_texture_desc.setToDefault2DTexture();
@@ -137,7 +137,7 @@ namespace wmr
 		m_depth_texture_desc.setToDefault2DTexture();
 	}
 
-	void ViewportRenderer::ReleaseTextureResources() const
+	void ViewportRendererOverride::ReleaseTextureResources() const
 	{
 		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
 
@@ -156,7 +156,7 @@ namespace wmr
 			maya_texture_manager->releaseTexture(m_depth_texture.texture);
 	}
 
-	void ViewportRenderer::CreateRenderOperations()
+	void ViewportRendererOverride::CreateRenderOperations()
 	{
 		if (!m_render_operations[0])
 		{
@@ -167,7 +167,7 @@ namespace wmr
 		}
 	}
 
-	void ViewportRenderer::InitializeWispRenderer()
+	void ViewportRendererOverride::InitializeWispRenderer()
 	{
 		util::log_callback::impl = [ & ]( std::string const & str )
 		{
@@ -231,12 +231,12 @@ namespace wmr
 		m_frame_graph_manager->Create(*m_render_system, RendererFrameGraphType::DEFERRED);
 	}
 
-	MHWRender::DrawAPI ViewportRenderer::supportedDrawAPIs() const
+	MHWRender::DrawAPI ViewportRendererOverride::supportedDrawAPIs() const
 	{
 		return (MHWRender::kOpenGL | MHWRender::kOpenGLCoreProfile | MHWRender::kDirectX11);
 	}
 
-	MHWRender::MRenderOperation* ViewportRenderer::renderOperation()
+	MHWRender::MRenderOperation* ViewportRendererOverride::renderOperation()
 	{
 		if (m_current_render_operation >= 0 && m_current_render_operation < 4)
 		{
@@ -249,7 +249,7 @@ namespace wmr
 		return nullptr;
 	}
 
-	void ViewportRenderer::SynchronizeWispWithMayaViewportCamera()
+	void ViewportRendererOverride::SynchronizeWispWithMayaViewportCamera()
 	{
 		M3dView maya_view;
 		MStatus status = M3dView::getM3dViewFromModelPanel( wmr::settings::VIEWPORT_PANEL_NAME, maya_view );
@@ -299,7 +299,7 @@ namespace wmr
 		m_viewport_camera->SetFov( AI_RAD_TO_DEG( camera_functions.horizontalFieldOfView()) );
 	}
 
-	MStatus ViewportRenderer::setup(const MString& destination)
+	MStatus ViewportRendererOverride::setup(const MString& destination)
 	{
 		SynchronizeWispWithMayaViewportCamera();
 
@@ -341,7 +341,7 @@ namespace wmr
 		return MStatus::kSuccess;
 	}
 
-	bool ViewportRenderer::AreAllRenderOperationsSetCorrectly() const
+	bool ViewportRendererOverride::AreAllRenderOperationsSetCorrectly() const
 	{
 		return (!m_render_operations[0] ||
 				!m_render_operations[1] ||
@@ -350,7 +350,7 @@ namespace wmr
 	}
 
 	// TODO: REFACTOR
-	void ViewportRenderer::UpdateTextureData(MHWRender::MTextureAssignment& texture_to_update, WispBufferType type, const wr::CPUTexture& cpu_texture, MHWRender::MTextureManager* texture_manager)
+	void ViewportRendererOverride::UpdateTextureData(MHWRender::MTextureAssignment& texture_to_update, WispBufferType type, const wr::CPUTexture& cpu_texture, MHWRender::MTextureManager* texture_manager)
 	{
 		unsigned int buffer_width = cpu_texture.m_buffer_width;
 		unsigned int buffer_height = cpu_texture.m_buffer_height;
@@ -418,24 +418,24 @@ namespace wmr
 		delete[] wisp_data;
 	}
 
-	MStatus ViewportRenderer::cleanup()
+	MStatus ViewportRendererOverride::cleanup()
 	{
 		m_current_render_operation = -1;
 		return MStatus::kSuccess;
 	}
 
-	MString ViewportRenderer::uiName() const
+	MString ViewportRendererOverride::uiName() const
 	{
 		return m_ui_name;
 	}
 
-	bool ViewportRenderer::startOperationIterator()
+	bool ViewportRendererOverride::startOperationIterator()
 	{
 		m_current_render_operation = 0;
 		return true;
 	}
 
-	bool ViewportRenderer::nextRenderOperation()
+	bool ViewportRendererOverride::nextRenderOperation()
 	{
 		++m_current_render_operation;
 
@@ -447,7 +447,7 @@ namespace wmr
 		return false;
 	}
 
-	bool ViewportRenderer::UpdateTextures(MHWRender::MRenderer* maya_renderer, MHWRender::MTextureManager* texture_manager, const wr::CPUTextures& cpu_textures)
+	bool ViewportRendererOverride::UpdateTextures(MHWRender::MRenderer* maya_renderer, MHWRender::MTextureManager* texture_manager, const wr::CPUTextures& cpu_textures)
 	{
 		if (!maya_renderer || !texture_manager)
 			return false;

@@ -7,7 +7,7 @@
 namespace wmr
 {
 	// Forward declarations
-	class ViewportRenderer;
+	class ViewportRendererOverride;
 
 	//! Plugin main
 	/*! Contains the entire plug-in. It is responsible for initializing and uninitializing the plug-in. */
@@ -48,6 +48,6 @@ namespace wmr
 
 	private:
 		//! Viewport renderer override
-		std::unique_ptr<ViewportRenderer> m_wisp_viewport_renderer;
+		std::unique_ptr<ViewportRendererOverride> m_wisp_viewport_renderer;
 	};
 }
