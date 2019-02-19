@@ -34,16 +34,16 @@ namespace wmr
 		 *  originally came from the Autodesk API samples, so for more information and documentation, please have a look
 		 *  at the SDK samples folder.
 		 *  
-		 *  \return bool True if the scene is dirty, else, false.
-		 *  \sa ActOnCurrentDirtyState() */
+		 *  /return bool True if the scene is dirty, else, false.
+		 *  /sa ActOnCurrentDirtyState() */
 		bool IsSceneDirty() const;
 
 		//! Set the dirty file flag
 		/*! If the file should be marked dirty, this function will execute the appropriate command to do this. It is
 		 *  essentially a MEL command that is being executed from within C++.
 		 *  
-		 *  \param state Whether the current file should be marked dirty or not, use the result from IsSceneDirty().
-		 *  \sa IsSceneDirty() */
+		 *  /param state Whether the current file should be marked dirty or not, use the result from IsSceneDirty().
+		 *  /sa IsSceneDirty() */
 		void ActOnCurrentDirtyState(const bool& state) const;
 
 	private:

@@ -41,16 +41,16 @@ namespace wmr
 		/*! Configure the render passes for all the frame graphs. For every single type in the RendererFrameGraphType
 		 *  enumeration, a new frame graph is created.
 		 *  
-		 *  \param render_system Reference to the Wisp framework render system object.
-		 *  \param initial_type Default rendering pipeline used in the application.
-		 *  \sa RendererFrameGraphType */
+		 *  /param render_system Reference to the Wisp framework render system object.
+		 *  /param initial_type Default rendering pipeline used in the application.
+		 *  /sa RendererFrameGraphType */
 		void Create(wr::RenderSystem& render_system, RendererFrameGraphType initial_type = RendererFrameGraphType::DEFERRED) noexcept;
 
 		//! Set a frame graph type
 		/*! Replace the currently active frame graph pipeline type with the new type.
 		 *  
-		 *  \param new_renderer_frame_graph_type Type of the new rendering pipeline.
-		 *  \sa RendererFrameGraphType */
+		 *  /param new_renderer_frame_graph_type Type of the new rendering pipeline.
+		 *  /sa RendererFrameGraphType */
 		void SetType(RendererFrameGraphType new_renderer_frame_graph_type) noexcept;
 
 		//! Get the currently active frame graph

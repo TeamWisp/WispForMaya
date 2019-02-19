@@ -24,14 +24,14 @@ namespace wmr
 		/*! Please note that this is an implementation of a Maya API function. Please refer to the Autodesk documentation
 		 *  for more information.
 		 *  
-		 *  \return Scene renderer filter type. */
+		 *  /return Scene renderer filter type. */
 		MHWRender::MSceneRender::MSceneFilterOption renderFilterOverride() override;
 
 		//! Configure the clear operation for the user-interface renderer
 		/*! Please note that this is a function override from the Maya API, so check the Autodesk documentation for more
 		 *  information.
 		 *
-		 *  \return Returns the clear operation data structure as seen in the Maya API. */
+		 *  /return Returns the clear operation data structure as seen in the Maya API. */
 		MHWRender::MClearOperation& clearOperation() override;
 		
 		//! Configure what the renderer should render

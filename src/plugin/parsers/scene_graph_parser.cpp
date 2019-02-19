@@ -3,31 +3,31 @@
 #include "model_pool.hpp"
 #include "vertex.hpp"
 #include "renderer.hpp"
-#include "scene_graph\scene_graph.hpp"
-#include "scene_graph\mesh_node.hpp"
-#include "d3d12\d3d12_renderer.hpp"
-#include "d3d12\d3d12_model_pool.hpp" 
+#include "scene_graph/scene_graph.hpp"
+#include "scene_graph/mesh_node.hpp"
+#include "d3d12/d3d12_renderer.hpp"
+#include "d3d12/d3d12_model_pool.hpp" 
 
-#include "plugin\callback_manager.hpp"
+#include "plugin/callback_manager.hpp"
 
 
-#include <maya\MDagPath.h>
-#include <maya\MEulerRotation.h>
-#include <maya\MFloatArray.h>
-#include <maya\MFloatVectorArray.h>
-#include <maya\MFnMesh.h>
-#include <maya\MFnTransform.h>
-#include <maya\MGlobal.h>
-#include <maya\MItDag.h>
-#include <maya\MItMeshPolygon.h>
-#include <maya\MPointArray.h>
-#include <maya\MQuaternion.h>
-#include <maya\MStatus.h>
-#include <maya\MFnDagNode.h>
-#include <maya\MNodeMessage.h>
-#include <maya\MPlug.h>
-#include <maya\MUuid.h>
-#include <maya\MDGMessage.h>
+#include <maya/MDagPath.h>
+#include <maya/MEulerRotation.h>
+#include <maya/MFloatArray.h>
+#include <maya/MFloatVectorArray.h>
+#include <maya/MFnMesh.h>
+#include <maya/MFnTransform.h>
+#include <maya/MGlobal.h>
+#include <maya/MItDag.h>
+#include <maya/MItMeshPolygon.h>
+#include <maya/MPointArray.h>
+#include <maya/MQuaternion.h>
+#include <maya/MStatus.h>
+#include <maya/MFnDagNode.h>
+#include <maya/MNodeMessage.h>
+#include <maya/MPlug.h>
+#include <maya/MUuid.h>
+#include <maya/MDGMessage.h>
 
 #include <sstream>
 

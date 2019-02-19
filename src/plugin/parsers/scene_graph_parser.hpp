@@ -1,5 +1,5 @@
 #pragma once
-#include <maya\MFnMesh.h>
+#include <maya/MFnMesh.h>
 namespace wr
 {
 	class SceneGraph;

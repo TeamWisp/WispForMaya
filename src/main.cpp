@@ -17,8 +17,8 @@ wmr::PluginMain plugin_instance;
  *  needs to make it all work. Once the plug-in object exists, the instance of the plug-in will be initialized, upon
  *  which lower-level systems will start working.
  *
- *  \param object Inherited function from Maya, see Autodesk documentation.
- *  \return Returns MStatus::kSucccess if everything went all right. */
+ *  /param object Inherited function from Maya, see Autodesk documentation.
+ *  /return Returns MStatus::kSucccess if everything went all right. */
 MStatus initializePlugin(MObject object)
 {
 	// Register the plug-in to Maya, using the name and version data from the settings header file
@@ -35,8 +35,8 @@ MStatus initializePlugin(MObject object)
 /*  As soon as Maya tries to unload the plug-in, this function is called. The plug-in object is referenced and its
  *  destruction (called: "uninitialize") function is called. This will ensure a proper shut-down of all internal system.
  * 
- *  \param object Inherited function from Maya, see Autodesk documentation.
- *  \return Returns MStatus::kSucccess if everything went all right. */
+ *  /param object Inherited function from Maya, see Autodesk documentation.
+ *  /return Returns MStatus::kSucccess if everything went all right. */
 MStatus uninitializePlugin(MObject object)
 {
 	MFnPlugin plugin(object);
