@@ -58,6 +58,9 @@ namespace wmr
 		 *  handle clean-up whenever it goes out of scope. */
 		wr::FrameGraph* Get() const noexcept;
 
+		//! Resize the current active frame graph */
+		void Resize(unsigned int new_width, unsigned int new_height, wr::RenderSystem& render_system) noexcept;
+
 	private:
 		//! Configure a frame graph for a full deferred rendering pipeline
 		void CreateDeferredPipeline() noexcept;

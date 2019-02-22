@@ -56,6 +56,11 @@ namespace wmr
 		return m_renderer_frame_graphs[static_cast<size_t>(m_current_rendering_pipeline_type)];
 	}
 
+	void FrameGraphManager::Resize(unsigned int new_width, unsigned int new_height, wr::RenderSystem& render_system) noexcept
+	{
+		m_renderer_frame_graphs[static_cast<size_t>(m_current_rendering_pipeline_type)]->Resize(render_system, new_width, new_height);
+	}
+
 	void FrameGraphManager::CreateDeferredPipeline() noexcept
 	{
 		auto frame_graph = new wr::FrameGraph(8);
