@@ -3,6 +3,8 @@
 //wisp plug-in
 #include "plugin/framegraph/frame_graph_manager.hpp"
 #include "plugin/renderer/model_manager.hpp"
+#include "plugin/renderer/texture_manager.hpp"
+#include "plugin/renderer/material_manager.hpp"
 
 // Wisp rendering framework
 #include "frame_graph/frame_graph.hpp"
@@ -29,16 +31,13 @@ void wmr::renderer::Initialize()
 
 	// need managers
 	m_model_manager = std::make_unique<ModelManager>();
-	texture_pool = m_render_system->CreateTexturePool( 16, 14 );
-	material_pool = m_render_system->CreateMaterialPool( 8 );
-
+	m_texture_manager = std::make_unique<TextureManager>();
+	m_material_manager = std::make_unique<MaterialManager>();
 
 	m_scenegraph = std::make_shared<wr::SceneGraph>( m_render_system.get() );
 
-
-	// multiple cameras??
-	m_viewport_camera = m_scenegraph->CreateChild<wr::CameraNode>( nullptr, 90.f, ( float )m_window->GetWidth() / ( float )m_window->GetHeight() );
-	m_viewport_camera->SetPosition( { 0, 0, -1 } );
+	m_wisp_camera = m_scenegraph->CreateChild<wr::CameraNode>( nullptr, 90.f, ( float )m_window->GetWidth() / ( float )m_window->GetHeight() );
+	m_wisp_camera->SetPosition( { 0, 0, -1 } );
 
 
 
