@@ -3,22 +3,10 @@
 // Wisp plug-in
 #include "miscellaneous/functions.hpp"
 #include "miscellaneous/settings.hpp"
-#include "plugin/framegraph/frame_graph_manager.hpp"
 #include "plugin/parsers/scene_graph_parser.hpp"
 #include "render_operations/screen_render_operation.hpp"
 #include "render_operations/gizmo_render_operation.hpp"
-
-// Wisp rendering framework demo
-#include "../demo/engine_interface.hpp"
-#include "../demo/resources.hpp"
-#include "../demo/scene_cubes.hpp"
-#include "../demo/scene_viknell.hpp"
-
-// Wisp rendering framework
-#include "frame_graph/frame_graph.hpp"
-#include "scene_graph/camera_node.hpp"
-#include "scene_graph/scene_graph.hpp"
-#include "wisp.hpp"
+#include "renderer/renderer.hpp"
 
 // Maya API
 #include <maya/M3dView.h>
@@ -34,7 +22,6 @@
 
 // C++ standard
 #include <algorithm>
-#include <memory>
 #include <memory>
 #include <sstream>
 
@@ -65,29 +52,26 @@ namespace wmr
 
 	static void CreateScene( wr::SceneGraph* scene_graph, wr::Window* window )
 	{
-		static std::shared_ptr<DebugCamera> camera = scene_graph->CreateChild<DebugCamera>( nullptr, 90.f, ( float )window->GetWidth() / ( float )window->GetHeight() );
-		camera->SetPosition( { 0, 0, -1 } );
 
+		//loaded_skybox2 = texture_pool->Load( "resources/materials/LA_Downtown_Afternoon_Fishing_3k.hdr", false, false );
+		//loaded_skybox = texture_pool->Load( "resources/materials/skybox.dds", false, false );
 
-		loaded_skybox2 = texture_pool->Load( "resources/materials/LA_Downtown_Afternoon_Fishing_3k.hdr", false, false );
-		loaded_skybox = texture_pool->Load( "resources/materials/skybox.dds", false, false );
+		//scene_graph->m_skybox = loaded_skybox2;
 
-		scene_graph->m_skybox = loaded_skybox2;
+		//auto skybox = scene_graph->CreateChild<wr::SkyboxNode>( nullptr, loaded_skybox );
 
-		auto skybox = scene_graph->CreateChild<wr::SkyboxNode>( nullptr, loaded_skybox );
+		//// Lights
+		//auto point_light_0 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
+		//point_light_0->SetRadius( 30.0f );
+		//point_light_0->SetPosition( { -10, 0, 0 } );
 
-		// Lights
-		auto point_light_0 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
-		point_light_0->SetRadius( 30.0f );
-		point_light_0->SetPosition( { -10, 0, 0 } );
+		//auto point_light_1 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
+		//point_light_1->SetRadius( 20.0f );
+		//point_light_1->SetPosition( { 0, 0, 10.0 } );
 
-		auto point_light_1 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
-		point_light_1->SetRadius( 20.0f );
-		point_light_1->SetPosition( { 0, 0, 10.0 } );
-
-		auto point_light_2 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
-		point_light_2->SetRadius( 12.0f );
-		point_light_2->SetPosition( { -0.7, 3.5, 0 } );
+		//auto point_light_2 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
+		//point_light_2->SetRadius( 12.0f );
+		//point_light_2->SetPosition( { -0.7, 3.5, 0 } );
 
 	}
 
@@ -96,29 +80,38 @@ namespace wmr
 		, m_ui_name(wmr::settings::PRODUCT_NAME)
 		, m_current_render_operation(-1)
 	{
+		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
+		if( maya_renderer )
+		{
+			maya_renderer->registerOverride( this );
+		}
+		else
+		{
+			assert( false );
+		}
+
 		ConfigureRenderOperations();
 		SetDefaultTextureState();
 
 		CreateRenderOperations();
-		InitializeWispRenderer();
 
-		m_scenegraph_parser = std::make_unique<ScenegraphParser>(*m_render_system, *m_scenegraph);
+		m_scenegraph_parser = std::make_unique<ScenegraphParser>(*m_renderer->);
 		m_scenegraph_parser->initialize(texture_pool, material_pool);
 
-		CreateScene(m_scenegraph.get(), window.get());
-		m_render_system->InitSceneGraph(*m_scenegraph.get());
+		
 	}
 
 	ViewportRendererOverride::~ViewportRendererOverride()
 	{
-		// Wait for the GPU to finish all work
-		m_render_system->WaitForAllPreviousWork();
-		m_model_loader.reset();
-		m_render_system.reset();
-		m_frame_graph_manager.reset();
-
-		// Release Maya textures
 		ReleaseTextureResources();
+		// Not the Wisp renderer, but the internal Maya renderer
+		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
+
+		if( maya_renderer )
+		{
+			// De-register the actual plug-in
+			maya_renderer->deregisterOverride( this );
+		}
 	}
 
 	void ViewportRendererOverride::ConfigureRenderOperations()
@@ -166,70 +159,7 @@ namespace wmr
 			m_render_operations[3] = std::make_unique<MHWRender::MPresentTarget>(m_render_operation_names[2]);
 		}
 	}
-
-	void ViewportRendererOverride::InitializeWispRenderer()
-	{
-		util::log_callback::impl = [ & ]( std::string const & str )
-		{
-			engine::debug_console.AddLog( str.c_str() );
-		};
-
-		m_render_system = std::make_unique<wr::D3D12RenderSystem>();
-
-		m_model_loader = std::make_unique<wr::AssimpModelLoader>();
-
-		m_render_system->Init( window.get() );
-
-		texture_pool = m_render_system->CreateTexturePool( 16, 14 );
-		material_pool = m_render_system->CreateMaterialPool( 8 );
-
-
-		m_scenegraph = std::make_shared<wr::SceneGraph>( m_render_system.get() );
-
-		m_viewport_camera = m_scenegraph->CreateChild<wr::CameraNode>( nullptr, 90.f, ( float )window->GetWidth() / ( float )window->GetHeight() );
-		m_viewport_camera->SetPosition( { 0, 0, -1 } );
-
-		/*CreateScene( m_scenegraph.get(), window.get() );
-
-		m_render_system->InitSceneGraph( *m_scenegraph.get() );*/
-
-		//m_framegraph = std::make_unique<wr::FrameGraph>( 7 );
-
-		//wr::AddEquirectToCubemapTask( *m_framegraph );
-
-	//	wr::AddCubemapConvolutionTask( *m_framegraph );
-
-		// Construct the G-buffer
-		//wr::AddDeferredMainTask( *m_framegraph, std::nullopt, std::nullopt );
 		
-		// Save the depth buffer CPU pointer
-	//	wr::AddDepthDataReadBackTask<wr::DeferredMainTaskData>(*m_framegraph, std::nullopt, std::nullopt);
-
-		// Merge the G-buffer into one final texture
-	//	wr::AddDeferredCompositionTask( *m_framegraph, std::nullopt, std::nullopt );
-
-	//	wr::AddPostProcessingTask<wr::DeferredCompositionTaskData>( *m_framegraph );
-
-		// Save the final texture CPU pointer
-	//	wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*m_framegraph, std::nullopt, std::nullopt);
-
-		// Copy the composition pixel data to the final render target
-	//	wr::AddRenderTargetCopyTask<wr::PostProcessingData>( *m_framegraph );
-
-		// ImGui
-		/*auto render_editor = [&]()
-		{
-			engine::RenderEngine( m_render_system.get(), m_scenegraph.get() );
-		};
-
-		auto imgui_task = wr::GetImGuiTask( render_editor );*/
-		
-		//m_framegraph->AddTask<wr::ImGuiTaskData>( imgui_task );
-		//m_framegraph->Setup( *m_render_system );
-		// Create the frame graphs and start out using the deferred rendering pipeline
-		m_frame_graph_manager = std::make_unique<FrameGraphManager>();
-		m_frame_graph_manager->Create(*m_render_system, RendererFrameGraphType::DEFERRED);
-	}
 
 	MHWRender::DrawAPI ViewportRendererOverride::supportedDrawAPIs() const
 	{
@@ -303,8 +233,6 @@ namespace wmr
 	{
 		SynchronizeWispWithMayaViewportCamera();
 
-		auto textures = m_render_system->Render( m_scenegraph, *m_frame_graph_manager->Get());
-
 		auto* const maya_renderer = MHWRender::MRenderer::theRenderer();
 
 		if (!maya_renderer)
@@ -328,7 +256,7 @@ namespace wmr
 		}
 
 		// Update textures used for scene blit
-		if (!UpdateTextures(maya_renderer, maya_texture_manager, textures))
+		if (!UpdateTextures(maya_renderer, maya_texture_manager, m_renderer->GetRenderResult()))
 		{
 			assert( false );
 			return MStatus::kFailure;

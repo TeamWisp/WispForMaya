@@ -13,15 +13,17 @@
 #include "d3d12/d3d12_renderer.hpp"
 #include "wisp.hpp"
 
-wmr::renderer::renderer()
+wmr::Renderer::Renderer()
 {
 }
 
-wmr::renderer::~renderer()
+wmr::Renderer::~Renderer()
 {
+	m_render_system->WaitForAllPreviousWork();
+	m_render_system.reset();
 }
 
-void wmr::renderer::Initialize()
+void wmr::Renderer::Initialize()
 {
 	
 	m_render_system = std::make_unique<wr::D3D12RenderSystem>();
@@ -39,19 +41,23 @@ void wmr::renderer::Initialize()
 	m_wisp_camera = m_scenegraph->CreateChild<wr::CameraNode>( nullptr, 90.f, ( float )m_window->GetWidth() / ( float )m_window->GetHeight() );
 	m_wisp_camera->SetPosition( { 0, 0, -1 } );
 
-
-
+	m_render_system->InitSceneGraph( *m_scenegraph.get() );
 	m_framegraph_manager = std::make_unique<FrameGraphManager>();
 	m_framegraph_manager->Create( *m_render_system, RendererFrameGraphType::DEFERRED );
 }
 
-void wmr::renderer::Update()
+void wmr::Renderer::Update()
 {
 	
 }
 
-void wmr::renderer::Render()
+void wmr::Renderer::Render()
 {
 	m_render_system->Render(m_scenegraph , *m_framegraph_manager->Get());
 
+}
+
+const wr::CPUTextures wmr::Renderer::GetRenderResult()
+{
+	return m_result_textures;
 }

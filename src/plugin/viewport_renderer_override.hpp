@@ -27,6 +27,7 @@ namespace wmr
 {
     // Forward declarations
 	class ScenegraphParser;
+	class Renderer;
 
 	//! Indicates which buffer should be used to save the Wisp renderer output data
 	enum class WispBufferType
@@ -34,9 +35,6 @@ namespace wmr
 		COLOR,	/*!< Store the data in the color buffer. */
 		DEPTH	/*!< Store the data in the depth buffer.*/
 	};
-
-	// Forward declaration
-	class FrameGraphManager;
 
 	//! Viewport renderer  override implementation
 	/*! Implementation of a Maya MRenderOverride. It inherits from the Maya API base class and implements all methods
@@ -63,6 +61,10 @@ namespace wmr
 		 *  /sa ReleaseTextureResources()*/
 		~ViewportRendererOverride() override;
 
+		//! Returns the name of the plug-in that should show up under the "renderer" drop-down menu in the Maya viewport
+		/*! /return Name of the drop-down menu item. */
+		MString uiName() const override;
+
 	private:
 		//! Set the names of the render operations
 		void ConfigureRenderOperations();
@@ -84,14 +86,6 @@ namespace wmr
 		 *  /sa ScreenRenderOperation
 		 *  /sa GizmoRenderOperation */
 		void CreateRenderOperations();
-
-		//! Initializes the Wisp rendering framework
-		/*! To use the Wisp rendering framework, a couple things have to be initialized. This is determined by the framework
-		 *! API itself, so these things cannot be changed all that much. This function creates a render system, model loader,
-		 *! scene graph, and a frame graph manager.
-		 *! 
-		 *! /sa FrameGraphManager*/
-		void InitializeWispRenderer();
 
 		//! Indicate which rendering back-ends are supported by the plug-in
 		/*! The Maya API requires us to override this function. The return value of the function is a flag that indicates
@@ -150,10 +144,6 @@ namespace wmr
 		 *  /return kSuccess is always returned from this function, it simply cannot fail. */
 		MStatus cleanup() override;
 
-		//! Returns the name of the plug-in that should show up under the "renderer" drop-down menu in the Maya viewport
-		/*! /return Name of the drop-down menu item. */
-		MString uiName() const override;
-
 		//! Sets the current render operation to 0
 		/*! /return Always returns true no matter what. This function cannot fail. */
 		bool startOperationIterator() override;
@@ -171,48 +161,20 @@ namespace wmr
 		void SynchronizeWispWithMayaViewportCamera();
 
 	private:
-		//! Frame graph manager that correctly configures the Wisp frame graph render passes
-		std::unique_ptr<FrameGraphManager> m_frame_graph_manager;
+		
+		MString m_ui_name; //!< Name of the ui panel that will be overridden
 
-		//! Name of the ui panel that will be overridden
-		MString m_ui_name;
+		std::array<std::unique_ptr<MHWRender::MRenderOperation>, 4> m_render_operations; //!< All render operations used in this plug-in		
+		MString m_render_operation_names[3]; //!< Custom render operation names for the overrides
 
-		//! All render operations used in this plug-in
-		std::array<std::unique_ptr<MHWRender::MRenderOperation>, 4> m_render_operations;
+		int m_current_render_operation; //!< Index of the currently active render operation
 
-		//! Custom render operation names for the overrides
-		MString m_render_operation_names[3];
+		MHWRender::MTextureDescription m_color_texture_desc; //!< Plug-in color buffer description
+		MHWRender::MTextureAssignment m_color_texture; //!< Plug-in color buffer texture
+		MHWRender::MTextureDescription m_depth_texture_desc; //!< Plug-in depth buffer description
+		MHWRender::MTextureAssignment m_depth_texture; //!< Plug-in depth buffer texture
 
-		//! Index of the currently active render operation
-		int m_current_render_operation;
-
-		//! Plug-in color buffer description
-		MHWRender::MTextureDescription m_color_texture_desc;
-
-		//! Plug-in color buffer texture
-		MHWRender::MTextureAssignment m_color_texture;
-
-		//! Plug-in depth buffer description
-		MHWRender::MTextureDescription m_depth_texture_desc;
-
-		//! Plug-in depth buffer texture
-		MHWRender::MTextureAssignment m_depth_texture;
-
-		//! Wisp framework model loading using the Assimp model loader
-		std::unique_ptr<wr::AssimpModelLoader> m_model_loader;
-
-		//! Viewport camera
-		std::shared_ptr<wr::CameraNode> m_viewport_camera;
-
-		//! Wisp framework render system
-		std::unique_ptr<wr::D3D12RenderSystem> m_render_system;
-
-		//! Wisp framework scene graph
-		std::shared_ptr<wr::SceneGraph> m_scenegraph;
-
-		//! Wisp framework texture pool
-		std::shared_ptr<wr::TexturePool> m_texture_pool;
-
+		std::unique_ptr<Renderer> m_renderer; //!< Wisp framework render system
 		std::unique_ptr<wmr::ScenegraphParser> m_scenegraph_parser;
 	};
 }
