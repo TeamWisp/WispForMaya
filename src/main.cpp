@@ -68,7 +68,7 @@ MStatus initializePlugin(MObject object)
 	const auto is_scene_dirty = IsSceneDirty();
 
 	// Initialize the renderer override
-	viewport_renderer_override = new wmr::ViewportRendererOverride( "wisp_ViewportBlitOverride" );
+	viewport_renderer_override = new wmr::ViewportRendererOverride( wmr::settings::VIEWPORT_OVERRIDE_NAME );
 
 
 	// If the scene was previously unmodified, return it to that state to avoid dirtying

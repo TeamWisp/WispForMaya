@@ -160,6 +160,9 @@ namespace wmr
 		 *  grabs the Maya camera matrices and converts it to the Wisp format. */
 		void SynchronizeWispWithMayaViewportCamera();
 
+		Renderer& GetRenderer() const;
+
+
 	private:
 		
 		MString m_ui_name; //!< Name of the ui panel that will be overridden

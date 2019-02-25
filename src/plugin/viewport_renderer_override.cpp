@@ -229,6 +229,11 @@ namespace wmr
 		m_viewport_camera->SetFov( AI_RAD_TO_DEG( camera_functions.horizontalFieldOfView()) );
 	}
 
+	Renderer & ViewportRendererOverride::GetRenderer() const
+	{
+		return *m_renderer.get();
+	}
+
 	MStatus ViewportRendererOverride::setup(const MString& destination)
 	{
 		SynchronizeWispWithMayaViewportCamera();

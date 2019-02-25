@@ -1,5 +1,8 @@
 #include "scene_graph_parser.hpp"
 
+#include "plugin/callback_manager.hpp"
+#include "miscellaneous/settings.hpp"
+
 #include "model_pool.hpp"
 #include "vertex.hpp"
 #include "renderer.hpp"
@@ -8,13 +11,12 @@
 #include "d3d12/d3d12_renderer.hpp"
 #include "d3d12/d3d12_model_pool.hpp" 
 
-#include "plugin/callback_manager.hpp"
-
 
 #include <maya/MDagPath.h>
 #include <maya/MEulerRotation.h>
 #include <maya/MFloatArray.h>
 #include <maya/MFloatVectorArray.h>
+#include <maya/MFnCamera.h>
 #include <maya/MFnMesh.h>
 #include <maya/MFnTransform.h>
 #include <maya/MGlobal.h>
@@ -22,12 +24,15 @@
 #include <maya/MItMeshPolygon.h>
 #include <maya/MPointArray.h>
 #include <maya/MQuaternion.h>
+#include <maya/M3dView.h>
 #include <maya/MStatus.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MNodeMessage.h>
 #include <maya/MPlug.h>
+#include <maya/MViewport2Renderer.h>
 #include <maya/MUuid.h>
 #include <maya/MDGMessage.h>
+
 
 #include <sstream>
 
@@ -42,11 +47,7 @@ static std::shared_ptr<wr::MaterialPool> material_pool;
 
 static wr::MaterialHandle rusty_metal_material;
 
-wmr::ScenegraphParser* wmr::ScenegraphParser::m_instance = nullptr;
-
-
 std::vector<std::pair<MObject, std::shared_ptr<wr::MeshNode>>> modelTransformVector;
-
 
 static void updateTransform( MFnTransform& transform, std::shared_ptr<wr::MeshNode> mesh_node )
 {
@@ -81,7 +82,6 @@ static void updateTransform( MFnTransform& transform, std::shared_ptr<wr::MeshNo
 	
 	mesh_node->SetScale( { static_cast< float >( scale[0] ), static_cast< float >( scale[1] ),static_cast< float >( scale[2] ) } );
 }
-
 
 void attributeMeshTransformCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData )
 {
@@ -162,11 +162,6 @@ void wmr::ScenegraphParser::addedCallback( MObject &node, void *clientData )
 	}
 }
 
-wmr::ScenegraphParser * wmr::ScenegraphParser::getInstance()
-{
-	return m_instance;
-}
-
 static MIntArray GetLocalIndex( MIntArray & getVertices, MIntArray & getTriangle )
 {
 	// MItMeshPolygon::getTriangle() returns object-relative vertex indices
@@ -194,11 +189,9 @@ static MIntArray GetLocalIndex( MIntArray & getVertices, MIntArray & getTriangle
 }
 
 
-wmr::ScenegraphParser::ScenegraphParser( wr::D3D12RenderSystem& render_system, wr::SceneGraph& scene_graph ) 
-	: m_render_system(render_system)
-	, m_scenegraph(scene_graph)
+wmr::ScenegraphParser::ScenegraphParser( ) 
 {
-	m_instance = this;
+	m_viewport_override = dynamic_cast<>(MHWRender::MRenderer::theRenderer()->findRenderOverride( settings::VIEWPORT_OVERRIDE_NAME ));
 }
 
 wmr::ScenegraphParser::~ScenegraphParser()
