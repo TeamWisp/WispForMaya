@@ -1,5 +1,5 @@
 #pragma once
-#include <maya/MFnMesh.h>
+#include <memory>
 namespace wr
 {
 	class SceneGraph;
@@ -12,23 +12,25 @@ namespace wr
 
 namespace wmr
 {
+	class CameraParser;
+	class MaterialParser;
+	class ModelParser;
+	class Renderer;
 	class ViewportRendererOverride;
+	
 	class ScenegraphParser
 	{
 	public:
 		ScenegraphParser();
 		~ScenegraphParser();
 
-		void initialize( std::shared_ptr<wr::TexturePool> texture_pool, std::shared_ptr<wr::MaterialPool> material_pool);
+		void Initialize();
 
 	private:
-		void meshAdded( MFnMesh& fnmesh );
-		static void addedCallback( MObject &node, void *clientData );
-		wr::SceneGraph& m_scenegraph;
-		wr::D3D12RenderSystem& m_render_system;
-		ViewportRendererOverride* m_viewport_override = nullptr;
-
-
+		Renderer& m_render_system;
+		std::unique_ptr<ModelParser> m_model_parser;
+		std::unique_ptr<CameraParser> m_camera_parser;
+		std::unique_ptr<MaterialParser> m_material_parser;
 
 	};
 }

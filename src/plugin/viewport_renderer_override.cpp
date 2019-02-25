@@ -95,10 +95,8 @@ namespace wmr
 
 		CreateRenderOperations();
 
-		m_scenegraph_parser = std::make_unique<ScenegraphParser>(*m_renderer->);
-		m_scenegraph_parser->initialize(texture_pool, material_pool);
-
-		
+		m_scenegraph_parser = std::make_unique<ScenegraphParser>();
+		m_scenegraph_parser->Initialize();
 	}
 
 	ViewportRendererOverride::~ViewportRendererOverride()
