@@ -2,6 +2,7 @@
 
 // Wisp plug-in
 #include "miscellaneous/settings.hpp"
+#include "plugin/render_operations/screen_render_operation.hpp"
 #include "plugin/renderer/renderer.hpp"
 #include "plugin/viewport_renderer_override.hpp"
 
@@ -10,9 +11,10 @@
 
 namespace wmr
 {
-	RendererCopyOperation::RendererCopyOperation(const MString & name)
+	RendererCopyOperation::RendererCopyOperation(const MString& name, ScreenRenderOperation& blit_operation)
 		: MHWRender::MUserRenderOperation(name)
 		, m_renderer(dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer())
+		, m_blit_operation(blit_operation)
 	{
 		SetDefaultTextureState();
 	}
@@ -169,7 +171,8 @@ namespace wmr
 
 		if (new_textures_available)
 		{
-			// #TODO: update blit operation here!
+			m_blit_operation.SetColorTexture(m_color_texture);
+			m_blit_operation.SetDepthTexture(m_depth_texture);
 		}
 
 		return MStatus::kSuccess;

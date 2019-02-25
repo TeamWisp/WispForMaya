@@ -13,11 +13,12 @@ namespace wmr
 {
 	// Forward declarations
 	class Renderer;
+	class ScreenRenderOperation;
 
 	class RendererCopyOperation final : public MHWRender::MUserRenderOperation
 	{
 	public:
-		RendererCopyOperation(const MString& name);
+		RendererCopyOperation(const MString& name, ScreenRenderOperation& blit_operation);
 		~RendererCopyOperation();
 
 	private:
@@ -54,6 +55,7 @@ namespace wmr
 
 	private:
 		Renderer& m_renderer;									//!< Wisp renderer
+		ScreenRenderOperation& m_blit_operation;				//!< Render operation that blits to the fullscreen quad
 
 		MHWRender::MTextureDescription m_color_texture_desc;	//!< Plug-in color buffer description
 		MHWRender::MTextureAssignment m_color_texture;			//!< Plug-in color buffer texture
