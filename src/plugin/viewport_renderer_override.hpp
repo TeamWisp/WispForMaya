@@ -65,6 +65,8 @@ namespace wmr
 		/*! /return Name of the drop-down menu item. */
 		MString uiName() const override;
 
+		Renderer& GetRenderer() const;
+
 	private:
 		//! Set the names of the render operations
 		void ConfigureRenderOperations();
@@ -160,7 +162,7 @@ namespace wmr
 		 *  grabs the Maya camera matrices and converts it to the Wisp format. */
 		void SynchronizeWispWithMayaViewportCamera();
 
-		Renderer& GetRenderer() const;
+		
 
 
 	private:
