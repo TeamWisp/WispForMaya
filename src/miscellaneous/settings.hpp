@@ -18,6 +18,6 @@ namespace wmr
 		//! Name of the viewport panel this plug-in will override
 		static const constexpr char* VIEWPORT_PANEL_NAME = "modelPanel4";
 
-		static const constexpr char* VIEWPORT_OVERRIDE_NAME = "wisp_viewport_override"
+		static const constexpr char* VIEWPORT_OVERRIDE_NAME = "wisp_viewport_override";
 	};
 }
