@@ -4,6 +4,9 @@
 
 namespace wmr
 {
+	// Forward declarations
+	class Renderer;
+
 	class RendererDrawOperation final : public MHWRender::MUserRenderOperation
 	{
 	public:
@@ -17,5 +20,8 @@ namespace wmr
 
 		bool hasUIDrawables() const override;
 		bool requiresLightData() const override;
+
+	private:
+		Renderer& m_renderer;
 	};
 }
