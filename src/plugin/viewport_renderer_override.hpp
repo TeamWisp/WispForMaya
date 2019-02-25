@@ -71,16 +71,6 @@ namespace wmr
 		//! Set the names of the render operations
 		void ConfigureRenderOperations();
 
-		//! Create an empty texture and its description
-		/*! When the texture object is created, its texture resource is set to nullptr. The texture description is set
-		 *  to the default 2D texture description values. */
-		void SetDefaultTextureState();
-
-		//! Release allocated textures
-		/*! When this function is called, all textures that were in use by the plug-in will be released and cleaned-up by
-		 *  Maya itself.*/
-		void ReleaseTextureResources() const;
-		
 		//! Assign the correct render operations to the render operation container
 		/*! The names specified by the ConfigureRenderOperations() function indicate the order in which the render
 		 *  operations are expected.
@@ -115,31 +105,6 @@ namespace wmr
 		/*! /return True if everything is correct, else, false. */
 		bool AreAllRenderOperationsSetCorrectly() const;
 
-		//! Send the Wisp texture data to the Maya textures
-		/*! This function is reponsible for updating the existing textures with Wisp renderer data, as well as recreating
-		 *  textures when the viewport is resized.
-		 *
-		 *  /param maya_renderer The Maya renderer Singleton instance.
-		 *  /param texture_manager The Maya texture manager instance retrieved from the Maya renderer.
-		 *  /param cpu_textures Data structure that holds the Wisp renderer output data.
-		 *  
-		 *  /return Returns false if an error occurred, else, true is returned. */
-		bool UpdateTextures(MHWRender::MRenderer* maya_renderer, MHWRender::MTextureManager* texture_manager, const wr::CPUTextures& cpu_textures);
-
-		//! Copy raw Wisp renderer texture data to a Maya texture
-		/*! This function handles the actual copying of texture data from the Wisp render output data structures to the
-		 *  Maya textures. Based on the buffer type passed to this function, one of the Maya textures will be updated.
-		 *  For instance, if the type is depth, the Maya depth texture will receieve the data. Same thing for the color
-		 *  buffer: passing the color type will result in the Wisp render output data being copied to the Maya color texture.
-		 *  
-		 *  /param texture_to_update Texture that should receive the data.
-		 *  /param type The type of buffer data that should be copied.
-		 *  /param cpu_texture The Wisp renderer output texture data to copy from.
-		 *  /param texture_manager Maya texture manager instance.
-		 *  
-		 *  /sa WispBufferType */
-		void UpdateTextureData(MHWRender::MTextureAssignment& texture_to_update, WispBufferType type, const wr::CPUTexture& cpu_texture, MHWRender::MTextureManager* texture_manager);
-
 		//! Clean-up the viewport override
 		/*! Sets the current render operation to -1 and always returns kSuccess.
 		 *
@@ -162,9 +127,6 @@ namespace wmr
 		 *  grabs the Maya camera matrices and converts it to the Wisp format. */
 		void SynchronizeWispWithMayaViewportCamera();
 
-		
-
-
 	private:
 		
 		MString m_ui_name; //!< Name of the ui panel that will be overridden
@@ -173,11 +135,6 @@ namespace wmr
 		MString m_render_operation_names[3]; //!< Custom render operation names for the overrides
 
 		int m_current_render_operation; //!< Index of the currently active render operation
-
-		MHWRender::MTextureDescription m_color_texture_desc; //!< Plug-in color buffer description
-		MHWRender::MTextureAssignment m_color_texture; //!< Plug-in color buffer texture
-		MHWRender::MTextureDescription m_depth_texture_desc; //!< Plug-in depth buffer description
-		MHWRender::MTextureAssignment m_depth_texture; //!< Plug-in depth buffer texture
 
 		std::unique_ptr<Renderer> m_renderer; //!< Wisp framework render system
 		std::unique_ptr<wmr::ScenegraphParser> m_scenegraph_parser;

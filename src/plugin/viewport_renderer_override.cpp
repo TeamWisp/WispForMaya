@@ -91,8 +91,6 @@ namespace wmr
 		}
 
 		ConfigureRenderOperations();
-		SetDefaultTextureState();
-
 		CreateRenderOperations();
 
 		m_scenegraph_parser = std::make_unique<ScenegraphParser>();
@@ -101,7 +99,6 @@ namespace wmr
 
 	ViewportRendererOverride::~ViewportRendererOverride()
 	{
-		ReleaseTextureResources();
 		// Not the Wisp renderer, but the internal Maya renderer
 		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
 
@@ -117,34 +114,6 @@ namespace wmr
 		m_render_operation_names[0] = "wisp_SceneBlit";
 		m_render_operation_names[1] = "wisp_UIDraw";
 		m_render_operation_names[2] = "wisp_Present";
-	}
-
-	void ViewportRendererOverride::SetDefaultTextureState()
-	{
-		m_color_texture.texture = nullptr;
-		m_color_texture_desc.setToDefault2DTexture();
-
-		m_depth_texture.texture = nullptr;
-		m_depth_texture_desc.setToDefault2DTexture();
-	}
-
-	void ViewportRendererOverride::ReleaseTextureResources() const
-	{
-		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
-
-		if (!maya_renderer)
-			return;
-
-		const auto maya_texture_manager = maya_renderer->getTextureManager();
-
-		if (!maya_texture_manager)
-			return;
-
-		if (m_color_texture.texture)
-			maya_texture_manager->releaseTexture(m_color_texture.texture);
-
-		if (m_depth_texture.texture)
-			maya_texture_manager->releaseTexture(m_depth_texture.texture);
 	}
 
 	void ViewportRendererOverride::CreateRenderOperations()
@@ -258,13 +227,6 @@ namespace wmr
 			return MStatus::kFailure;
 		}
 
-		// Update textures used for scene blit
-		if (!UpdateTextures(maya_renderer, maya_texture_manager, m_renderer->GetRenderResult()))
-		{
-			assert( false );
-			return MStatus::kFailure;
-		}
-
 		// Force the panel display style to smooth shaded if it is not already
 		// this ensures that viewport selection behavior works as if shaded
 		EnsurePanelDisplayShading(destination);
@@ -278,75 +240,6 @@ namespace wmr
 				!m_render_operations[1] ||
 				!m_render_operations[2] ||
 				!m_render_operations[3]);
-	}
-
-	// TODO: REFACTOR
-	void ViewportRendererOverride::UpdateTextureData(MHWRender::MTextureAssignment& texture_to_update, WispBufferType type, const wr::CPUTexture& cpu_texture, MHWRender::MTextureManager* texture_manager)
-	{
-		unsigned int buffer_width = cpu_texture.m_buffer_width;
-		unsigned int buffer_height = cpu_texture.m_buffer_height;
-		unsigned int buffer_bytes_per_pixel = cpu_texture.m_bytes_per_pixel;
-
-		// Allocate memory to store the Wisp texture data
-		auto* wisp_data = new unsigned char[buffer_width * buffer_height * buffer_bytes_per_pixel];
-		memcpy(wisp_data, cpu_texture.m_data, sizeof(unsigned char) * buffer_width * buffer_height * buffer_bytes_per_pixel);
-
-		if (!texture_to_update.texture)
-		{
-			switch (type)
-			{
-			case WispBufferType::COLOR:
-				m_color_texture_desc.fWidth = buffer_width;
-				m_color_texture_desc.fHeight = buffer_height;
-				m_color_texture_desc.fDepth = 1;
-				m_color_texture_desc.fBytesPerRow = buffer_bytes_per_pixel * buffer_width;
-				m_color_texture_desc.fBytesPerSlice = m_color_texture_desc.fBytesPerRow * buffer_height;
-				m_color_texture_desc.fTextureType = MHWRender::kImage2D;
-
-				// Acquire a new texture
-				m_color_texture.texture = texture_manager->acquireTexture("", m_color_texture_desc, wisp_data);
-
-				if (m_color_texture.texture)
-					m_color_texture.texture->textureDescription(m_color_texture_desc);
-				break;
-
-			case WispBufferType::DEPTH:
-				m_depth_texture_desc.fWidth = buffer_width;
-				m_depth_texture_desc.fHeight = buffer_height;
-				m_depth_texture_desc.fDepth = 1;
-				m_depth_texture_desc.fBytesPerRow = buffer_bytes_per_pixel * buffer_width;
-				m_depth_texture_desc.fBytesPerSlice = m_color_texture_desc.fBytesPerRow * buffer_height;
-				m_depth_texture_desc.fTextureType = MHWRender::kDepthTexture;
-
-				// Acquire a new texture
-				m_depth_texture.texture = texture_manager->acquireDepthTexture("", reinterpret_cast<float*>(wisp_data), buffer_width, buffer_height, false, nullptr);
-
-				if (m_depth_texture.texture)
-					m_depth_texture.texture->textureDescription(m_depth_texture_desc);
-				break;
-
-			default:
-				break;
-			}
-		}
-		else
-		{
-			switch (type)
-			{
-			case wmr::WispBufferType::COLOR:
-				m_color_texture.texture->update(wisp_data, false);
-				break;
-			
-			case wmr::WispBufferType::DEPTH:
-				m_depth_texture.texture->update(wisp_data, false);
-				break;
-
-			default:
-				break;
-			}
-		}
-
-		delete[] wisp_data;
 	}
 
 	MStatus ViewportRendererOverride::cleanup()
@@ -376,61 +269,5 @@ namespace wmr
 		}
 
 		return false;
-	}
-
-	bool ViewportRendererOverride::UpdateTextures(MHWRender::MRenderer* maya_renderer, MHWRender::MTextureManager* texture_manager, const wr::CPUTextures& cpu_textures)
-	{
-		if (!maya_renderer || !texture_manager)
-			return false;
-
-		// Early exit, no texture data from Wisp available just yet
-		if (cpu_textures.pixel_data == std::nullopt ||
-			cpu_textures.depth_data == std::nullopt)
-			return true;
-
-		// Get current output size.
-		unsigned int target_width = 0;
-		unsigned int target_height = 0;
-		maya_renderer->outputTargetSize(target_width, target_height);
-
-		bool aquire_new_texture = false;
-		bool force_reload = true;
-
-		// If a resize occurred, or we haven't allocated any texture yet,
-		// then create new textures which match the output size. 
-		// Release any existing textures.
-		//
-		if (force_reload || !m_color_texture.texture ||
-			(m_color_texture_desc.fWidth != target_width || m_color_texture_desc.fHeight != target_height) ||
-			(m_depth_texture_desc.fWidth != target_width || m_depth_texture_desc.fHeight != target_height))
-		{
-			if (m_color_texture.texture)
-			{
-				texture_manager->releaseTexture(m_color_texture.texture);
-				m_color_texture.texture = nullptr;
-			}
-
-			if (m_depth_texture.texture)
-			{
-				texture_manager->releaseTexture(m_depth_texture.texture);
-				m_depth_texture.texture = nullptr;
-			}
-			
-			aquire_new_texture = true;
-			force_reload = false;
-		}
-
-		UpdateTextureData(m_color_texture, WispBufferType::COLOR, cpu_textures.pixel_data.value(), texture_manager);
-		UpdateTextureData(m_depth_texture, WispBufferType::DEPTH, cpu_textures.depth_data.value(), texture_manager);
-
-		// Update the textures used for the blit operation.
-		if (aquire_new_texture)
-		{
-			auto* custom_blit = (ScreenRenderOperation*)m_render_operations[0].get();
-			custom_blit->SetColorTexture(m_color_texture);
-			custom_blit->SetDepthTexture(m_depth_texture);
-		}
-
-		return (m_color_texture.texture && m_depth_texture.texture);
 	}
 }
