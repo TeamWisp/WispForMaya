@@ -23,5 +23,11 @@ namespace wmr
 		 *
 		 *  /param msg The message to log to the output. */
 		void LogDebug(const char* msg);
+
+		//! Hash a c-string
+		/*! Implementation from: http://www.cse.yorku.ca/~oz/hash.html .
+		 * 
+		 *  \param str The string to hash. */
+		size_t HashCString(const char* str);
 	}
 }
