@@ -29,6 +29,13 @@ namespace wmr
 		void Render();
 		const wr::CPUTextures GetRenderResult();
 
+		ModelManager& GetModelManager() const;
+		FrameGraphManager& GetFrameGraph() const;
+		MaterialManager& GetMaterialManager() const;
+		TextureManager& GetTextureManager() const;
+		wr::SceneGraph& GetScenegraph() const;
+		wr::D3D12RenderSystem& GetD3D12Renderer() const;
+
 
 	private:
 		std::unique_ptr<FrameGraphManager>		m_framegraph_manager;

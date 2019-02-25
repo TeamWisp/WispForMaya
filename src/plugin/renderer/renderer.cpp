@@ -61,3 +61,33 @@ const wr::CPUTextures wmr::Renderer::GetRenderResult()
 {
 	return m_result_textures;
 }
+
+wmr::ModelManager & wmr::Renderer::GetModelManager() const
+{
+	return *m_model_manager.get();
+}
+
+wmr::FrameGraphManager & wmr::Renderer::GetFrameGraph() const
+{
+	return *m_framegraph_manager.get();
+}
+
+wmr::MaterialManager & wmr::Renderer::GetMaterialManager() const
+{
+	return *m_material_manager.get();
+}
+
+wmr::TextureManager & wmr::Renderer::GetTextureManager() const
+{
+	return *m_texture_manager.get();
+}
+
+wr::SceneGraph & wmr::Renderer::GetScenegraph() const
+{
+	return *m_scenegraph;
+}
+
+wr::D3D12RenderSystem & wmr::Renderer::GetD3D12Renderer() const
+{
+	return *m_render_system.get();
+}

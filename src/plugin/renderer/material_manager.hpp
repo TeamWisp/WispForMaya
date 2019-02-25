@@ -9,6 +9,8 @@ namespace wmr
 		~MaterialManager();
 
 	private:
+		// TODO added render_system..
+		
 
 	};
 

@@ -1,6 +1,11 @@
 #include "model_parser.hpp"
 
 #include "plugin/callback_manager.hpp"
+#include "plugin/viewport_renderer_override.hpp"
+#include "plugin/renderer/renderer.hpp"
+#include "plugin/renderer/model_manager.hpp"
+#include "miscellaneous/settings.hpp"
+#include "plugin/renderer/texture_manager.hpp"
 
 #include "vertex.hpp"
 #include "renderer.hpp"
@@ -119,11 +124,14 @@ namespace wmr
 }
 #pragma endregion
 
-wmr::ModelParser::ModelParser()
+wmr::ModelParser::ModelParser() :
+	m_render_system( dynamic_cast< const ViewportRendererOverride* >(
+		MHWRender::MRenderer::theRenderer()->findRenderOverride( settings::VIEWPORT_OVERRIDE_NAME )
+		)->GetRenderer() )
 {
 }
 
-wmr::ModelParser::~ModelParser()
+wmr::ModelParser::~ModelParser() 
 {
 }
 
@@ -295,8 +303,8 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 		}
 		itt.next();
 	}
-
-	wr::Model* model = m_render_system.m_model_pools[0]->LoadCustom<wr::Vertex>( { mesh_data } );
+	bool model_reloaded = false;
+	wr::Model* model = m_render_system.GetModelManager().AddModel( fnmesh.name(), { mesh_data },model_reloaded );
 
 	auto model_node = m_scenegraph.CreateChild<wr::MeshNode>( nullptr, model );
 	//MStatus status;
@@ -321,7 +329,7 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 
 	updateTransform( transform, model_node );
 
-	model->m_meshes[0].second = &rusty_metal_material;
+	model->m_meshes[0].second = m_render_system.GetMaterialManager();
 
 	m_object_transform_vector.push_back( std::make_pair( transform.object(), model_node ) );
 
