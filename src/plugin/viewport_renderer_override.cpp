@@ -3,9 +3,12 @@
 // Wisp plug-in
 #include "miscellaneous/functions.hpp"
 #include "miscellaneous/settings.hpp"
-#include "plugin/parsers/scene_graph_parser.hpp"
-#include "render_operations/screen_render_operation.hpp"
+#include "parsers/scene_graph_parser.hpp"
 #include "render_operations/gizmo_render_operation.hpp"
+#include "render_operations/renderer_copy_operation.hpp"
+#include "render_operations/renderer_draw_operation.hpp"
+#include "render_operations/renderer_update_operation.hpp"
+#include "render_operations/screen_render_operation.hpp"
 #include "renderer/renderer.hpp"
 
 // Maya API
@@ -50,31 +53,6 @@ namespace wmr
 		}
 	}
 
-	static void CreateScene( wr::SceneGraph* scene_graph, wr::Window* window )
-	{
-
-		//loaded_skybox2 = texture_pool->Load( "resources/materials/LA_Downtown_Afternoon_Fishing_3k.hdr", false, false );
-		//loaded_skybox = texture_pool->Load( "resources/materials/skybox.dds", false, false );
-
-		//scene_graph->m_skybox = loaded_skybox2;
-
-		//auto skybox = scene_graph->CreateChild<wr::SkyboxNode>( nullptr, loaded_skybox );
-
-		//// Lights
-		//auto point_light_0 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
-		//point_light_0->SetRadius( 30.0f );
-		//point_light_0->SetPosition( { -10, 0, 0 } );
-
-		//auto point_light_1 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
-		//point_light_1->SetRadius( 20.0f );
-		//point_light_1->SetPosition( { 0, 0, 10.0 } );
-
-		//auto point_light_2 = scene_graph->CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, DirectX::XMVECTOR{ 5, 5, 5 } );
-		//point_light_2->SetRadius( 12.0f );
-		//point_light_2->SetPosition( { -0.7, 3.5, 0 } );
-
-	}
-
 	ViewportRendererOverride::ViewportRendererOverride(const MString& name)
 		: MRenderOverride(name)
 		, m_ui_name(wmr::settings::PRODUCT_NAME)
@@ -90,7 +68,6 @@ namespace wmr
 			assert( false );
 		}
 
-		ConfigureRenderOperations();
 		CreateRenderOperations();
 
 		m_scenegraph_parser = std::make_unique<ScenegraphParser>();
@@ -109,24 +86,19 @@ namespace wmr
 		}
 	}
 
-	void ViewportRendererOverride::ConfigureRenderOperations()
-	{
-		m_render_operation_names[0] = "wisp_SceneBlit";
-		m_render_operation_names[1] = "wisp_UIDraw";
-		m_render_operation_names[2] = "wisp_Present";
-	}
-
 	void ViewportRendererOverride::CreateRenderOperations()
 	{
 		if (!m_render_operations[0])
 		{
-			m_render_operations[0] = std::make_unique<ScreenRenderOperation>(m_render_operation_names[0]);
-			m_render_operations[1] = std::make_unique<GizmoRenderOperation>(m_render_operation_names[1]);
-			m_render_operations[2] = std::make_unique<MHWRender::MHUDRender>();
-			m_render_operations[3] = std::make_unique<MHWRender::MPresentTarget>(m_render_operation_names[2]);
+			m_render_operations[0] = std::make_unique<RendererUpdateOperation>	(settings::RENDER_OPERATION_NAMES[0]);
+			m_render_operations[1] = std::make_unique<RendererDrawOperation>	(settings::RENDER_OPERATION_NAMES[1]);
+			m_render_operations[2] = std::make_unique<RendererCopyOperation>	(settings::RENDER_OPERATION_NAMES[2]);
+			m_render_operations[3] = std::make_unique<ScreenRenderOperation>	(settings::RENDER_OPERATION_NAMES[3]);
+			m_render_operations[4] = std::make_unique<GizmoRenderOperation>		(settings::RENDER_OPERATION_NAMES[4]);
+			m_render_operations[5] = std::make_unique<MHWRender::MHUDRender>	(settings::RENDER_OPERATION_NAMES[5]);
+			m_render_operations[6] = std::make_unique<MHWRender::MPresentTarget>(settings::RENDER_OPERATION_NAMES[6]);
 		}
 	}
-		
 
 	MHWRender::DrawAPI ViewportRendererOverride::supportedDrawAPIs() const
 	{
@@ -135,7 +107,7 @@ namespace wmr
 
 	MHWRender::MRenderOperation* ViewportRendererOverride::renderOperation()
 	{
-		if (m_current_render_operation >= 0 && m_current_render_operation < 4)
+		if (m_current_render_operation >= 0 && m_current_render_operation < settings::RENDER_OPERATION_COUNT)
 		{
 			if (m_render_operations[m_current_render_operation])
 			{
@@ -170,7 +142,6 @@ namespace wmr
 		camera_transform.getRotation( view_rotation );
 	
 		m_viewport_camera->SetRotation( {  ( float )view_rotation.x,( float )view_rotation.y, ( float )view_rotation.z } );
-
 		
 		MMatrix cameraPos = camera_dag_path.inclusiveMatrix();
 		MVector eye = MVector( static_cast<float>( cameraPos(3,0)), static_cast< float >( cameraPos( 3, 1 ) ), static_cast< float >( cameraPos( 3, 2 ) ) );
@@ -181,24 +152,12 @@ namespace wmr
 		m_viewport_camera->m_frustum_far = camera_functions.farClippingPlane();
 		m_viewport_camera->m_frustum_near = camera_functions.nearClippingPlane();
 		
-
-		unsigned int target_width = 0;
-		unsigned int target_height = 0;
-		MHWRender::MRenderer::theRenderer()->outputTargetSize( target_width, target_height );
-
-		double hfov = camera_functions.horizontalFieldOfView();
-		double vfov = camera_functions.verticalFieldOfView();
-		m_viewport_camera->SetAspectRatio( 1.0f );
-
-		m_viewport_camera->SetFov( AI_RAD_TO_DEG(hfov) );
-
-
 		m_viewport_camera->SetFov( AI_RAD_TO_DEG( camera_functions.horizontalFieldOfView()) );
 	}
 
-	Renderer & ViewportRendererOverride::GetRenderer() const
+	Renderer& ViewportRendererOverride::GetRenderer() const
 	{
-		return *m_renderer.get();
+		return *m_renderer;
 	}
 
 	MStatus ViewportRendererOverride::setup(const MString& destination)
@@ -236,10 +195,17 @@ namespace wmr
 
 	bool ViewportRendererOverride::AreAllRenderOperationsSetCorrectly() const
 	{
-		return (!m_render_operations[0] ||
-				!m_render_operations[1] ||
-				!m_render_operations[2] ||
-				!m_render_operations[3]);
+		bool all_good = true;
+
+		for (const auto& operation : m_render_operations)
+		{
+			if (!operation)
+			{
+				all_good = false;
+			}
+		}
+
+		return (all_good);
 	}
 
 	MStatus ViewportRendererOverride::cleanup()
@@ -263,7 +229,7 @@ namespace wmr
 	{
 		++m_current_render_operation;
 
-		if (m_current_render_operation < 4)
+		if (m_current_render_operation < settings::RENDER_OPERATION_COUNT)
 		{
 			return true;
 		}

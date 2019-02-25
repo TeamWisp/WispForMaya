@@ -1,5 +1,8 @@
 #pragma once
 
+// C++ standard
+#include <array>
+
 //! Generic plug-in namespace (Wisp Maya Renderer)
 namespace wmr
 {
@@ -18,6 +21,21 @@ namespace wmr
 		//! Name of the viewport panel this plug-in will override
 		static const constexpr char* VIEWPORT_PANEL_NAME = "modelPanel4";
 
+		//! Name of the viewport override
 		static const constexpr char* VIEWPORT_OVERRIDE_NAME = "wisp_viewport_override";
+
+		static const constexpr std::uint32_t RENDER_OPERATION_COUNT = 7;
+
+		//! Names and order of the render operations in this plug-in
+		static const constexpr std::array<const char*, RENDER_OPERATION_COUNT> RENDER_OPERATION_NAMES =
+		{
+			"wisp_renderer_update",	// Update the Wisp rendering framework				(renderer_update_operation.hpp)
+			"wisp_renderer_draw",	// Render using Wisp render textures				(renderer_draw_operation.hpp)
+			"wisp_renderer_copy",	// Copy the Wisp output into Maya render textures	(renderer_copy_operation.hpp)
+			"wisp_fullscreen_blit",	// Blit the Maya render textures to the screen		(screen_render_operation.hpp)
+			"wisp_gizmo_render",	// Render gizmos									(gizmo_render_operation.hpp)
+			"wisp_hud_render",		// Render the HUD									(using default Maya implementation)
+			"wisp_present"			// Present the results to the viewport window		(using default Maya implementation)
+		};
 	};
 }
