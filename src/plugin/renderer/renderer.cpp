@@ -92,3 +92,8 @@ wr::D3D12RenderSystem & wmr::Renderer::GetD3D12Renderer() const
 {
 	return *m_render_system.get();
 }
+
+std::shared_ptr<wr::CameraNode> wmr::Renderer::GetCamera() const
+{
+	return m_wisp_camera;
+}

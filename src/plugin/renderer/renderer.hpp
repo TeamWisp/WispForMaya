@@ -35,6 +35,7 @@ namespace wmr
 		TextureManager& GetTextureManager() const;
 		wr::SceneGraph& GetScenegraph() const;
 		wr::D3D12RenderSystem& GetD3D12Renderer() const;
+		std::shared_ptr<wr::CameraNode> GetCamera() const;
 
 
 	private:
