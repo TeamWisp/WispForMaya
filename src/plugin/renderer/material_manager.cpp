@@ -12,8 +12,16 @@
 
 wmr::MaterialManager::MaterialManager()
 {
+}
+
+wmr::MaterialManager::~MaterialManager()
+{
+}
+
+void wmr::MaterialManager::Initialize()
+{
 	auto& renderer = dynamic_cast< const ViewportRendererOverride* >( MHWRender::MRenderer::theRenderer()->findRenderOverride( settings::VIEWPORT_OVERRIDE_NAME ) )->GetRenderer();
-	m_material_pool = renderer.GetD3D12Renderer().CreateMaterialPool(0);
+	m_material_pool = renderer.GetD3D12Renderer().CreateMaterialPool( 0 );
 
 	m_default_material_handle = m_material_pool->Create();
 
@@ -24,11 +32,6 @@ wmr::MaterialManager::MaterialManager()
 	internal_material->SetNormal( texture_manager.GetDefaultTexture() );
 	internal_material->SetMetallic( texture_manager.GetDefaultTexture() );
 	internal_material->SetRoughness( texture_manager.GetDefaultTexture() );
-
-}
-
-wmr::MaterialManager::~MaterialManager()
-{
 }
 
 wr::MaterialHandle wmr::MaterialManager::GetDefaultMaterial() noexcept

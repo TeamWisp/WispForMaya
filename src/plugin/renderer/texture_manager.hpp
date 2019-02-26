@@ -32,6 +32,6 @@ namespace wmr
 		std::vector<wr::TextureHandle> m_texture_container;
 
 		//! Wisp texture pool
-		std::unique_ptr<wr::TexturePool> m_texture_pool;
+		std::shared_ptr<wr::TexturePool> m_texture_pool;
 	};
 }
