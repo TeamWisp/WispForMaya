@@ -31,8 +31,6 @@
 #include <memory>
 #include <sstream>
 
-auto window = std::make_unique<wr::Window>( GetModuleHandleA( nullptr ), "D3D12 Test App", 1280, 720 );
-
 static std::shared_ptr<wr::TexturePool> texture_pool;
 static std::shared_ptr<wr::MaterialPool> material_pool;
 static wr::TextureHandle loaded_skybox;
@@ -70,6 +68,8 @@ namespace wmr
 		{
 			assert( false );
 		}
+
+		m_renderer = std::make_unique<Renderer>();
 
 		CreateRenderOperations();
 

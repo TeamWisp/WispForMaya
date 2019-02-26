@@ -24,7 +24,6 @@ namespace wmr
 	public:
 		Renderer();
 		~Renderer();
-		void Initialize();
 		void Update();
 		void Render();
 		const wr::CPUTextures GetRenderResult();

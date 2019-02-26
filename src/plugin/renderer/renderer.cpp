@@ -15,35 +15,29 @@
 
 wmr::Renderer::Renderer()
 {
-}
-
-wmr::Renderer::~Renderer()
-{
-	m_render_system->WaitForAllPreviousWork();
-	m_render_system.reset();
-}
-
-void wmr::Renderer::Initialize()
-{
-	
 	m_render_system = std::make_unique<wr::D3D12RenderSystem>();
-	m_window = std::make_unique<wr::Window>( GetModuleHandleA( nullptr ), "Wisp hidden window", 1280, 720 );
-	m_render_system->Init( m_window.get() );
-
+	m_window = std::make_unique<wr::Window>(GetModuleHandleA(nullptr), "Wisp hidden window", 1280, 720);
+	m_render_system->Init(m_window.get());
 
 	// need managers
 	m_model_manager = std::make_unique<ModelManager>();
 	m_texture_manager = std::make_unique<TextureManager>();
 	m_material_manager = std::make_unique<MaterialManager>();
 
-	m_scenegraph = std::make_shared<wr::SceneGraph>( m_render_system.get() );
+	m_scenegraph = std::make_shared<wr::SceneGraph>(m_render_system.get());
 
-	m_wisp_camera = m_scenegraph->CreateChild<wr::CameraNode>( nullptr, 90.f, ( float )m_window->GetWidth() / ( float )m_window->GetHeight() );
-	m_wisp_camera->SetPosition( { 0, 0, -1 } );
+	m_wisp_camera = m_scenegraph->CreateChild<wr::CameraNode>(nullptr, 90.f, (float)m_window->GetWidth() / (float)m_window->GetHeight());
+	m_wisp_camera->SetPosition({ 0, 0, -1 });
 
-	m_render_system->InitSceneGraph( *m_scenegraph.get() );
+	m_render_system->InitSceneGraph(*m_scenegraph.get());
 	m_framegraph_manager = std::make_unique<FrameGraphManager>();
-	m_framegraph_manager->Create( *m_render_system, RendererFrameGraphType::DEFERRED );
+	m_framegraph_manager->Create(*m_render_system, RendererFrameGraphType::DEFERRED);
+}
+
+wmr::Renderer::~Renderer()
+{
+	m_render_system->WaitForAllPreviousWork();
+	m_render_system.reset();
 }
 
 void wmr::Renderer::Update()
