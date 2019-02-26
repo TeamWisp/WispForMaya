@@ -55,7 +55,7 @@ void wmr::Renderer::Update()
 
 void wmr::Renderer::Render()
 {
-	m_render_system->Render(m_scenegraph , *m_framegraph_manager->Get());
+	m_result_textures = m_render_system->Render(m_scenegraph , *m_framegraph_manager->Get());
 }
 
 const wr::CPUTextures wmr::Renderer::GetRenderResult()
