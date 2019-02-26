@@ -37,7 +37,6 @@ static wr::TextureHandle loaded_skybox;
 static wr::TextureHandle loaded_skybox2;
 
 #define SCENE viknell_scene
-
 namespace wmr
 {
 	static void EnsurePanelDisplayShading( const MString& destination )

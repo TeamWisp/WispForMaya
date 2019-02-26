@@ -15,11 +15,16 @@
 wmr::ModelManager::ModelManager()
 {
 	// Create a model pool using the D3D12 Wisp renderer
-	m_model_pool.reset(dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer().GetD3D12Renderer().CreateModelPool(settings::MAX_VERTEX_DATA_SIZE_MB, settings::MAX_INDEX_DATA_SIZE_MB).get());
 }
 
 wmr::ModelManager::~ModelManager()
 {
+}
+
+void wmr::ModelManager::Initialize()
+{
+	auto* maya_override = dynamic_cast< const ViewportRendererOverride* >( MHWRender::MRenderer::theRenderer()->findRenderOverride( settings::VIEWPORT_OVERRIDE_NAME ) );
+	m_model_pool = maya_override->GetRenderer().GetD3D12Renderer().CreateModelPool( settings::MAX_VERTEX_DATA_SIZE_MB, settings::MAX_INDEX_DATA_SIZE_MB ) ;
 }
 
 wr::Model* wmr::ModelManager::AddModel(const MString& name, const wr::MeshData<wr::Vertex>& data, bool& replaced_existing_model) noexcept

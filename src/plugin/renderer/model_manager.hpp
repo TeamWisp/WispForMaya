@@ -24,6 +24,8 @@ namespace wmr
 		ModelManager();
 		~ModelManager();
 
+		void Initialize();
+
 		//! Request to load a model, if the model already exists
 		/*! Returns a pointer to the loaded model.
 		 *
@@ -37,8 +39,9 @@ namespace wmr
 		wr::Model* GetModelByName(const char* name) noexcept;
 		wr::Model* GetModelByName(const MString& name) noexcept;
 
+
 	private:
-		std::unique_ptr<wr::ModelPool> m_model_pool;		//! Wisp object for model loading
+		std::shared_ptr<wr::ModelPool> m_model_pool;		//! Wisp object for model loading
 		std::unordered_map<size_t, wr::Model*> m_models;	//! Models added to the model pool referenced by hash
 	};
 
