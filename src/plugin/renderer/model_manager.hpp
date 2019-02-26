@@ -11,6 +11,11 @@
 #include <unordered_map>
 #include <vector>
 
+namespace wr
+{
+	class RenderSystem;
+}
+
 namespace wmr
 {
 	class ModelManager
@@ -33,8 +38,8 @@ namespace wmr
 		wr::Model* GetModelByName(const MString& name) noexcept;
 
 	private:
-		std::unique_ptr<wr::ModelPool> m_model_pool;			//! Wisp object for model loading
-		std::unordered_map<size_t, wr::Model*> m_models;		//! Models added to the model pool referenced by hash
+		std::unique_ptr<wr::ModelPool> m_model_pool;		//! Wisp object for model loading
+		std::unordered_map<size_t, wr::Model*> m_models;	//! Models added to the model pool referenced by hash
 	};
 
 }
