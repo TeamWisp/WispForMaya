@@ -19,7 +19,6 @@ wmr::Renderer::Renderer()
 	m_window = std::make_unique<wr::Window>(GetModuleHandleA(nullptr), "Wisp hidden window", 1280, 720);
 	m_render_system->Init(m_window.get());
 
-	// need managers
 	m_model_manager = std::make_unique<ModelManager>();
 	m_texture_manager = std::make_unique<TextureManager>();
 	m_material_manager = std::make_unique<MaterialManager>();
@@ -38,6 +37,11 @@ wmr::Renderer::~Renderer()
 {
 	m_render_system->WaitForAllPreviousWork();
 	m_render_system.reset();
+}
+
+void wmr::Renderer::Initialize() noexcept
+{
+	m_texture_manager->Initialize();
 }
 
 void wmr::Renderer::Update()

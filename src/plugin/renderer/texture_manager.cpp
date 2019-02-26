@@ -11,7 +11,7 @@
 
 namespace wmr
 {
-	TextureManager::TextureManager()
+	void TextureManager::Initialize() noexcept
 	{
 		// Create a texture pool using the D3D12 Wisp renderer
 		m_texture_pool.reset(dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer().GetD3D12Renderer().CreateTexturePool().get());

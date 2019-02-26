@@ -69,6 +69,7 @@ namespace wmr
 		}
 
 		m_renderer = std::make_unique<Renderer>();
+		m_renderer->Initialize();
 
 		CreateRenderOperations();
 
