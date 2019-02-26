@@ -46,7 +46,6 @@ namespace wmr
 			"wisp_renderer_copy",	// Copy the Wisp output into Maya render textures	(renderer_copy_operation.hpp)
 			"wisp_fullscreen_blit",	// Blit the Maya render textures to the screen		(screen_render_operation.hpp)
 			"wisp_gizmo_render",	// Render gizmos									(gizmo_render_operation.hpp)
-			"wisp_hud_render",		// Render the HUD									(using default Maya implementation)
 			"wisp_present"			// Present the results to the viewport window		(using default Maya implementation)
 		};
 	};

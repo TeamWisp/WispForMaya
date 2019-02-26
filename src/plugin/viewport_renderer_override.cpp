@@ -93,13 +93,16 @@ namespace wmr
 	{
 		if (!m_render_operations[0])
 		{
+			//needs to be create first as other operations depent on it.
+			std::unique_ptr<ScreenRenderOperation> screen_render_operation = std::make_unique<ScreenRenderOperation>(settings::RENDER_OPERATION_NAMES[3]);
+
 			m_render_operations[0] = std::make_unique<RendererUpdateOperation>	(settings::RENDER_OPERATION_NAMES[0]);
 			m_render_operations[1] = std::make_unique<RendererDrawOperation>	(settings::RENDER_OPERATION_NAMES[1]);
-			m_render_operations[2] = std::make_unique<RendererCopyOperation>	(settings::RENDER_OPERATION_NAMES[2]);
-			m_render_operations[3] = std::make_unique<ScreenRenderOperation>	(settings::RENDER_OPERATION_NAMES[3]);
+			m_render_operations[2] = std::make_unique<RendererCopyOperation>	(settings::RENDER_OPERATION_NAMES[2], *screen_render_operation );
+			m_render_operations[3] = std::move(screen_render_operation);
 			m_render_operations[4] = std::make_unique<GizmoRenderOperation>		(settings::RENDER_OPERATION_NAMES[4]);
-			m_render_operations[5] = std::make_unique<MHWRender::MHUDRender>	(settings::RENDER_OPERATION_NAMES[5]);
-			m_render_operations[6] = std::make_unique<MHWRender::MPresentTarget>(settings::RENDER_OPERATION_NAMES[6]);
+			m_render_operations[5] = std::make_unique<MHWRender::MHUDRender>	();
+			m_render_operations[6] = std::make_unique<MHWRender::MPresentTarget>(settings::RENDER_OPERATION_NAMES[5]);
 		}
 	}
 

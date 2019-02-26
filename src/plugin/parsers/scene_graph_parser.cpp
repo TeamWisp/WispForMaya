@@ -5,6 +5,8 @@
 #include "miscellaneous/settings.hpp"
 #include "plugin/viewport_renderer_override.hpp"
 #include "plugin/parsers/model_parser.hpp"
+#include "plugin/parsers/material_parser.hpp"
+#include "plugin/parsers/camera_parser.hpp"
 
 #include "model_pool.hpp"
 #include "vertex.hpp"
