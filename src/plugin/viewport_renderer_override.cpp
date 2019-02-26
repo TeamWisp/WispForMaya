@@ -93,7 +93,7 @@ namespace wmr
 	{
 		if (!m_render_operations[0])
 		{
-			//needs to be create first as other operations depent on it.
+			// Needs to be created first because other operations depend on it.
 			std::unique_ptr<ScreenRenderOperation> screen_render_operation = std::make_unique<ScreenRenderOperation>(settings::RENDER_OPERATION_NAMES[3]);
 
 			m_render_operations[0] = std::make_unique<RendererUpdateOperation>	(settings::RENDER_OPERATION_NAMES[0]);
