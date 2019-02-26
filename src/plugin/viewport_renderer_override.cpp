@@ -147,7 +147,7 @@ namespace wmr
 			return MStatus::kFailure;
 		}
 
-		if ( AreAllRenderOperationsSetCorrectly() )
+		if ( !AreAllRenderOperationsSetCorrectly() )
 		{
 			assert( false );
 			return MStatus::kFailure;
@@ -172,7 +172,7 @@ namespace wmr
 			}
 		}
 
-		return (all_good);
+		return all_good;
 	}
 
 	MStatus ViewportRendererOverride::cleanup()

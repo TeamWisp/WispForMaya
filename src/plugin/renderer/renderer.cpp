@@ -41,18 +41,18 @@ wmr::Renderer::~Renderer()
 
 void wmr::Renderer::Initialize() noexcept
 {
+	m_model_manager->Initialize();
 	m_texture_manager->Initialize();
+	m_material_manager->Initialize();
 }
 
 void wmr::Renderer::Update()
 {
-	
 }
 
 void wmr::Renderer::Render()
 {
 	m_render_system->Render(m_scenegraph , *m_framegraph_manager->Get());
-
 }
 
 const wr::CPUTextures wmr::Renderer::GetRenderResult()
