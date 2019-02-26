@@ -17,8 +17,11 @@ namespace wmr
 	class TextureManager
 	{
 	public:
-		TextureManager();
+		TextureManager() = default;
 		~TextureManager() = default;
+
+		//! Initialization
+		void Initialize() noexcept;
 
 		//! Get a texture handle to the fall-back texture
 		const wr::TextureHandle& GetDefaultTexture() const noexcept;
