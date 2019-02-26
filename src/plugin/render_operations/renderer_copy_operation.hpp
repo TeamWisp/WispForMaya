@@ -1,6 +1,7 @@
 #pragma once
 
 // Maya API
+#include <maya/MShaderManager.h>
 #include <maya/MViewport2Renderer.h>
 
 // Wisp forward declarations

@@ -122,11 +122,6 @@ namespace wmr
 		 *  /return True when the last operation has been selected, else, false. */
 		bool nextRenderOperation() override;
 
-		//! Mirror the Maya camera in the Wisp rendering framework
-		/*! To make Maya usable, the Wisp framework camera has to match the Maya viewport camera exactly. This function
-		 *  grabs the Maya camera matrices and converts it to the Wisp format. */
-		void SynchronizeWispWithMayaViewportCamera();
-
 	private:
 		
 		MString m_ui_name; //!< Name of the ui panel that will be overridden

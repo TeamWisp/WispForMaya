@@ -11,6 +11,9 @@
 #include "render_operations/screen_render_operation.hpp"
 #include "renderer/renderer.hpp"
 
+// Wisp rendering framework
+#include "window.hpp"
+
 // Maya API
 #include <maya/M3dView.h>
 #include <maya/MDagPath.h>
@@ -118,43 +121,6 @@ namespace wmr
 		return nullptr;
 	}
 
-	void ViewportRendererOverride::SynchronizeWispWithMayaViewportCamera()
-	{
-		M3dView maya_view;
-		MStatus status = M3dView::getM3dViewFromModelPanel( wmr::settings::VIEWPORT_PANEL_NAME, maya_view );
-
-		if( status != MStatus::kSuccess )
-		{
-			// Failure means no camera data for this frame, early-out!
-			return;
-		}
-
-		// Model view matrix
-		MMatrix mv_matrix;
-		maya_view.modelViewMatrix( mv_matrix );
-
-		MDagPath camera_dag_path;
-		maya_view.getCamera( camera_dag_path );
-		MFnTransform camera_transform( camera_dag_path.transform() );
-		// Additional functionality
-		
-		MEulerRotation view_rotation;
-		camera_transform.getRotation( view_rotation );
-	
-		m_viewport_camera->SetRotation( {  ( float )view_rotation.x,( float )view_rotation.y, ( float )view_rotation.z } );
-		
-		MMatrix cameraPos = camera_dag_path.inclusiveMatrix();
-		MVector eye = MVector( static_cast<float>( cameraPos(3,0)), static_cast< float >( cameraPos( 3, 1 ) ), static_cast< float >( cameraPos( 3, 2 ) ) );
-		m_viewport_camera->SetPosition( { ( float )-eye.x, ( float )-eye.y, ( float )-eye.z } );
-
-		
-		MFnCamera camera_functions( camera_dag_path );
-		m_viewport_camera->m_frustum_far = camera_functions.farClippingPlane();
-		m_viewport_camera->m_frustum_near = camera_functions.nearClippingPlane();
-		
-		m_viewport_camera->SetFov( AI_RAD_TO_DEG( camera_functions.horizontalFieldOfView()) );
-	}
-
 	Renderer& ViewportRendererOverride::GetRenderer() const
 	{
 		return *m_renderer;
@@ -162,8 +128,6 @@ namespace wmr
 
 	MStatus ViewportRendererOverride::setup(const MString& destination)
 	{
-		SynchronizeWispWithMayaViewportCamera();
-
 		auto* const maya_renderer = MHWRender::MRenderer::theRenderer();
 
 		if (!maya_renderer)
