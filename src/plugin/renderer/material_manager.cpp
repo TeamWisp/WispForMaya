@@ -31,7 +31,7 @@ wmr::MaterialManager::~MaterialManager()
 {
 }
 
-wr::MaterialHandle* wmr::MaterialManager::GetDefaultMaterial() noexcept
+wr::MaterialHandle wmr::MaterialManager::GetDefaultMaterial() noexcept
 {
-	return &m_default_material_handle;
+	return m_default_material_handle;
 }

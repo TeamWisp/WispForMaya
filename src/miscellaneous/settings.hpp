@@ -9,12 +9,6 @@ namespace wmr
 	//! Holds all global settings for the plug-in
 	namespace settings
 	{
-		//! Number of textures a texture pool can hold
-		static const constexpr std::uint32_t MAX_NUMBER_OF_TEXTURES_IN_POOL = 128;
-
-		//! Size of the texture pool in MB
-		static const constexpr std::uint32_t TEXTURE_POOL_SIZE_MB = 512;
-
 		//! Maximum amount of vertex data in the model pool in MB
 		static const constexpr std::uint32_t MAX_VERTEX_DATA_SIZE_MB = 512;
 

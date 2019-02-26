@@ -18,7 +18,7 @@ namespace wmr
 		MaterialManager();
 		~MaterialManager();
 
-		wr::MaterialHandle* GetDefaultMaterial() noexcept;
+		wr::MaterialHandle GetDefaultMaterial() noexcept;
 	private:
 		// TODO added render_system..
 		
