@@ -27,6 +27,6 @@ namespace wmr
 
 	private:
 		std::vector<std::pair<MObject, std::shared_ptr<wr::MeshNode>>> m_object_transform_vector;
-		Renderer& m_render_system;
+		Renderer& m_renderer;
 	};
 }

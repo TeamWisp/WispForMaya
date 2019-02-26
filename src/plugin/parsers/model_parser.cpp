@@ -125,7 +125,7 @@ namespace wmr
 #pragma endregion
 
 wmr::ModelParser::ModelParser() :
-	m_render_system( dynamic_cast< const ViewportRendererOverride* >(
+	m_renderer( dynamic_cast< const ViewportRendererOverride* >(
 		MHWRender::MRenderer::theRenderer()->findRenderOverride( settings::VIEWPORT_OVERRIDE_NAME )
 		)->GetRenderer() )
 {
@@ -304,9 +304,9 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 		itt.next();
 	}
 	bool model_reloaded = false;
-	wr::Model* model = m_render_system.GetModelManager().AddModel( fnmesh.name(), { mesh_data },model_reloaded );
+	wr::Model* model = m_renderer.GetModelManager().AddModel( fnmesh.name(), { mesh_data },model_reloaded );
 
-	auto model_node = m_scenegraph.CreateChild<wr::MeshNode>( nullptr, model );
+	auto model_node = m_renderer.GetScenegraph().CreateChild<wr::MeshNode>( nullptr, model );
 	//MStatus status;
 
 
@@ -329,7 +329,7 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 
 	updateTransform( transform, model_node );
 
-	model->m_meshes[0].second = m_render_system.GetMaterialManager();
+	model->m_meshes[0].second = m_renderer.GetMaterialManager();
 
 	m_object_transform_vector.push_back( std::make_pair( transform.object(), model_node ) );
 
