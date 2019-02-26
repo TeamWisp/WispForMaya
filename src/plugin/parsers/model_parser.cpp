@@ -6,6 +6,7 @@
 #include "plugin/renderer/model_manager.hpp"
 #include "miscellaneous/settings.hpp"
 #include "plugin/renderer/texture_manager.hpp"
+#include "plugin/renderer/material_manager.hpp"
 
 #include "vertex.hpp"
 #include "renderer.hpp"
@@ -306,7 +307,7 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 	bool model_reloaded = false;
 	wr::Model* model = m_render_system.GetModelManager().AddModel( fnmesh.name(), { mesh_data },model_reloaded );
 
-	auto model_node = m_scenegraph.CreateChild<wr::MeshNode>( nullptr, model );
+	auto model_node = m_render_system.GetScenegraph().CreateChild<wr::MeshNode>( nullptr, model );
 	//MStatus status;
 
 
@@ -329,7 +330,7 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 
 	updateTransform( transform, model_node );
 
-	model->m_meshes[0].second = m_render_system.GetMaterialManager();
+	model->m_meshes[0].second = m_render_system.GetMaterialManager().GetDefaultMaterial();
 
 	m_object_transform_vector.push_back( std::make_pair( transform.object(), model_node ) );
 
