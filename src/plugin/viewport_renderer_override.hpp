@@ -1,5 +1,8 @@
 #pragma once
 
+// Wisp plug-in
+#include <miscellaneous/settings.hpp>
+
 // Maya API
 #include <maya/MShaderManager.h>
 
@@ -68,9 +71,6 @@ namespace wmr
 		Renderer& GetRenderer() const;
 
 	private:
-		//! Set the names of the render operations
-		void ConfigureRenderOperations();
-
 		//! Assign the correct render operations to the render operation container
 		/*! The names specified by the ConfigureRenderOperations() function indicate the order in which the render
 		 *  operations are expected.
@@ -122,17 +122,11 @@ namespace wmr
 		 *  /return True when the last operation has been selected, else, false. */
 		bool nextRenderOperation() override;
 
-		//! Mirror the Maya camera in the Wisp rendering framework
-		/*! To make Maya usable, the Wisp framework camera has to match the Maya viewport camera exactly. This function
-		 *  grabs the Maya camera matrices and converts it to the Wisp format. */
-		void SynchronizeWispWithMayaViewportCamera();
-
 	private:
 		
 		MString m_ui_name; //!< Name of the ui panel that will be overridden
 
-		std::array<std::unique_ptr<MHWRender::MRenderOperation>, 4> m_render_operations; //!< All render operations used in this plug-in		
-		MString m_render_operation_names[3]; //!< Custom render operation names for the overrides
+		std::array<std::unique_ptr<MHWRender::MRenderOperation>, settings::RENDER_OPERATION_COUNT> m_render_operations; //!< All render operations used in this plug-in		
 
 		int m_current_render_operation; //!< Index of the currently active render operation
 

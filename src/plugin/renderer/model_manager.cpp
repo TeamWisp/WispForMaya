@@ -2,13 +2,20 @@
 
 // Wisp plug-in
 #include "miscellaneous/functions.hpp"
+#include "plugin/viewport_renderer_override.hpp"
+#include "renderer.hpp"
+#include "settings.hpp"
 
 // Wisp rendering framework
-#include "wisp.hpp"
+#include "d3d12/d3d12_renderer.hpp"
+
+// Maya API
+#include <maya/MViewport2Renderer.h>
 
 wmr::ModelManager::ModelManager()
-	: m_model_pool(std::make_unique<wr::ModelPool>())
 {
+	// Create a model pool using the D3D12 Wisp renderer
+	m_model_pool.reset(dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer().GetD3D12Renderer().CreateModelPool(settings::MAX_VERTEX_DATA_SIZE_MB, settings::MAX_INDEX_DATA_SIZE_MB).get());
 }
 
 wmr::ModelManager::~ModelManager()

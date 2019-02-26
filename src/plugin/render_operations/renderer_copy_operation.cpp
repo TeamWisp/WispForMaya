@@ -118,13 +118,13 @@ namespace wmr
 
 		// Failed to retrieve the Maya renderer, cannot continue!
 		if (!maya_renderer)
-			return;
+			return MStatus::kFailure;
 
 		auto maya_texture_manager = maya_renderer->getTextureManager();
 
 		// Failed to retrieve the Maya texture manager, cannot continue!
 		if (!maya_texture_manager)
-			return;
+			return MStatus::kFailure;
 
 		// Get the output of the Wisp renderer for this frame
 		auto wisp_renderer_output = m_renderer.GetRenderResult();
@@ -133,7 +133,7 @@ namespace wmr
 		if (!wisp_renderer_output.depth_data.has_value() ||
 			!wisp_renderer_output.pixel_data.has_value())
 		{
-			return;
+			return MStatus::kFailure;
 		}
 
 		// Retrieve the width and height of the Wisp output
