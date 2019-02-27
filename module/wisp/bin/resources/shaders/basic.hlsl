@@ -2,6 +2,8 @@
 //48 * 1024 / (4 * 4 * 4) = 48 * 1024 / 64 = 48 * 16 = 768
 #define MAX_INSTANCES 768
 
+#include "material_util.hlsl"
+
 struct VS_INPUT
 {
 	float3 pos : POSITION;
@@ -9,6 +11,7 @@ struct VS_INPUT
 	float3 normal : NORMAL;
 	float3 tangent : TANGENT;
 	float3 bitangent : BITANGENT;
+	float3 color : COLOR;
 };
 
 struct VS_OUTPUT
@@ -18,6 +21,7 @@ struct VS_OUTPUT
 	float3 normal : NORMAL;
 	float3 tangent : TANGENT;
 	float3 bitangent : BITANGENT;
+	float3 color : COLOR;
 };
 
 cbuffer CameraProperties : register(b0)
@@ -50,10 +54,11 @@ VS_OUTPUT main_vs(VS_INPUT input, uint instid : SV_InstanceId)
 	float4x4 mvp = mul(projection, vm);
 	
 	output.pos =  mul(mvp, float4(pos, 1.0f));
-	output.uv = input.uv;
+	output.uv = float2(input.uv.x, 1.0f - input.uv.y);
 	output.tangent = normalize(mul(inst.model, float4(input.tangent, 0))).xyz;
 	output.bitangent = normalize(mul(inst.model, float4(input.bitangent, 0))).xyz;
 	output.normal = normalize(mul(inst.model, float4(input.normal, 0))).xyz;
+	output.color = input.color;
 
 	return output;
 }
@@ -71,18 +76,29 @@ Texture2D material_metallic : register(t3);
 
 SamplerState s0 : register(s0);
 
+cbuffer MaterialProperties : register(b2)
+{
+	MaterialData data;
+}
+
+
 PS_OUTPUT main_ps(VS_OUTPUT input) : SV_TARGET
 {
 	PS_OUTPUT output;
 	float3x3 tbn = {input.tangent, input.bitangent, input.normal};
-	float4 albedo = material_albedo.Sample(s0, input.uv);
-	float4 roughness = material_roughness.Sample(s0, input.uv);
-	float4 metallic = material_metallic.Sample(s0, input.uv);
 
-	float3 tex_normal = material_normal.Sample(s0, input.uv).rgb * 2.0 - float3(1.0, 1.0, 1.0);	
-	float3 normal = normalize(mul( tex_normal, tbn));
+	OutputMaterialData output_data = InterpretMaterialData(data,
+		material_albedo,
+		material_normal,
+		material_roughness,
+		material_metallic,
+		s0,
+		input.uv);
 
-	output.albedo_roughness = float4(albedo.xyz, roughness.r);
-	output.normal_metallic = float4(normal, metallic.r);
+	float3 normal = normalize(mul(output_data.normal, tbn));
+
+	output.albedo_roughness = float4(output_data.albedo, output_data.roughness);
+	output.normal_metallic = float4(normal, output_data.metallic);
+
 	return output;
 }

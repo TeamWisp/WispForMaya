@@ -1,7 +1,8 @@
 #define LIGHTS_REGISTER register(t2)
+#include "util.hlsl"
 #include "pbr_util.hlsl"
-#include "shadow_ray.hlsl"
 #include "lighting.hlsl"
+#include "material_util.hlsl"
 
 static const float M_PI = 3.14159265f;
 
@@ -12,25 +13,35 @@ struct Vertex
 	float3 normal;
 	float3 tangent;
 	float3 bitangent;
+	float3 color;
 };
 
 struct Material
 {
-	float idx_offset;
-	float vertex_offset;
 	float albedo_id;
 	float normal_id;
 	float roughness_id;
 	float metalicness_id;
+
+	MaterialData data;
+};
+
+struct Offset
+{
+    float material_idx;
+    float idx_offset;
+    float vertex_offset;
 };
 
 RWTexture2D<float4> gOutput : register(u0);
 ByteAddressBuffer g_indices : register(t1);
 StructuredBuffer<Vertex> g_vertices : register(t3);
 StructuredBuffer<Material> g_materials : register(t4);
+StructuredBuffer<Offset> g_offsets : register(t5);
 
-Texture2D skybox : register(t5);
-Texture2D g_textures[20] : register(t6);
+Texture2D skybox : register(t6);
+TextureCube irradiance_map : register(t7);
+Texture2D g_textures[90] : register(t8);
 SamplerState s0 : register(s0);
 
 typedef BuiltInTriangleIntersectionAttributes MyAttributes;
@@ -60,26 +71,6 @@ struct Ray
 	float3 origin;
 	float3 direction;
 };
-
-uint initRand(uint val0, uint val1, uint backoff = 16)
-{
-	uint v0 = val0, v1 = val1, s0 = 0;
-
-	[unroll]
-	for (uint n = 0; n < backoff; n++)
-	{
-		s0 += 0x9e3779b9;
-		v0 += ((v1 << 4) + 0xa341316c) ^ (v1 + s0) ^ ((v1 >> 5) + 0xc8013ea4);
-		v1 += ((v0 << 4) + 0xad90777d) ^ (v0 + s0) ^ ((v0 >> 5) + 0x7e95761e);
-	}
-	return v0;
-}
-
-float nextRand(inout uint s)
-{
-	s = (1664525u * s + 1013904223u);
-	return float(s & 0x00FFFFFF) / float(0x01000000);
-}
 
 float3 getPerpendicularVector(float3 u)
 {
@@ -112,16 +103,6 @@ uint3 Load3x32BitIndices(uint offsetBytes)
  	return g_indices.Load3(offsetBytes);
 }
 
-float2 VectorToLatLong(float3 dir)
-{
-	float3 p = normalize(dir);
-
-	// atan2_WAR is a work-around due to an apparent compiler bug in atan2
-	float u = (1.f + atan2(p.x, -p.z) / M_PI) * 0.5f;
-	float v = acos(p.y*-1) / M_PI;
-	return float2(u, v);
-}
-
 inline Ray GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 projectionToWorld, in float2 offset, unsigned int seed)
 {
 #ifdef DEPTH_OF_FIELD
@@ -131,13 +112,16 @@ inline Ray GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 
 	float3 cameraV = float3(0, 1, 0);
 	float3 cameraW = float3(0, 0, 1);
 
-    float2 xy = (index + offset + pixelOff) + 0.5f; // center in the middle of the pixel.
-    float2 screenPos = xy / DispatchRaysDimensions().xy * 2.0 - 1.0;
+	float2 xy = (index + offset + pixelOff) + 0.5f; // center in the middle of the pixel.
+	float2 screenPos = xy / DispatchRaysDimensions().xy * 2.0 - 1.0;
 
-    // Unproject the pixel coordinate into a world positon.
-    float4 world = mul(float4(screenPos, 0, 1), projectionToWorld);
+	// Invert Y for DirectX-style coordinates.
+	screenPos.y = -screenPos.y;
+
+	// Unproject the pixel coordinate into a world positon.
+	float4 world = mul(float4(screenPos, 0, 1), projectionToWorld);
 	world.xyz = world.x * cameraU + world.y * cameraV + cameraW;
-    world.xyz /= 1;
+	world.xyz /= 1;
 
 	float2 pixelCenter = (index + offset) / DispatchRaysDimensions().xy;            // Pixel ID -> [0..1] over screen
 	float2 ndc = float2(2, -2) * pixelCenter + float2(-1, 1);             // Convert to [-1..1]
@@ -146,19 +130,22 @@ inline Ray GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 
 
 	float focallen = focal_len;
 	float lensrad = focal_len / (2.0f * 16);
-	float3 focalPt = cameraPosition + focallen * world;  
+	float3 focalPt = cameraPosition + focallen * world;
 
 	float2 rngLens = float2(6.2831853f * nextRand(seed), lensrad*nextRand(seed));
 	float2 lensPos = float2(cos(rngLens.x) * rngLens.y, sin(rngLens.x) * rngLens.y);
 
 	//lensPos = mul(float4(lensPos, 0, 0), projectionToWorld);
 
-    Ray ray;
-    ray.origin = cameraPosition + float3(lensPos, 0);
+	Ray ray;
+	ray.origin = cameraPosition + float3(lensPos, 0);
 	ray.direction = normalize(focalPt.xyz - ray.origin);
 #else
     float2 xy = (index + offset) + 0.5f; // center in the middle of the pixel.
     float2 screenPos = xy / DispatchRaysDimensions().xy * 2.0 - 1.0;
+
+	// Invert Y for DirectX-style coordinates.
+	screenPos.y = -screenPos.y;
 
     // Unproject the pixel coordinate into a world positon.
     float4 world = mul(float4(screenPos, 0, 1), projectionToWorld);
@@ -167,9 +154,9 @@ inline Ray GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 
     Ray ray;
     ray.origin = cameraPosition;
     ray.direction = normalize(world.xyz - ray.origin);
-#endif
 
     return ray;
+#endif
 }
 
 // Retrieve hit world position.
@@ -182,7 +169,7 @@ float4 TraceColorRay(float3 origin, float3 direction, unsigned int depth, unsign
 {
 	if (depth >= MAX_RECURSION)
 	{
-		return float4(0, 0, 0, 0);
+		return skybox.SampleLevel(s0, SampleSphericalMap(direction), 0);
 	}
 
 	// Define a ray, consisting of origin, direction, and the min-max distance values
@@ -197,7 +184,7 @@ float4 TraceColorRay(float3 origin, float3 direction, unsigned int depth, unsign
 	// Trace the ray
 	TraceRay(
 		Scene,
-		RAY_FLAG_NONE,
+		RAY_FLAG_CULL_FRONT_FACING_TRIANGLES,
 		~0, // InstanceInclusionMask
 		0, // RayContributionToHitGroupIndex
 		0, // MultiplierForGeometryContributionToHitGroupIndex
@@ -234,30 +221,13 @@ void RaygenEntry()
 	float3 result = TraceColorRay(ray.origin, ray.direction, 0, rand_seed);
 #endif
 	
-#ifdef PATH_TRACING
-	if (frame_idx > 0 && !any(isnan(result)))
-	{
-		gOutput[DispatchRaysIndex().xy] += float4(result, 1);
-	}
-	else
-	{
-		gOutput[DispatchRaysIndex().xy] = float4(0, 0, 0, 0);
-	}
-#else
 	gOutput[DispatchRaysIndex().xy] = float4(result, 1);
-#endif
 }
 
 [shader("miss")]
 void MissEntry(inout HitInfo payload)
 {
-	// Load some information about our lightprobe texture
-	float2 dims;
-	skybox.GetDimensions(dims.x, dims.y);
-
-	// Convert our ray direction to a (u,v) coordinate
-	float2 uv = VectorToLatLong(WorldRayDirection());
-	payload.color = skybox[uint2(uv * dims)].rgb;
+	payload.color = skybox.SampleLevel(s0, SampleSphericalMap(WorldRayDirection()), 0);
 }
 
 float3 HitAttribute(float3 a, float3 b, float3 c, BuiltInTriangleIntersectionAttributes attr)
@@ -272,22 +242,16 @@ float3 HitAttribute(float3 a, float3 b, float3 c, BuiltInTriangleIntersectionAtt
         attr.barycentrics.y * (vertexAttribute[2] - vertexAttribute[0]);
 }
 
-float3 ReflectRay(float3 v1, float3 v2)
-{
-	return (v2 * ((2.f * dot(v1, v2))) - v1);
-}
-
 [shader("closesthit")]
 void ClosestHitEntry(inout HitInfo payload, in MyAttributes attr)
 {
-	float gamma = 2.2;
-	
 	// Calculate the essentials
-	const Material material = g_materials[InstanceID()];
+	const Offset offset = g_offsets[InstanceID()];
+	const Material material = g_materials[offset.material_idx];
 	const float3 hit_pos = HitWorldPosition();
-	const float index_offset = material.idx_offset;
-	const float vertex_offset = material.vertex_offset;
-	
+	const float index_offset = offset.idx_offset;
+	const float vertex_offset = offset.vertex_offset;
+
 	// Find first index location
 	const uint index_size = 4;
     const uint indices_per_triangle = 3;
@@ -312,58 +276,65 @@ void ClosestHitEntry(inout HitInfo payload, in MyAttributes attr)
 	const float3 normal = normalize(HitAttribute(v0.normal, v1.normal, v2.normal, attr));
 	const float3 tangent = HitAttribute(v0.tangent, v1.tangent, v2.tangent, attr);
 	const float3 bitangent = HitAttribute(v0.bitangent, v1.bitangent, v2.bitangent, attr);
-	const float3 uv = HitAttribute(float3(v0.uv, 0), float3(v1.uv, 0), float3(v2.uv, 0), attr);
 
-	float mip_level = 0;
+	float2 uv = HitAttribute(float3(v0.uv, 0), float3(v1.uv, 0), float3(v2.uv, 0), attr).xy;
+	uv.y = 1.0f - uv.y;
 
-	const float3 albedo = g_textures[material.albedo_id].SampleLevel(s0, uv, mip_level).xyz;
-	const float roughness =  max(0.05, g_textures[material.roughness_id].SampleLevel(s0, uv, mip_level).r);
-	const float metal = g_textures[material.metalicness_id].SampleLevel(s0, uv, mip_level).r;
-	const float3 normal_t = (g_textures[material.normal_id].SampleLevel(s0, uv, mip_level).xyz) * 2.0 - float3(1.0, 1.0, 1.0);
+	float mip_level = payload.depth+1;
 
-	const float3 N = normalize(mul(ObjectToWorld3x4(), float4(normal, 0)));
-	const float3 T = normalize(mul(ObjectToWorld3x4(), float4(tangent, 0)));
-	//float3 B = normalize(mul(ObjectToWorld3x4(), float4(bitangent, 0)));
-	const float3 B = cross(N, T);
+	OutputMaterialData output_data = InterpretMaterialDataRT(material.data,
+		g_textures[material.albedo_id],
+		g_textures[material.normal_id],
+		g_textures[material.roughness_id],
+		g_textures[material.metalicness_id],
+		mip_level,
+		s0,
+		uv);
+
+	float3 albedo = output_data.albedo;
+	float roughness = output_data.roughness;
+	float metal = output_data.metallic;
+	
+	float3 N = normalize(mul(ObjectToWorld3x4(), float4(-normal, 0)));
+	float3 T = normalize(mul(ObjectToWorld3x4(), float4(tangent, 0)));
+#define CALC_B
+#ifndef CALC_B
+	const float3 B = normalize(mul(ObjectToWorld3x4(), float4(bitangent, 0)));
+#else
+	T = normalize(T - dot(T, N) * N);
+	float3 B = cross(N, T);
+#endif
 	const float3x3 TBN = float3x3(T, B, N);
 
-	float3 fN = normalize(mul(normal_t, TBN));
+	float3 fN = normalize(mul(output_data.normal, TBN));
 	if (dot(fN, V) <= 0.0f) fN = -fN;
 
-	// Shadow
-	float shadow_factor = 1;
-	[unroll]
-	for (int i = 0; i < 3; i++)
-	{
-		float3 diff = lights[i].pos - hit_pos;
-		float3 light_dir = normalize(diff);
-		float3 light_dist = length(diff);
-		bool shadow = TraceShadowRay(hit_pos + (fN * EPSILON), light_dir, light_dist, payload.depth + 1, payload.seed);
-		if (shadow) shadow_factor -= 0.3;
-	}
+	// Irradiance
+	float3 flipped_N = fN;
+	flipped_N.y *= -1;
+	const float3 sampled_irradiance = irradiance_map.SampleLevel(s0, flipped_N, 0).xyz;
 
 	// Direct
-	float3 reflect_dir = ReflectRay(V, fN);
-	bool horizon = (dot(V, fN) > 0.0f);
-	float3 reflection = TraceColorRay(hit_pos + (fN * EPSILON), reflect_dir, payload.depth + 1, payload.seed);
+	float3 reflect_dir = reflect(-V, fN);
+	float3 reflection = TraceColorRay(hit_pos + fN * EPSILON, reflect_dir, payload.depth + 1, payload.seed);
 
-#ifdef PATH_TRACING
-	// Indirect lighting
-	const float3 rand_dir = getCosHemisphereSample(payload.seed, fN);
-	const float cos_theta = cos(dot(rand_dir, fN));
-	float3 irradiance = (TraceColorRay(hit_pos + (fN * EPSILON), rand_dir, payload.depth + 1, payload.seed) * cos_theta) * (albedo / PI);
-
-	payload.color = (irradiance + (reflection.xyz * metal));
-#else
-	const float3 F = F_SchlickRoughness(max(dot(fN, V), 0.0), metal, albedo, roughness);
+	const float3 F = F_SchlickRoughness(max(dot(fN, V), 0.0), 
+		metal, 
+		albedo, 
+		roughness);
 	float3 kS = F;
     float3 kD = 1.0 - kS;
     kD *= 1.0 - metal;
 
-	float3 retval = shade_pixel(hit_pos, V, albedo, metal, roughness, fN);
-	float3 specular = (reflection.xyz) * F;
-	float3 diffuse = float3(0, 0, 0);
+	float3 lighting = shade_pixel(hit_pos, V, 
+		albedo, 
+		metal, 
+		roughness, 
+		fN, 
+		payload.seed, 
+		payload.depth);
+	float3 specular = (reflection) * F;
+	float3 diffuse = albedo * sampled_irradiance;
 	float3 ambient = (kD * diffuse + specular);
-	payload.color = ambient + (retval * shadow_factor);
-#endif
+	payload.color = ambient + lighting;
 }
