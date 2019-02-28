@@ -196,13 +196,13 @@ namespace wmr
 			(current_frame_graph_size.second != height))
 		{
 			// Wait until the GPU is done executing
-			//m_renderer->GetD3D12Renderer().WaitForAllPreviousWork();
+			m_renderer->GetD3D12Renderer().WaitForAllPreviousWork();
 
 			// Resize the renderer viewport
-			//m_renderer->GetD3D12Renderer().Resize(width, height);
+			m_renderer->GetD3D12Renderer().Resize(width, height);
 
 			// Resize the frame graph
-			//m_renderer->GetFrameGraph().Resize(width, height, m_renderer->GetD3D12Renderer());
+			m_renderer->GetFrameGraph().Resize(width, height, m_renderer->GetD3D12Renderer());
 		}
 	}
 
