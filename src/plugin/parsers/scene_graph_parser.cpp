@@ -72,7 +72,8 @@ wmr::ScenegraphParser::ScenegraphParser( ) :
 		MHWRender::MRenderer::theRenderer()->findRenderOverride( settings::VIEWPORT_OVERRIDE_NAME )
 		)->GetRenderer() )
 {
-	
+	m_camera_parser = std::make_unique<CameraParser>();
+	m_model_parser = std::make_unique<ModelParser>();
 }
 
 wmr::ScenegraphParser::~ScenegraphParser()
@@ -81,7 +82,7 @@ wmr::ScenegraphParser::~ScenegraphParser()
 
 void wmr::ScenegraphParser::Initialize()
 {
-	m_model_parser = std::make_unique<ModelParser>();
+	m_camera_parser->Initialize();
 
 	MStatus status;
 
@@ -113,4 +114,9 @@ void wmr::ScenegraphParser::Initialize()
 		}
 		itt.next();
 	}
+}
+
+wmr::CameraParser& wmr::ScenegraphParser::GetCameraParser() const noexcept
+{
+	return *m_camera_parser;
 }

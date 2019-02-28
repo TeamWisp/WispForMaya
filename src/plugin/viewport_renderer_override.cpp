@@ -3,6 +3,7 @@
 // Wisp plug-in
 #include "miscellaneous/functions.hpp"
 #include "miscellaneous/settings.hpp"
+#include "parsers/camera_parser.hpp"
 #include "parsers/scene_graph_parser.hpp"
 #include "render_operations/gizmo_render_operation.hpp"
 #include "render_operations/renderer_copy_operation.hpp"
@@ -131,6 +132,9 @@ namespace wmr
 
 	MStatus ViewportRendererOverride::setup(const MString& destination)
 	{
+		// Update the viewport camera(s)
+		m_scenegraph_parser->GetCameraParser().UpdateViewportCamera(destination);
+
 		auto* const maya_renderer = MHWRender::MRenderer::theRenderer();
 
 		if (!maya_renderer)

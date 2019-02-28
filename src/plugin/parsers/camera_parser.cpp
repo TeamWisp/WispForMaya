@@ -27,7 +27,7 @@ void wmr::CameraParser::UpdateViewportCamera(const MString & panel_name)
 	auto status = M3dView::getM3dViewFromModelPanel(panel_name, viewport);
 
 	// Could not retrieve the viewport panel
-	if (!status)
+	if (status == MStatus::kFailure)
 		return;
 
 	// Model view matrix

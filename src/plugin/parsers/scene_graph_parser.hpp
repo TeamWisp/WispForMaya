@@ -8,8 +8,6 @@ namespace wr
 	class MaterialPool;
 }
 
-//class MFnMesh;
-
 namespace wmr
 {
 	class CameraParser;
@@ -25,6 +23,8 @@ namespace wmr
 		~ScenegraphParser();
 
 		void Initialize();
+
+		CameraParser& GetCameraParser() const noexcept;
 
 	private:
 		Renderer& m_render_system;
