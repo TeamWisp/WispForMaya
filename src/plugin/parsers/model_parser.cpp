@@ -309,6 +309,13 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 	bool model_reloaded = false;
 	wr::Model* model = m_renderer.GetModelManager().AddModel( fnmesh.name(), { mesh_data },model_reloaded );
 
+	auto default_material = m_renderer.GetMaterialManager().GetDefaultMaterial();
+
+	for (auto& m : model->m_meshes)
+	{
+		m.second = default_material;
+	}
+
 	auto model_node = m_renderer.GetScenegraph().CreateChild<wr::MeshNode>( nullptr, model );
 	//MStatus status;
 
