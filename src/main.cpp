@@ -11,10 +11,21 @@
 
 // C++ standard
 #include <memory>
+#include <direct.h>
 
 
 wmr::ViewportRendererOverride* viewport_renderer_override;
 
+
+class SetWorkDir{							
+public:
+	SetWorkDir()							
+	{										
+		_chdir( getenv( "WISP_MAYA" ) );	
+	}										
+};
+
+static SetWorkDir set_work_dir;
 
 // Global plug-in instance
 bool IsSceneDirty()
