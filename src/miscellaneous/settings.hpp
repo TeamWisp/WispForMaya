@@ -3,6 +3,12 @@
 // C++ standard
 #include <array>
 
+// Makes it a bit cleaner to specify sizes
+constexpr int operator"" MB(unsigned long long int megabytes)
+{
+	return megabytes * 1024 * 1024;
+}
+
 //! Generic plug-in namespace (Wisp Maya Renderer)
 namespace wmr
 {
@@ -10,10 +16,10 @@ namespace wmr
 	namespace settings
 	{
 		//! Maximum amount of vertex data in the model pool in MB
-		static const constexpr std::uint32_t MAX_VERTEX_DATA_SIZE_MB = 512;
+		static const constexpr std::uint32_t MAX_VERTEX_DATA_SIZE_MB = 512MB;
 
 		//! Maximum amount of index data in the model pool in MB
-		static const constexpr std::uint32_t MAX_INDEX_DATA_SIZE_MB = 512;
+		static const constexpr std::uint32_t MAX_INDEX_DATA_SIZE_MB = 512MB;
 
 		//! Name of the studio / company developing this product
 		static const constexpr char* COMPANY_NAME = "Team Wisp";
