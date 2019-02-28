@@ -3,42 +3,60 @@ Bringing real-time ray-tracing to the Maya viewport using the [Wisp real-time ra
 
 # Table of contents
 
-1. [Installation instructions](#instructions)
-2. [Setting the environment variable](#environment-variable)
-3. [Configuring the Remote Windows Debugger](#debugging)
-   1. [Project properties](#project-properties)
-   2. [Changing the debugger](#select-the-remote-windows-debugger)
-   3. [Windows Remote Debugger settings](#windows-remote-debugger-settings)
-   4. [Using the Windows Remote Debugger](#select-the-windows-remote-debugger)
+- [Maya-Ray-Traced-Viewport-Plugin](#maya-ray-traced-viewport-plugin)
+- [Table of contents](#table-of-contents)
+- [Installation](#installation)
+    - [1. Download](#1-download)
+    - [2. setup](#2-setup)
+    - [3. Load plug-in](#3-load-plug-in)
+    - [4. Result](#4-result)
+- [Plug-in development](#plug-in-development)
+  - [Debugging](#debugging)
+    - [Project properties](#project-properties)
+    - [Select the Remote Windows Debugger](#select-the-remote-windows-debugger)
+    - [Windows Remote Debugger settings](#windows-remote-debugger-settings)
+    - [Select the Windows Remote Debugger](#select-the-windows-remote-debugger)
 
 # Installation
+### 1. Download
+- **Users**
+    - Expect a installer soon. For now follow developer instructions.
+- **Developers**
+   1. download or clone repository.
+   2. make sure you have CMake 3.13 or higher and Windows SDK 10.0.17763.0 or newer installed
+   3. create an environment variable called `MAYA_2018_DIR`. This environment variable should point to your `<installation/path>/Autodesk/Maya2018` folder.
+![MAYA_2018_DIR environment variable](./readme_media/environment_variable.png)
+   4. Run install.bat , when asked to update submodules choose yes.
+   5. Build generated solution, preferably with visual studio. ```cmake --build``` also works 
 
-## Instructions
+### 2. setup
+- **Users**
+    - Expect a installer soon. For now follow developer instructions.
+- **Developers**
+    1. copy wisp-template.mod to:
+        1. if ```MAYA_MODULE_PATH``` **is not** set, any of the following directories
+            -   ```<user’s directory>/My Documents/maya/2015/modules```
 
-1. Copy the .mll file.
+            -   ```<user’s directory>/My Documents/maya/modules```
 
-   1. **Developers**, build the project and navigate to ```bin/Debug``` or ```bin/Release```, depending on the chosen configuration. Copy the `.mll` file.
-   2. **Regular users**, grab a copy of the `.mll` file from the releases on GitHub.
+            -   ```C:/Program Files/Common Files/Autodesk Shared/Modules/maya/2015```
 
-2. Paste the `.mll` file in the Autodesk Maya plug-ins folder. This folder is different for each user, as it has to be manually specified in the `Maya.env` configuration file. Please refer to [the documentation](https://knowledge.autodesk.com/support/maya/learn-explore/caas/CloudHelp/cloudhelp/2018/ENU/Maya-EnvVar/files/GUID-8EFB1AC1-ED7D-4099-9EEE-624097872C04-htm.html) for more information on how to set-up your `Maya.env` file.
+            -   ```C:/Program Files/Common Files/Autodesk Shared/Modules/maya```
 
-   By default, the Autodesk Maya installation folder contains a `/plug-ins` folder, the `.mll` file can be placed in here. However, this is considered bad practice. Instead, create a folder somewhere on your computer and add an **environment variable** that points to the newly created folder. Inside this folder, create three sub-directories: *plug-ins*, *icons*, and *scripts*.
+            -   ```<maya_directory>/modules/```
+        2. if ```MAYA_MODULE_PATH``` **is** set
+            -   the specified path
+    2. rename wisp-template.mod to wisp.mod
+    3. open wisp.mod and edit line 1: <GIT REPO LOCATION> to be equal to the location of the repository.
 
-   In both cases, the `.mll` should be pasted in the `/plug-ins` folder.
 
-3. Open the plug-in manager and load the plug-in. Alternatively, the MEL `loadPlugin` command can be used. If these two options fail, restart Autodesk Maya. The plug-in should show up now.
+### 3. Load plug-in
+Open Maya and open the plug-in manager. Load the plug-in. Alternatively, the MEL `loadPlugin` command can be used. If these two options fail, restart Autodesk Maya. The plug-in should show up now.
 
+### 4. Result
 ![Plug-in loaded and read to use](./readme_media/maya_plugin_loaded.png)
 
 # Plug-in development
-
-## Environment variable
-
-Before running the installer, install the [Maya dev-kit](https://www.autodesk.com/developer-network/platform-technologies/maya) (if needed), and create an environment variable called `MAYA_2018_DIR`. This environment variable should point to your `<installation/path>/Autodesk/Maya2018` folder.
-
-![MAYA_2018_DIR environment variable](./readme_media/environment_variable.png)
-
-Download this repository and run the **install.bat** file on your machine. If you are compiling this on a different platform, you may have to run CMake manually.
 
 ## Debugging
 
