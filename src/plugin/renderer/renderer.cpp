@@ -45,7 +45,7 @@ void wmr::Renderer::Initialize() noexcept
 	m_scenegraph->m_skybox = m_texture_manager->GetDefaultTexture();
 	auto skybox = m_scenegraph->CreateChild<wr::SkyboxNode>(nullptr, m_texture_manager->GetDefaultTexture());
 
-	m_render_system->InitSceneGraph(*m_scenegraph.get());
+	m_render_system->InitSceneGraph(*m_scenegraph);
 	m_framegraph_manager->Create(*m_render_system, RendererFrameGraphType::DEFERRED);
 }
 
@@ -63,34 +63,34 @@ const wr::CPUTextures wmr::Renderer::GetRenderResult()
 	return m_result_textures;
 }
 
-wmr::ModelManager & wmr::Renderer::GetModelManager() const
+wmr::ModelManager& wmr::Renderer::GetModelManager() const
 {
-	return *m_model_manager.get();
+	return *m_model_manager;
 }
 
-wmr::FrameGraphManager & wmr::Renderer::GetFrameGraph() const
+wmr::FrameGraphManager& wmr::Renderer::GetFrameGraph() const
 {
-	return *m_framegraph_manager.get();
+	return *m_framegraph_manager;
 }
 
-wmr::MaterialManager & wmr::Renderer::GetMaterialManager() const
+wmr::MaterialManager& wmr::Renderer::GetMaterialManager() const
 {
-	return *m_material_manager.get();
+	return *m_material_manager;
 }
 
-wmr::TextureManager & wmr::Renderer::GetTextureManager() const
+wmr::TextureManager& wmr::Renderer::GetTextureManager() const
 {
-	return *m_texture_manager.get();
+	return *m_texture_manager;
 }
 
-wr::SceneGraph & wmr::Renderer::GetScenegraph() const
+wr::SceneGraph& wmr::Renderer::GetScenegraph() const
 {
 	return *m_scenegraph;
 }
 
-wr::D3D12RenderSystem & wmr::Renderer::GetD3D12Renderer() const
+wr::D3D12RenderSystem& wmr::Renderer::GetD3D12Renderer() const
 {
-	return *m_render_system.get();
+	return *m_render_system;
 }
 
 std::shared_ptr<wr::CameraNode> wmr::Renderer::GetCamera() const
