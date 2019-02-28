@@ -30,9 +30,6 @@ namespace wmr
 		//! Current release version of the product
 		static const constexpr char* PRODUCT_VERSION = "0.0.1";
 		
-		//! Name of the viewport panel this plug-in will override
-		static const constexpr char* VIEWPORT_PANEL_NAME = "modelPanel4";
-
 		//! Name of the viewport override
 		static const constexpr char* VIEWPORT_OVERRIDE_NAME = "wisp_viewport_override";
 
