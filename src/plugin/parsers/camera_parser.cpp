@@ -45,7 +45,7 @@ void wmr::CameraParser::UpdateViewportCamera(const MString & panel_name)
 
 	MMatrix cameraPos = camera_dag_path.inclusiveMatrix();
 	MVector eye = MVector(static_cast<float>(cameraPos(3, 0)), static_cast<float>(cameraPos(3, 1)), static_cast<float>(cameraPos(3, 2)));
-	m_viewport_camera->SetPosition({ (float)-eye.x, (float)-eye.y, (float)-eye.z });
+	m_viewport_camera->SetPosition({ (float)eye.x, (float)eye.y, (float)eye.z });
 
 	MFnCamera camera_functions(camera_dag_path);
 	m_viewport_camera->m_frustum_far = camera_functions.farClippingPlane();
