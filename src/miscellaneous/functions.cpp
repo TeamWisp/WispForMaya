@@ -22,4 +22,13 @@ namespace wmr::func
 		printf("%s", msg);
 #endif
 	}
+
+	size_t HashCString(const char * str)
+	{
+		size_t h = 5381;
+		int c;
+		while ((c = *str++))
+			h = ((h << 5) + h) + c;
+		return h;
+	}
 }

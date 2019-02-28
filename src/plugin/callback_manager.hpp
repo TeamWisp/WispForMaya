@@ -21,23 +21,23 @@ namespace wmr
 		/*! When the callback manager is destroyed, the destructor always calls Reset() to make sure every callback has
 		 *  been reset before the plug-in quits.
 		 *  
-		 *  \sa Reset()*/
+		 *  /sa Reset()*/
 		~CallbackManager();
 
 		//! Get a hold of the Singleton instance
-		/*! \return Returns a reference to the callback manager if it exists, else, nullptr. */
+		/*! /return Returns a reference to the callback manager if it exists, else, nullptr. */
 		static CallbackManager& GetInstance();
 
 		//! Register a callback
 		/*! Used to registers callbacks using a MCallbackId structure.
 		 *
-		 *  \param msid Callback id. */
+		 *  /param msid Callback id. */
 		void RegisterCallback(MCallbackId mcid);
 
 		//! Reset the callback manager
 		/*! If any callbacks have been set, this function will make sure that they are properly disposed of.
 		 *  
-		 *  \sa ~CallbackManager()*/
+		 *  /sa ~CallbackManager()*/
 		void Reset();
 
 	private:
