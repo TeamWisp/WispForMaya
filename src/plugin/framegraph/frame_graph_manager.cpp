@@ -30,8 +30,11 @@ namespace wmr
 		}
 	}
 
-	void FrameGraphManager::Create(wr::RenderSystem& render_system, RendererFrameGraphType initial_type) noexcept
+	void FrameGraphManager::Create(wr::RenderSystem& render_system, RendererFrameGraphType initial_type, std::uint32_t initial_width, std::uint32_t initial_height) noexcept
 	{
+		m_width = initial_width;
+		m_height = initial_height;
+
 		m_current_rendering_pipeline_type = initial_type;
 
 		// Add required tasks to each frame graph
@@ -56,9 +59,17 @@ namespace wmr
 		return m_renderer_frame_graphs[static_cast<size_t>(m_current_rendering_pipeline_type)];
 	}
 
-	void FrameGraphManager::Resize(unsigned int new_width, unsigned int new_height, wr::RenderSystem& render_system) noexcept
+	void FrameGraphManager::Resize(unsigned int new_width, unsigned int new_height, wr::D3D12RenderSystem& render_system) noexcept
 	{
+		m_width = new_width;
+		m_height = new_height;
+
 		m_renderer_frame_graphs[static_cast<size_t>(m_current_rendering_pipeline_type)]->Resize(render_system, new_width, new_height);
+	}
+
+	std::pair<std::uint32_t, std::uint32_t> FrameGraphManager::GetCurrentDimensions() const noexcept
+	{
+		return std::pair<std::uint32_t, std::uint32_t>(m_width, m_height);
 	}
 
 	void FrameGraphManager::CreateDeferredPipeline() noexcept

@@ -1,6 +1,7 @@
 #include "viewport_renderer_override.hpp"
 
 // Wisp plug-in
+#include "framegraph/frame_graph_manager.hpp"
 #include "miscellaneous/functions.hpp"
 #include "miscellaneous/settings.hpp"
 #include "parsers/camera_parser.hpp"
@@ -13,6 +14,7 @@
 #include "renderer/renderer.hpp"
 
 // Wisp rendering framework
+#include "d3d12/d3d12_renderer.hpp"
 #include "window.hpp"
 
 // Maya API
@@ -135,6 +137,9 @@ namespace wmr
 		// Update the viewport camera(s)
 		m_scenegraph_parser->GetCameraParser().UpdateViewportCamera(destination);
 
+		// Check if the viewport has been resized
+		HandleViewportResize(destination);
+
 		auto* const maya_renderer = MHWRender::MRenderer::theRenderer();
 
 		if (!maya_renderer)
@@ -162,6 +167,43 @@ namespace wmr
 		EnsurePanelDisplayShading(destination);
 
 		return MStatus::kSuccess;
+	}
+
+	void ViewportRendererOverride::HandleViewportResize(const MString& panel_name) noexcept
+	{
+		M3dView viewport;
+
+		// Try to retrieve the current active viewport panel
+		auto status = M3dView::getM3dViewFromModelPanel(panel_name, viewport);
+
+		// Could not retrieve the viewport panel
+		if (status == MStatus::kFailure)
+			return;
+
+		// Position and dimensions of the current Maya viewport
+		std::uint32_t x, y, width, height;
+		status = viewport.viewport(x, y, width, height);
+
+		// Could not retrieve the viewport information
+		if (status == MStatus::kFailure)
+			return;
+
+		// Size of the current frame graph
+		const auto current_frame_graph_size = m_renderer->GetFrameGraph().GetCurrentDimensions();
+
+		// Wisp <==> Maya viewport resolutions do not match
+		if ((current_frame_graph_size.first != width) ||
+			(current_frame_graph_size.second != height))
+		{
+			// Wait until the GPU is done executing
+			//m_renderer->GetD3D12Renderer().WaitForAllPreviousWork();
+
+			// Resize the renderer viewport
+			//m_renderer->GetD3D12Renderer().Resize(width, height);
+
+			// Resize the frame graph
+			//m_renderer->GetFrameGraph().Resize(width, height, m_renderer->GetD3D12Renderer());
+		}
 	}
 
 	bool ViewportRendererOverride::AreAllRenderOperationsSetCorrectly() const
