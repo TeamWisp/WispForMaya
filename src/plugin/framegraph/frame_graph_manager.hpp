@@ -8,6 +8,7 @@ namespace wr
 {
 	class FrameGraph;
 	class RenderSystem;
+	class D3D12RenderSystem;
 }
 
 //! Generic plug-in namespace (Wisp Maya Renderer)
@@ -43,8 +44,10 @@ namespace wmr
 		 *  
 		 *  /param render_system Reference to the Wisp framework render system object.
 		 *  /param initial_type Default rendering pipeline used in the application.
+		 *  /param initial_width Width of the render texture.
+		 *  /param initial_height Height of the render texture.
 		 *  /sa RendererFrameGraphType */
-		void Create(wr::RenderSystem& render_system, RendererFrameGraphType initial_type = RendererFrameGraphType::DEFERRED) noexcept;
+		void Create(wr::RenderSystem& render_system, RendererFrameGraphType initial_type = RendererFrameGraphType::DEFERRED, std::uint32_t initial_width = 1280, std::uint32_t initial_height = 720) noexcept;
 
 		//! Set a frame graph type
 		/*! Replace the currently active frame graph pipeline type with the new type.
@@ -59,7 +62,11 @@ namespace wmr
 		wr::FrameGraph* Get() const noexcept;
 
 		//! Resize the current active frame graph */
-		void Resize(unsigned int new_width, unsigned int new_height, wr::RenderSystem& render_system) noexcept;
+		void Resize(unsigned int new_width, unsigned int new_height, wr::D3D12RenderSystem& render_system) noexcept;
+
+		//! Retrieve the size of the frame graph
+		/*! /return Pair containing the width and height respectively. */
+		std::pair<std::uint32_t, std::uint32_t> GetCurrentDimensions() const noexcept;
 
 	private:
 		//! Configure a frame graph for a full deferred rendering pipeline
@@ -72,8 +79,9 @@ namespace wmr
 		void CreateFullRTPipeline() noexcept;
 
 	private:
-		//! Currently selected rendering pipeline type
-		RendererFrameGraphType m_current_rendering_pipeline_type;
+		std::uint32_t m_width;										//! Width of the render texture
+		std::uint32_t m_height;										//! Height of the render texture
+		RendererFrameGraphType m_current_rendering_pipeline_type;	//! Currently selected rendering pipeline type
 
 		//! Container that holds all available frame graphs
 		std::array<wr::FrameGraph*, static_cast<size_t>(RendererFrameGraphType::RENDERING_PIPELINE_TYPE_COUNT)> m_renderer_frame_graphs;

@@ -68,6 +68,8 @@ namespace wmr
 		/*! /return Name of the drop-down menu item. */
 		MString uiName() const override;
 
+		//! Get hold of the renderer
+		/*! /return Renderer reference. */
 		Renderer& GetRenderer() const;
 
 	private:
@@ -100,6 +102,10 @@ namespace wmr
 		 *  
 		 *  /return Returns kSuccess upon successful execution. */
 		MStatus setup(const MString& destination) override;
+
+		//! Updates application state when viewport has been resized
+		/*! /param panel_name The name of the current viewport panel function. */
+		void HandleViewportResize(const MString& panel_name) noexcept;
 
 		//! A simple check that checks whether all render operations are valid (no nullptr)
 		/*! /return True if everything is correct, else, false. */
