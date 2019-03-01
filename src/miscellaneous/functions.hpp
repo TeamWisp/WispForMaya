@@ -6,6 +6,12 @@
 // C++ standard
 #include <cstdint>
 
+//! Makes it easy to specify buffer sizes
+constexpr int operator""MB(unsigned long long int megabytes)
+{
+	return megabytes * 1024 * 1024;
+}
+
 //! Generic plug-in namespace (Wisp Maya Renderer)
 namespace wmr
 {
