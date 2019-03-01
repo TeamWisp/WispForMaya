@@ -31,4 +31,17 @@ namespace wmr::func
 			h = ((h << 5) + h) + c;
 		return h;
 	}
+
+	std::uint32_t RoundUpToNearestMultiple(std::uint32_t input, std::uint32_t multiple)
+	{
+		if (multiple == 0)
+			return input;
+
+		std::uint32_t remainder = input % multiple;
+		if (remainder == 0)
+			return input;
+
+		return input + multiple - remainder;
+	}
+
 }

@@ -3,6 +3,9 @@
 // Maya API
 #include <maya/MStatus.h>
 
+// C++ standard
+#include <cstdint>
+
 //! Generic plug-in namespace (Wisp Maya Renderer)
 namespace wmr
 {
@@ -29,5 +32,11 @@ namespace wmr
 		 * 
 		 *  \param str The string to hash. */
 		size_t HashCString(const char* str);
+
+		// https://stackoverflow.com/a/3407254
+		//! Round the input number to the nearest multiple of the specified number
+		/*! \param input Number to round.
+		 *  \param multiple Multiple to round the input to. */
+		std::uint32_t RoundUpToNearestMultiple(std::uint32_t input, std::uint32_t multiple);
 	}
 }
