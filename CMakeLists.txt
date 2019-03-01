@@ -96,6 +96,11 @@ set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
 set_target_properties(${PROJECT_NAME} PROPERTIES CMAKE_CXX_STANDARD_REQUIRED ON)
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/../")
 
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD        # Adds a post-build event to MyTest
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different  # which executes "cmake - E copy_if_different..."
+        "${CMAKE_BINARY_DIR}/bin/\$\(Configuration\)/${PROJECT_NAME}.mll"      # <--this is in-file
+        "${CMAKE_BINARY_DIR}/../module/wisp/plug-ins")                 # <--this is out-file path
+
 if (MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /W4 /permissive- /MP /Gm-)
 endif()
