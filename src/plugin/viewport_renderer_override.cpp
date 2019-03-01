@@ -181,8 +181,8 @@ namespace wmr
 			return;
 
 		// Position and dimensions of the current Maya viewport
-		std::uint32_t x, y, width, height;
-		status = viewport.viewport(x, y, width, height);
+		std::uint32_t x, y, current_viewport_width, current_viewport_height;
+		status = viewport.viewport(x, y, current_viewport_width, current_viewport_height);
 
 		// Could not retrieve the viewport information
 		if (status == MStatus::kFailure)
@@ -192,17 +192,17 @@ namespace wmr
 		const auto current_frame_graph_size = m_renderer->GetFrameGraph().GetCurrentDimensions();
 
 		// Wisp <==> Maya viewport resolutions do not match
-		if ((current_frame_graph_size.first != width) ||
-			(current_frame_graph_size.second != height))
+		if ((current_frame_graph_size.first != current_viewport_width) ||
+			(current_frame_graph_size.second != current_viewport_height))
 		{
 			// Wait until the GPU is done executing
 			m_renderer->GetD3D12Renderer().WaitForAllPreviousWork();
 
 			// Resize the renderer viewport
-			m_renderer->GetD3D12Renderer().Resize(width, height);
+			m_renderer->GetD3D12Renderer().Resize(current_viewport_width, current_viewport_height);
 
 			// Resize the frame graph
-			m_renderer->GetFrameGraph().Resize(width, height, m_renderer->GetD3D12Renderer());
+			m_renderer->GetFrameGraph().Resize(current_viewport_width, current_viewport_height, m_renderer->GetD3D12Renderer());
 		}
 	}
 
