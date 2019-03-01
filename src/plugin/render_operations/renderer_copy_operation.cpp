@@ -1,10 +1,11 @@
 #include "renderer_copy_operation.hpp"
 
 // Wisp plug-in
+#include "miscellaneous/functions.hpp"
 #include "miscellaneous/settings.hpp"
-#include "plugin/render_operations/screen_render_operation.hpp"
 #include "plugin/renderer/renderer.hpp"
 #include "plugin/viewport_renderer_override.hpp"
+#include "screen_render_operation.hpp"
 
 // Maya API
 #include <maya/MViewport2Renderer.h>
@@ -60,13 +61,14 @@ namespace wmr
 
 	void RendererCopyOperation::CreateColorTextureOfSize(const wr::CPUTexture& cpu_data, bool& created_new_texture)
 	{
+		auto aligned_buffer_size = func::RoundUpToNearestMultiple(cpu_data.m_bytes_per_pixel * cpu_data.m_buffer_width, 256);
+
 		if (!m_color_texture.texture)
 		{
 			m_color_texture_desc.fWidth = cpu_data.m_buffer_width;
 			m_color_texture_desc.fHeight = cpu_data.m_buffer_height;
 			m_color_texture_desc.fDepth = 1;
-			m_color_texture_desc.fBytesPerRow = cpu_data.m_bytes_per_pixel * cpu_data.m_buffer_width;
-			m_color_texture_desc.fBytesPerSlice = (cpu_data.m_bytes_per_pixel * cpu_data.m_buffer_width) * cpu_data.m_buffer_height;
+			m_color_texture_desc.fBytesPerRow = aligned_buffer_size;
 			m_color_texture_desc.fTextureType = MHWRender::kImage2D;
 
 			m_color_texture.texture = MHWRender::MRenderer::theRenderer()->getTextureManager()->acquireTexture("", m_color_texture_desc, cpu_data.m_data);
@@ -76,7 +78,7 @@ namespace wmr
 		}
 		else
 		{
-			m_color_texture.texture->update(cpu_data.m_data, false);
+			m_color_texture.texture->update(cpu_data.m_data, false, aligned_buffer_size);
 
 			created_new_texture = false;
 		}
@@ -84,13 +86,14 @@ namespace wmr
 
 	void RendererCopyOperation::CreateDepthTextureOfSize(const wr::CPUTexture& cpu_data, bool& created_new_texture)
 	{
+		auto aligned_buffer_size = func::RoundUpToNearestMultiple(cpu_data.m_bytes_per_pixel * cpu_data.m_buffer_width, 256);
+
 		if (!m_depth_texture.texture)
 		{
 			m_depth_texture_desc.fWidth = cpu_data.m_buffer_width;
 			m_depth_texture_desc.fHeight = cpu_data.m_buffer_height;
 			m_depth_texture_desc.fDepth = 1;
-			m_depth_texture_desc.fBytesPerRow = cpu_data.m_bytes_per_pixel * cpu_data.m_buffer_width;
-			m_depth_texture_desc.fBytesPerSlice = (cpu_data.m_bytes_per_pixel * cpu_data.m_buffer_width) * cpu_data.m_buffer_height;
+			m_depth_texture_desc.fBytesPerRow = aligned_buffer_size;
 			m_depth_texture_desc.fTextureType = MHWRender::kDepthTexture;
 
 			m_depth_texture.texture = MHWRender::MRenderer::theRenderer()->getTextureManager()->acquireDepthTexture("", cpu_data.m_data, cpu_data.m_buffer_width, cpu_data.m_buffer_height, false, nullptr);
@@ -100,7 +103,7 @@ namespace wmr
 		}
 		else
 		{
-			m_depth_texture.texture->update(cpu_data.m_data, false);
+			m_depth_texture.texture->update(cpu_data.m_data, false, aligned_buffer_size);
 
 			created_new_texture = false;
 		}
