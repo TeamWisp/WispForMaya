@@ -36,6 +36,12 @@ void wmr::CameraParser::UpdateViewportCamera(const MString & panel_name)
 
 	MDagPath camera_dag_path;
 	viewport.getCamera(camera_dag_path);
+	MFnCamera camera_functions(camera_dag_path);
+
+	// Ignore orthographic cameras
+	if (camera_functions.isOrtho())
+		return;
+
 	MFnTransform camera_transform(camera_dag_path.transform());
 
 	MEulerRotation view_rotation;
@@ -47,7 +53,6 @@ void wmr::CameraParser::UpdateViewportCamera(const MString & panel_name)
 	MVector eye = MVector(static_cast<float>(cameraPos(3, 0)), static_cast<float>(cameraPos(3, 1)), static_cast<float>(cameraPos(3, 2)));
 	m_viewport_camera->SetPosition({ (float)eye.x, (float)eye.y, (float)eye.z });
 
-	MFnCamera camera_functions(camera_dag_path);
 	m_viewport_camera->m_frustum_far = camera_functions.farClippingPlane();
 	m_viewport_camera->m_frustum_near = camera_functions.nearClippingPlane();
 
