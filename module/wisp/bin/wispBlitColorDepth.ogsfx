@@ -1,0 +1,92 @@
+//**************************************************************************/
+// Copyright 2012 Autodesk, Inc.  
+// All rights reserved.
+// Use of this software is subject to the terms of the Autodesk license 
+// agreement provided at the time of installation or download, or which 
+// otherwise accompanies this software in either electronic or hard copy form.   
+//**************************************************************************/
+
+#include "Common.ogsfh"
+
+// Color texture. Assumed to be 4 channel
+uniform texture2D gColorTex : SourceTexture
+<
+    string UIName = "Color Texture";
+>;
+// Color texture sampler.
+uniform sampler2D gColorSampler = sampler_state
+{
+    Texture = <gColorTex>;
+};
+
+// Disable alpha output.
+uniform bool gDisableAlpha;
+
+// Depth texture. Assumed to be 1 channel normalized between 0 and 1
+uniform texture2D gDepthTex : SourceTexture2
+<
+    string UIName = "Depth Texture";
+>;
+// Depth texture sampler.
+uniform sampler2D gDepthSampler = sampler_state
+{
+    Texture = <gDepthTex>;
+};
+
+
+// Pixel shader for color + depth
+//
+GLSLShader PS_BlitColorDepth
+{
+	void main()
+	{
+		// Output color
+		//
+		vec2 uv = VSUV;
+
+		colorOut = texture2D(gColorSampler, uv); 
+		if (gDisableAlpha)
+		{
+			colorOut.a = 1.0;
+		}
+
+		// Output depth
+		//
+		vec4 depth = texture2D(gDepthSampler, uv); 
+		gl_FragDepth = depth.r;
+	}
+}
+
+// Debug depth to color. Assumes a R32 single channel texture.
+//
+GLSLShader PS_BlitDepthToColor
+{
+	void main()
+	{
+		vec2 uv = VSUV;
+
+		vec4 depth = texture2D(gDepthSampler, uv); 
+		colorOut = vec4(depth.r, depth.r, depth.r, 1.0);
+	}
+}
+
+// The main technique
+technique Main
+{
+    pass p0
+    {
+        VertexShader (in VS_INPUT_ScreenQuad, out VS_TO_PS_ScreenQuad) = VS_ScreenQuad;
+        PixelShader (in VS_TO_PS_ScreenQuad, out pixelOut) = PS_BlitColorDepth;
+    }
+}
+
+// Debug by putting depth to color
+technique DepthToColor
+{
+    pass p0
+    {
+        VertexShader (in VS_INPUT_ScreenQuad, out VS_TO_PS_ScreenQuad) = VS_ScreenQuad;
+        PixelShader (in VS_TO_PS_ScreenQuad, out pixelOut) = PS_BlitDepthToColor;
+    }
+}
+
