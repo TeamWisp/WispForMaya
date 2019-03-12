@@ -22,6 +22,6 @@ namespace wmr
 	MUint64 GizmoRenderOperation::getObjectTypeExclusions()
 	{
 		// Render all UI
-		return 0;
+		return MObjectTypeExclusions::kExcludeNone;
 	}
 }
