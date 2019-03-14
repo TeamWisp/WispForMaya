@@ -2,8 +2,11 @@
 
 // Maya API
 #include <maya/MFnDependencyNode.h>
+#include <maya/MFnLambertShader.h>
 #include <maya/MFnMesh.h>
+#include <maya/MFnSet.h>
 #include <maya/MIntArray.h>
+#include <maya/MItDependencyGraph.h>
 #include <maya/MObjectArray.h>
 #include <maya/MPlug.h>
 #include <maya/MPlugArray.h>
@@ -19,32 +22,7 @@
 #include <maya/MGlobal.h>
 #include <sstream>
 
-// From the devkit: findTexturesPerPolygonCmd.cpp
-MObject findShader(MObject& setNode)
-//
-//  Description:
-//      Find the shading node for the given shading group set node.
-//
-{
-	MFnDependencyNode fnNode(setNode);
-	MPlug shaderPlug = fnNode.findPlug("surfaceShader", true);
-
-	if (!shaderPlug.isNull())
-	{
-		MPlugArray connectedPlugs;
-		bool asSrc = false;
-		bool asDst = true;
-		shaderPlug.connectedTo(connectedPlugs, asDst, asSrc);
-
-		if (connectedPlugs.length() != 1)
-			cerr << "Error getting shader\n";
-		else
-			return connectedPlugs[0].node();
-	}
-
-	return MObject::kNullObj;
-}
-
+// https://nccastaff.bournemouth.ac.uk/jmacey/RobTheBloke/www/research/maya/mfnmesh.htm
 void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 {
 	MStatus status;
@@ -71,27 +49,53 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 		if (status == MStatus::kFailure)
 			continue;
 
-		// Find the texture that is applied to this set.  First, get the
-		// shading node connected to the set.  Then, if there is an input
-		// attribute called "color", search upstream from it for a texture
-		// file node.
-		//
-		MObject shaderNode = findShader(set);
-		if (shaderNode == MObject::kNullObj)
-			continue;
+			// All faces use the same material
+			case 1:
+				{
+					// Output hack
+					std::ostringstream os;
 
-		MPlug colorPlug = MFnDependencyNode(shaderNode).findPlug("color", true, &status);
-		if (status == MS::kFailure)
-			continue;
+					MFnDependencyNode fn_node(shaders[0]);
+					MPlug shader_plug = fn_node.findPlug("surfaceShader", true);
 
-		MItDependencyGraph dgIt(colorPlug, MFn::kFileTexture,
-			MItDependencyGraph::kUpstream,
-			MItDependencyGraph::kBreadthFirst,
-			MItDependencyGraph::kNodeLevel,
-			&status);
+					// Is this a valid plug?
+					if (!shader_plug.isNull())
+					{
+						MPlugArray connected_plugs;
+						shader_plug.connectedTo(connected_plugs, true, false);
 
-		if (status == MS::kFailure)
-			continue;
+						// Could not find a valid connected plug
+						if (connected_plugs.length() != 1)
+							return;
+
+						os << connected_plugs[0].node().apiTypeStr();
+
+						// Found a lambert shader
+						if (connected_plugs[0].node().apiType() == MFn::kLambert)
+						{
+							auto color_plug = MFnDependencyNode(connected_plugs[0].node()).findPlug("color");
+
+							MItDependencyGraph dependency_graph_iterator(
+								color_plug,
+								MFn::kFileTexture,
+								MItDependencyGraph::kUpstream,
+								MItDependencyGraph::kBreadthFirst,
+								MItDependencyGraph::kNodeLevel);
+
+							dependency_graph_iterator.disablePruningOnFilter();
+
+							auto texture_node = dependency_graph_iterator.currentItem();
+							auto file_name_plug = MFnDependencyNode(texture_node).findPlug("fileTextureName", true);
+
+							MString texture_path;
+							file_name_plug.getValue(texture_path);
+							os << texture_path.asChar();
+						}
+					}
+
+					MGlobal::displayInfo(os.str().c_str());
+				}
+				break;
 
 		dgIt.disablePruningOnFilter();
 
@@ -111,6 +115,16 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 		os << "Texture Node Name: " << MFnDependencyNode(textureNode).name() << endl;
 		os << "Texture File Name: " << textureName.asChar() << endl;
 
-		MGlobal::displayInfo(os.str().c_str());
+					for (auto shader_index = 0; shader_index < shaders.length(); ++shader_index)
+					{
+						// Get all faces used by this material index
+						for (unsigned int & itr : faces_by_material_index[shader_index])
+						{
+							// Use faces by material ID here
+						}
+					}
+				}
+				break;
+		}
 	}
 }
