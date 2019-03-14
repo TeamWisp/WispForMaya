@@ -3,6 +3,7 @@
 #include "miscellaneous/settings.hpp"
 #include "plugin/viewport_renderer_override.hpp"
 #include "plugin/viewport_renderer_override.hpp"
+#include "plugin/callback_manager.hpp"
 
 // Maya API
 #include <maya/MFnPlugin.h>
@@ -98,10 +99,14 @@ MStatus initializePlugin(MObject object)
 MStatus uninitializePlugin(MObject object)
 {
 	MFnPlugin plugin(object);
+
+
 	// Workaround for avoiding dirtying the scene when registering overrides
 	const auto is_scene_dirty = IsSceneDirty();
 	// Clean-up any used resources
 	delete viewport_renderer_override;
+	wmr::CallbackManager::Destroy();
+
 	// If the scene was previously unmodified, return it to that state to avoid dirtying
 	ActOnCurrentDirtyState( is_scene_dirty );
 
