@@ -10,11 +10,6 @@
 #include <maya/MObjectArray.h>
 #include <maya/MPlug.h>
 #include <maya/MPlugArray.h>
-#include <maya/MFnLambertShader.h>
-#include <maya/MDagPath.h>
-#include <maya/MFnSet.h>
-#include <maya/MItMeshPolygon.h>
-#include <maya/MItDependencyGraph.h>
 
 // C++ standard
 #include <vector>
@@ -25,31 +20,31 @@
 // https://nccastaff.bournemouth.ac.uk/jmacey/RobTheBloke/www/research/maya/mfnmesh.htm
 void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 {
-	MStatus status;
-	MDagPath path;
-	mesh.getPath(path);
+	// Number of instances of this mesh
+	std::uint32_t instance_count = mesh.parentCount();
 
-	// If it is instanced, determine which instance the path refers to
-	std::uint32_t instance_count = 0;
-	if (path.isInstanced())
-		instance_count = path.instanceNumber();
-
-	MObjectArray sets;
-	MObjectArray comps;
-
-	if (!mesh.getConnectedSetsAndMembers(instance_count, sets, comps, true))
-		return;
-
-	for (std::uint32_t index = 0; index < sets.length(); ++index)
+	for (auto instance_index = 0; instance_index < instance_count; ++instance_index)
 	{
-		MObject set = sets[index];
-		MObject comp = comps[index];
+		// Attach a function set to the instance
+		MFnDependencyNode mesh_fn(mesh.parent(instance_index));
 
-		MFnSet fn_set(set, &status);
-		if (status == MStatus::kFailure)
-			continue;
+		// References to the shaders used on the meshes
+		MObjectArray shaders;
 
-			// All faces use the same material
+		// Indices to the materials in the object array
+		MIntArray material_indices;
+
+		// Get all attached shaders for this instance
+		mesh.getConnectedShaders(instance_index, shaders, material_indices);
+
+		switch (shaders.length())
+		{
+			// No shaders applied to this mesh instance
+			case 0:
+				{}
+				break;
+
+				// All faces use the same material
 			case 1:
 				{
 					// Output hack
@@ -97,23 +92,22 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 				}
 				break;
 
-		dgIt.disablePruningOnFilter();
+				// Two or more materials are used
+			default:
+				{
+					// Get the number of materials by doing:
+					// auto num_of_mats = shaders.length()
 
-		// If no texture file node was found, just continue.
-		//
-		if (dgIt.isDone())
-			continue;
+					// Holds sorted face indices based on their applied material
+					std::vector<std::vector<std::uint32_t>> faces_by_material_index;
 
-		// Print out the texture node name and texture file that it references.
-		//
-		MObject textureNode = dgIt.currentItem();
-		MPlug filenamePlug = MFnDependencyNode(textureNode).findPlug("fileTextureName", true);
-		MString textureName;
-		std::ostringstream os;
-		filenamePlug.getValue(textureName);
-		os << "Set: " << fn_set.name() << endl;
-		os << "Texture Node Name: " << MFnDependencyNode(textureNode).name() << endl;
-		os << "Texture File Name: " << textureName.asChar() << endl;
+					// Make sure the container has the same size as the number of shaders
+					faces_by_material_index.resize(shaders.length());
+
+					for (auto material_index = 0; material_index < material_indices.length(); ++material_index)
+					{
+						faces_by_material_index[material_indices[material_index]].push_back(material_index);
+					}
 
 					for (auto shader_index = 0; shader_index < shaders.length(); ++shader_index)
 					{
