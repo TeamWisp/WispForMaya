@@ -80,8 +80,8 @@ static void updateTransform( MFnTransform& transform, std::shared_ptr<wr::MeshNo
 	double3 scale;
 	transform.getScale( scale );
 
-	mesh_node->SetPosition( { -static_cast< float >( pos.x ), -static_cast< float >( pos.y ), -static_cast< float >( pos.z ) } );
-	mesh_node->SetRotation( { static_cast< float >( rot.z ), static_cast< float >( rot.x ), static_cast< float >( rot.y ) } );
+	mesh_node->SetPosition( { static_cast< float >( pos.x ), static_cast< float >( pos.y ), static_cast< float >( pos.z ) } );
+	mesh_node->SetRotation( { static_cast< float >( rot.x ), static_cast< float >( rot.y ), static_cast< float >( rot.z ) } );
 	mesh_node->SetScale( { static_cast< float >( scale[0] ), static_cast< float >( scale[1] ),static_cast< float >( scale[2] ) } );
 }
 #pragma endregion
