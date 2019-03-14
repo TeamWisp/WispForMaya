@@ -119,9 +119,64 @@ namespace wmr
 				MGlobal::displayInfo( status.errorString() );
 			}
 		}
+	}
+
+	void AttributeMeshAddedCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData )
+	{
+		wmr::ModelParser* model_parser = reinterpret_cast< wmr::ModelParser* >( clientData );
+		MStatus status = MS::kSuccess;
+
+		// Make an MObject from the plug node
+		MObject object( plug.node() );
+
+		// Create mesh
+		MFnMesh mesh( object, &status );
+
+		if( status == MS::kSuccess )
+		{
+
+			// Add the mesh
+			model_parser->MeshAdded( mesh );
+
+			// Unregister the callback
+			auto findCallback = [ &object ]( std::pair<MObject, MCallbackId> pair ) -> bool
+			{
+				if( object == pair.first )
+				{
+					return true;
+				}
+				return false;
+			};
+			std::vector<std::pair<MObject, MCallbackId>>::iterator it =
+				std::find_if( model_parser->m_mesh_added_callback_vector.begin(), model_parser->m_mesh_added_callback_vector.end(), findCallback );
+
+			auto it_end = --model_parser->m_mesh_added_callback_vector.end();
+
+			if( it == it_end )
+			{
+				if( findCallback(*it) == true )
+				{
+					MMessage::removeCallback( it_end->second );
+					model_parser->m_mesh_added_callback_vector.pop_back();
+				}
+				else
+				{
+					assert( false ); // callback was never added to the vector;
+				}
+			}
+			else
+			{
+				std::iter_swap( it, it_end );
+				MMessage::removeCallback( it_end->second );
+				model_parser->m_mesh_added_callback_vector.pop_back();
+
+			}
+		}
+
+		// If mesh failed to create, it wasn't ready
 		else
 		{
-			return;
+			MGlobal::displayInfo( status.errorString() );
 		}
 	}
 }
@@ -130,12 +185,37 @@ namespace wmr
 wmr::ModelParser::ModelParser() :
 	m_renderer( dynamic_cast< const ViewportRendererOverride* >(
 		MHWRender::MRenderer::theRenderer()->findRenderOverride( settings::VIEWPORT_OVERRIDE_NAME )
-		)->GetRenderer() )
+		)->GetRenderer() ),
+	m_mesh_added_callback_vector(),
+	m_object_transform_vector()
 {
 }
 
 wmr::ModelParser::~ModelParser() 
 {
+}
+
+void wmr::ModelParser::SubscribeObject( MObject & maya_object)
+{
+	MStatus status = MS::kSuccess;
+
+	// For this callback, we want to use a temporary functions to gather data from a mesh when it's added to the scene
+	auto meshCreatedID = MNodeMessage::addAttributeChangedCallback(
+		maya_object,
+		AttributeMeshAddedCallback,
+		this,
+		&status
+	);
+
+	if( status == MS::kSuccess )
+	{
+		 m_mesh_added_callback_vector.push_back(std::make_pair(maya_object, meshCreatedID));
+	}
+	else
+	{
+		assert( false );
+	}
+
 }
 
 void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
@@ -315,7 +395,7 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 	{
 		m.second = default_material;
 	}
-
+	m_renderer.GetD3D12Renderer().WaitForAllPreviousWork();
 	auto model_node = m_renderer.GetScenegraph().CreateChild<wr::MeshNode>( nullptr, model );
 	//MStatus status;
 
