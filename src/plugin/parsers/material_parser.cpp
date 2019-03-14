@@ -1,13 +1,42 @@
 #include "material_parser.hpp"
 
 // Maya API
-#include <maya/MFnMesh.h>
-#include <maya/MObjectArray.h>
-#include <maya/MIntArray.h>
 #include <maya/MFnDependencyNode.h>
+#include <maya/MFnMesh.h>
+#include <maya/MIntArray.h>
+#include <maya/MObjectArray.h>
+#include <maya/MPlug.h>
+#include <maya/MPlugArray.h>
 
 // C++ standard
 #include <vector>
+
+#include <maya/MGlobal.h>
+#include <sstream>
+
+MString GetShaderName(MObject shadingEngine)
+{
+	// attach a function set to the shading engine
+	MFnDependencyNode fn(shadingEngine);
+
+	// get access to the surfaceShader attribute. This will be connected to
+	// lambert , phong nodes etc.
+	MPlug sshader = fn.findPlug("surfaceShader");
+
+	// will hold the connections to the surfaceShader attribute
+	MPlugArray materials;
+
+	// get the material connected to the surface shader
+	sshader.connectedTo(materials, true, false);
+
+	// if we found a material
+	if (materials.length())
+	{
+		MFnDependencyNode fnMat(materials[0].node());
+		return fnMat.name();
+	}
+	return "none";
+}
 
 // https://nccastaff.bournemouth.ac.uk/jmacey/RobTheBloke/www/research/maya/mfnmesh.htm
 void wmr::MaterialParser::Parse(const MFnMesh& mesh)
@@ -39,8 +68,16 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 			// All faces use the same material
 			case 1:
 				{
-					// Access the shader here:
-					// auto x = shaders[0]
+					std::ostringstream os;
+					
+					os	<< "\t\tmaterials 1\n";
+					os	<< "\t\t\t"
+						<< GetShaderName(shaders[0]).asChar()
+						<< std::endl;
+
+					MGlobal::displayInfo(os.str().c_str());
+
+
 				}
 				break;
 
@@ -63,10 +100,24 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 
 					for (auto shader_index = 0; shader_index < shaders.length(); ++shader_index)
 					{
+						std::ostringstream os;
+						os << "\t\t\t"
+							<< GetShaderName(shaders[shader_index]).asChar()
+							<< "\n\t\t\t"
+							<< faces_by_material_index[shader_index].size()
+							<< "\n\t\t\t\t";
+
+						MGlobal::displayInfo(os.str().c_str());
+
 						// Get all faces used by this material index
-						for (auto itr = faces_by_material_index[shader_index].begin(); itr != faces_by_material_index[shader_index].end(); ++itr)
+						for (unsigned int & itr : faces_by_material_index[shader_index])
 						{
+							std::ostringstream oss;
+
 							// Use the material index here
+							oss << itr << std::endl;
+
+							MGlobal::displayInfo(oss.str().c_str());
 						}
 					}
 				}
