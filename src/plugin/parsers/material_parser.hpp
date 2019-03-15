@@ -3,6 +3,9 @@
 // Maya API
 #include <maya/MApiNamespace.h>
 
+// C++ standard
+#include <optional>
+
 namespace wmr
 {
 	namespace detail
@@ -13,7 +16,6 @@ namespace wmr
 
 			LAMBERT,
 			PHONG,
-			BLINN_PHONG
 		};
 	}
 
@@ -30,6 +32,9 @@ namespace wmr
 		void Parse(const MFnMesh& mesh);
 
 	private:
-		const detail::SurfaceShaderType GetShaderType();
+		const detail::SurfaceShaderType GetShaderType(const MObject& node);
+		const MString GetPlugTexture(MPlug& plug);
+		const MPlug GetPlugByName(const MObject& node, MString name);
+		const std::optional<MPlug> GetSurfaceShader(const MObject& node);
 	};
 }

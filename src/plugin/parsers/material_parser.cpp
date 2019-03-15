@@ -50,44 +50,41 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 					// Output hack
 					std::ostringstream os;
 
-					MFnDependencyNode fn_node(shaders[0]);
-					MPlug shader_plug = fn_node.findPlug("surfaceShader", true);
+					auto surface_shader = GetSurfaceShader(shaders[0]);
 
-					// Is this a valid plug?
-					if (!shader_plug.isNull())
+					// Invalid surface shader
+					if (!surface_shader.has_value())
+						return;
+
+					// Find all plugs that are connected to this shader
+					MPlugArray connected_plugs;
+					surface_shader.value().connectedTo(connected_plugs, true, false);
+
+					// Could not find a valid connected plug
+					if (connected_plugs.length() != 1)
+						return;
+
+					auto shader_type = GetShaderType(connected_plugs[0].node());
+
+					// Shader type not supported by this plug-in
+					if (shader_type == detail::SurfaceShaderType::UNSUPPORTED)
+						return;
+
+					// Found a Lambert shader
+					if (shader_type == detail::SurfaceShaderType::LAMBERT)
 					{
-						MPlugArray connected_plugs;
-						shader_plug.connectedTo(connected_plugs, true, false);
+						os << "Found a Lambert shader!" << std::endl;
 
-						// Could not find a valid connected plug
-						if (connected_plugs.length() != 1)
-							return;
+						auto color_plug = GetPlugByName(connected_plugs[0].node(), "color");
 
-						os << connected_plugs[0].node().apiTypeStr();
+						// Retrieve the texture associated with this plug
+						auto texture_path = GetPlugTexture(color_plug);
 
-						// Found a lambert shader
-						if (connected_plugs[0].node().apiType() == MFn::kLambert)
-						{
-							auto color_plug = MFnDependencyNode(connected_plugs[0].node()).findPlug("color");
-
-							MItDependencyGraph dependency_graph_iterator(
-								color_plug,
-								MFn::kFileTexture,
-								MItDependencyGraph::kUpstream,
-								MItDependencyGraph::kBreadthFirst,
-								MItDependencyGraph::kNodeLevel);
-
-							dependency_graph_iterator.disablePruningOnFilter();
-
-							auto texture_node = dependency_graph_iterator.currentItem();
-							auto file_name_plug = MFnDependencyNode(texture_node).findPlug("fileTextureName", true);
-
-							MString texture_path;
-							file_name_plug.getValue(texture_path);
-							os << texture_path.asChar();
-						}
+						// Print the texture location
+						os << texture_path.asChar() << std::endl;
 					}
 
+					// Log the string stream to the Maya script output window
 					MGlobal::displayInfo(os.str().c_str());
 				}
 				break;
@@ -121,4 +118,60 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 				break;
 		}
 	}
+}
+
+const wmr::detail::SurfaceShaderType wmr::MaterialParser::GetShaderType(const MObject& node)
+{
+	detail::SurfaceShaderType shader_type = detail::SurfaceShaderType::UNSUPPORTED;
+
+	switch (node.apiType())
+	{
+		case MFn::kLambert:
+			shader_type = detail::SurfaceShaderType::LAMBERT;
+			break;
+
+		case MFn::kPhong:
+			shader_type = detail::SurfaceShaderType::PHONG;
+			break;
+
+		default:
+			break;
+	}
+
+	return shader_type;
+}
+
+const MString wmr::MaterialParser::GetPlugTexture(MPlug& plug)
+{
+	MItDependencyGraph dependency_graph_iterator(
+		plug,
+		MFn::kFileTexture,
+		MItDependencyGraph::kUpstream,
+		MItDependencyGraph::kBreadthFirst,
+		MItDependencyGraph::kNodeLevel);
+
+	dependency_graph_iterator.disablePruningOnFilter();
+
+	auto texture_node = dependency_graph_iterator.currentItem();
+	auto file_name_plug = MFnDependencyNode(texture_node).findPlug("fileTextureName", true);
+
+	MString texture_path;
+	file_name_plug.getValue(texture_path);
+
+	return texture_path;
+}
+
+const MPlug wmr::MaterialParser::GetPlugByName(const MObject& node, MString name)
+{
+	return MFnDependencyNode(node).findPlug("color");
+}
+
+const std::optional<MPlug> wmr::MaterialParser::GetSurfaceShader(const MObject& node)
+{
+	MPlug shader_plug = MFnDependencyNode(node).findPlug("surfaceShader", true);
+
+	if (!shader_plug.isNull())
+		return shader_plug;
+	else
+		return std::nullopt;
 }
