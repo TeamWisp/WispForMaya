@@ -93,6 +93,22 @@ void wmr::ScenegraphParser::Initialize()
 	{
 		assert( false );
 	}
+
+	addedId = MDGMessage::addNodeRemovedCallback(
+		MeshRemovedCallback,
+		"mesh",
+		this,
+		&status
+	);
+
+	if( status == MS::kSuccess )
+	{
+		CallbackManager::GetInstance().RegisterCallback( addedId );
+	}
+	else
+	{
+		assert( false );
+	}
 	
 	// TODO: add other types of addedCallbacks
 
