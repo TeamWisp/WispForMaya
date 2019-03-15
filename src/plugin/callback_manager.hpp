@@ -28,6 +28,9 @@ namespace wmr
 		/*! /return Returns a reference to the callback manager if it exists, else, nullptr. */
 		static CallbackManager& GetInstance();
 
+		//! Destroy instance of CallbackManager
+		static void Destroy();
+
 		//! Register a callback
 		/*! Used to registers callbacks using a MCallbackId structure.
 		 *
@@ -39,6 +42,7 @@ namespace wmr
 		 *  
 		 *  /sa ~CallbackManager()*/
 		void Reset();
+
 
 	private:
 		//! Singleton instance

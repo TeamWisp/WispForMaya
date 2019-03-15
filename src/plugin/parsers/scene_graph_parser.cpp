@@ -41,30 +41,22 @@
 #include <sstream>
 
 
-void MeshAddedCallback( MObject &node, void *clientData )
+void MeshAddedCallback( MObject &node, void *client_data )
 {
-	wmr::ModelParser* model_parser = reinterpret_cast< wmr::ModelParser* >( clientData );
+	assert( node.apiType() == MFn::Type::kMesh );
+	wmr::ScenegraphParser* scenegraph_parser = reinterpret_cast< wmr::ScenegraphParser* >( client_data );
 
-	// Check if the added node is a mesh
-	if( node.apiType() == MFn::Type::kMesh )
-	{
-		MStatus status = MS::kSuccess;
+	// Create an attribute changed callback to use in order to wait for the mesh to be ready
+	scenegraph_parser->GetModelParser().SubscribeObject( node );
+}
 
-		// Get the dag node
-		MFnDagNode dagNode( node, &status );
-		if( status == MS::kSuccess )
-		{
-			MFnMesh mesh( node );
-			MGlobal::displayInfo( "The mesh " + dagNode.name() + " has been added!" );
-			model_parser->MeshAdded( mesh );
-			// Create an attribute changed callback to use in order to wait for the mesh to be ready
-			//CreateChangedAttributeMeshCallback( node, attributeMeshAddedCallback );
-		}
-		else
-		{
-			MGlobal::displayInfo( status.errorString() );
-		}
-	}
+void MeshRemovedCallback( MObject& node, void* client_data )
+{
+	assert( node.apiType() == MFn::Type::kMesh );
+	wmr::ScenegraphParser* scenegraph_parser = reinterpret_cast< wmr::ScenegraphParser* >( client_data );
+
+	// Create an attribute changed callback to use in order to wait for the mesh to be ready
+	scenegraph_parser->GetModelParser().UnSubscribeObject( node );
 }
 
 wmr::ScenegraphParser::ScenegraphParser( ) :
@@ -89,9 +81,34 @@ void wmr::ScenegraphParser::Initialize()
 	MCallbackId addedId = MDGMessage::addNodeAddedCallback(
 		MeshAddedCallback,
 		"mesh",
-		m_model_parser.get(),
+		this,
 		&status
 	);
+	
+	if( status == MS::kSuccess )
+	{
+		CallbackManager::GetInstance().RegisterCallback( addedId );
+	}
+	else
+	{
+		assert( false );
+	}
+
+	addedId = MDGMessage::addNodeRemovedCallback(
+		MeshRemovedCallback,
+		"mesh",
+		this,
+		&status
+	);
+
+	if( status == MS::kSuccess )
+	{
+		CallbackManager::GetInstance().RegisterCallback( addedId );
+	}
+	else
+	{
+		assert( false );
+	}
 	
 	// TODO: add other types of addedCallbacks
 
@@ -114,6 +131,16 @@ void wmr::ScenegraphParser::Initialize()
 		}
 		itt.next();
 	}
+}
+
+wmr::ModelParser & wmr::ScenegraphParser::GetModelParser() const noexcept
+{
+	return *m_model_parser;
+}
+
+wmr::MaterialParser & wmr::ScenegraphParser::GetMaterialParser() const noexcept
+{
+	return *m_material_parser;
 }
 
 wmr::CameraParser& wmr::ScenegraphParser::GetCameraParser() const noexcept
