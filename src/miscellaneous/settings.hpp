@@ -42,5 +42,8 @@ namespace wmr
 			"wisp_gizmo_render",	// Render gizmos									(gizmo_render_operation.hpp)
 			"wisp_present"			// Present the results to the viewport window		(using default Maya implementation)
 		};
+
+		//! Name of the command used to switch rendering pipelines
+		static const constexpr char* RENDER_PIPELINE_SELECT_COMMAND_NAME = "wisp_switch_rendering_pipeline";
 	};
 }
