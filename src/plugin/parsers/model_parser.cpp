@@ -27,8 +27,8 @@
 #include <maya/MItMeshPolygon.h>
 #include <maya/MPointArray.h>
 #include <maya/MQuaternion.h>
-#include <maya/M3dView.h>
 #include <maya/MStatus.h>
+#include <maya/M3dView.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MNodeMessage.h>
 #include <maya/MPlug.h>
@@ -69,6 +69,7 @@ static MIntArray GetLocalIndex( MIntArray & getVertices, MIntArray & getTriangle
 static void updateTransform( MFnTransform& transform, std::shared_ptr<wr::MeshNode> mesh_node )
 {
 	MStatus status = MS::kSuccess;
+
 	MVector pos = transform.getTranslation( MSpace::kTransform, &status );
 
 	MQuaternion qrot;
@@ -78,105 +79,110 @@ static void updateTransform( MFnTransform& transform, std::shared_ptr<wr::MeshNo
 	rot.reorderIt( MEulerRotation::kZXY );
 
 	double3 scale;
-	transform.getScale( scale );
+	status = transform.getScale( scale );
+
+	assert( status == MS::kSuccess );
 
 	mesh_node->SetPosition( { static_cast< float >( pos.x ), static_cast< float >( pos.y ), static_cast< float >( pos.z ) } );
 	mesh_node->SetRotation( { static_cast< float >( rot.x ), static_cast< float >( rot.y ), static_cast< float >( rot.z ) } );
 	mesh_node->SetScale( { static_cast< float >( scale[0] ), static_cast< float >( scale[1] ),static_cast< float >( scale[2] ) } );
 }
+
+auto getTransformFindAlgorithm( MFnTransform& transform)
+{
+	return [ &transform ]( std::pair<MObject, std::shared_ptr<wr::MeshNode>> pair ) -> bool
+	{
+		if( transform.object() == pair.first )
+		{
+			return true;
+		}
+		return false;
+	};
+}
+
 #pragma endregion
 
 #pragma region callbacks
 namespace wmr
 {
-	void AttributeMeshTransformCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData )
+	void AttributeMeshTransformCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &other_plug, void *client_data )
 	{
-		wmr::ModelParser* model_parser = reinterpret_cast< wmr::ModelParser* >( clientData );
 		// Check if attribute was set
-		if( msg & MNodeMessage::kAttributeSet )
+		if( !( msg & MNodeMessage::kAttributeSet ) )
 		{
-			MStatus status = MS::kSuccess;
-
-			// Create transform from the MObject
-			MFnTransform transform( plug.node(), &status );
-			if( status == MS::kSuccess )
-			{
-				auto findTransform = [ &transform ]( std::pair<MObject, std::shared_ptr<wr::MeshNode>> pair ) -> bool
-				{
-					if( transform.object() == pair.first )
-					{
-						return true;
-					}
-					return false;
-				};
-				std::vector<std::pair<MObject, std::shared_ptr<wr::MeshNode>>>::iterator it =
-					std::find_if( model_parser->m_object_transform_vector.begin(), model_parser->m_object_transform_vector.end(), findTransform );
-
-				updateTransform( transform, it->second );
-			}
-			else
-			{
-				MGlobal::displayInfo( status.errorString() );
-			}
+			return;
 		}
-	}
 
-	void AttributeMeshAddedCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData )
-	{
-		wmr::ModelParser* model_parser = reinterpret_cast< wmr::ModelParser* >( clientData );
 		MStatus status = MS::kSuccess;
-
-		// Make an MObject from the plug node
-		MObject object( plug.node() );
-
-		// Create mesh
-		MFnMesh mesh( object, &status );
-
-		if( status == MS::kSuccess )
-		{
-
-			// Add the mesh
-			model_parser->MeshAdded( mesh );
-
-			// Unregister the callback
-			auto findCallback = [ &object ]( std::pair<MObject, MCallbackId> pair ) -> bool
-			{
-				if( object == pair.first )
-				{
-					return true;
-				}
-				return false;
-			};
-			std::vector<std::pair<MObject, MCallbackId>>::iterator it =
-				std::find_if( model_parser->m_mesh_added_callback_vector.begin(), model_parser->m_mesh_added_callback_vector.end(), findCallback );
-
-			auto it_end = --model_parser->m_mesh_added_callback_vector.end();
-
-			if( it == it_end )
-			{
-				if( findCallback(*it) == true )
-				{
-					MMessage::removeCallback( it_end->second );
-					model_parser->m_mesh_added_callback_vector.pop_back();
-				}
-				else
-				{
-					assert( false ); // callback was never added to the vector;
-				}
-			}
-			else
-			{
-				std::iter_swap( it, it_end );
-				MMessage::removeCallback( it_end->second );
-				model_parser->m_mesh_added_callback_vector.pop_back();
-
-			}
-		}
-
-		// If mesh failed to create, it wasn't ready
-		else
+		MFnTransform transform( plug.node(), &status );
+		if( status != MS::kSuccess )
 		{
 			MGlobal::displayInfo( status.errorString() );
+			return;
+		}
+
+		wmr::ModelParser* model_parser = reinterpret_cast< wmr::ModelParser* >( client_data );
+
+		// specialized find_if algorithm
+		
+
+		auto it = std::find_if( model_parser->m_object_transform_vector.begin(), model_parser->m_object_transform_vector.end(), getTransformFindAlgorithm(transform) );
+		if( it->first != transform.object() )
+		{
+			return; // find_if returns last element even if it is not a positive result
+		}
+		if( it->first != transform.object() )
+		{
+			return; // find_if returns last element even if it is not a positive result
+		}
+
+		updateTransform( transform, it->second );
+
+	}
+
+	void AttributeMeshAddedCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &other_plug, void *client_data )
+	{
+		// Make an MObject from the plug node
+		MObject object( plug.node() );
+		MStatus status = MS::kSuccess;
+		// Create mesh
+		MFnMesh mesh( object, &status );
+		if( status != MS::kSuccess )
+		{
+			return;
+		}
+
+		wmr::ModelParser* model_parser = reinterpret_cast< wmr::ModelParser* >( client_data );
+		// Add the mesh
+		model_parser->MeshAdded( mesh );
+
+		// Unregister the callback
+		auto findCallback = [ &object ]( std::pair<MObject, MCallbackId> pair ) -> bool
+		{
+			if( object == pair.first )
+			{
+				return true;
+			}
+			return false;
+		};
+		std::vector<std::pair<MObject, MCallbackId>>::iterator it =
+			std::find_if( model_parser->m_mesh_added_callback_vector.begin(), model_parser->m_mesh_added_callback_vector.end(), findCallback );
+
+		auto it_end = --model_parser->m_mesh_added_callback_vector.end();
+
+		if( it == it_end )
+		{
+			assert( findCallback( *it ) == true ); // callback was never added to the vector;
+			MMessage::removeCallback( it_end->second );
+			model_parser->m_mesh_added_callback_vector.pop_back();
+
+		}
+		else
+		{
+			std::iter_swap( it, it_end );
+			MMessage::removeCallback( it_end->second );
+			model_parser->m_mesh_added_callback_vector.pop_back();
+
 		}
 	}
 }
@@ -191,11 +197,11 @@ wmr::ModelParser::ModelParser() :
 {
 }
 
-wmr::ModelParser::~ModelParser() 
+wmr::ModelParser::~ModelParser()
 {
 }
 
-void wmr::ModelParser::SubscribeObject( MObject & maya_object)
+void wmr::ModelParser::SubscribeObject( MObject & maya_object )
 {
 	MStatus status = MS::kSuccess;
 
@@ -207,15 +213,33 @@ void wmr::ModelParser::SubscribeObject( MObject & maya_object)
 		&status
 	);
 
-	if( status == MS::kSuccess )
+	assert( status == MS::kSuccess );
+	m_mesh_added_callback_vector.push_back( std::make_pair( maya_object, meshCreatedID ) );
+
+}
+
+void wmr::ModelParser::UnSubscribeObject( MObject & maya_object )
+{
+	MStatus status = MS::kSuccess;
+
+	MFnMesh fnmesh( maya_object );
+
+	MFnDagNode dagnode = fnmesh.parent( 0, &status );
+	MObject maya_object_transform = dagnode.object();
+	MFnTransform transform( maya_object_transform, &status );
+	if( status != MS::kSuccess )
 	{
-		 m_mesh_added_callback_vector.push_back(std::make_pair(maya_object, meshCreatedID));
-	}
-	else
-	{
+		MGlobal::displayError( "Error: " + status.errorString() );
 		assert( false );
 	}
 
+	auto it = std::find_if( m_object_transform_vector.begin(), m_object_transform_vector.end(), getTransformFindAlgorithm( transform ) );
+	if( it->first != transform.object() )
+	{
+		assert( false );
+		return; // find_if returns last element even if it is not a positive result
+	}
+	m_renderer.GetScenegraph().DestroyNode( it->second );
 }
 
 void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
@@ -387,11 +411,11 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 		itt.next();
 	}
 	bool model_reloaded = false;
-	wr::Model* model = m_renderer.GetModelManager().AddModel( fnmesh.name(), { mesh_data },model_reloaded );
+	wr::Model* model = m_renderer.GetModelManager().AddModel( fnmesh.name(), { mesh_data }, model_reloaded );
 
 	auto default_material = m_renderer.GetMaterialManager().GetDefaultMaterial();
 
-	for (auto& m : model->m_meshes)
+	for( auto& m : model->m_meshes )
 	{
 		m.second = default_material;
 	}

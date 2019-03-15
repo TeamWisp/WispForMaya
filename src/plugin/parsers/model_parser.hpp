@@ -24,10 +24,13 @@ namespace wmr
 		~ModelParser();
 
 		void SubscribeObject( MObject& maya_object );
+		void UnSubscribeObject( MObject& maya_object );
 		void MeshAdded( MFnMesh & fnmesh );
 
 	private:
+		//callbacks that require private access and are part of the ModelParser.
 		friend void AttributeMeshAddedCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData );
+		friend void MeshRemovedCallback( MObject& node, void* client_data );
 
 		std::vector<std::pair<MObject, std::shared_ptr<wr::MeshNode>>> m_object_transform_vector;
 		std::vector<std::pair<MObject, MCallbackId>> m_mesh_added_callback_vector;

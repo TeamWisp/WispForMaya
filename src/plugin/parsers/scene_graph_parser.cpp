@@ -41,16 +41,22 @@
 #include <sstream>
 
 
-void MeshAddedCallback( MObject &node, void *clientData )
+void MeshAddedCallback( MObject &node, void *client_data )
 {
-	wmr::ScenegraphParser* scenegraph_parser = reinterpret_cast< wmr::ScenegraphParser* >( clientData );
+	assert( node.apiType() == MFn::Type::kMesh );
+	wmr::ScenegraphParser* scenegraph_parser = reinterpret_cast< wmr::ScenegraphParser* >( client_data );
 
-	// Check if the added node is a mesh
-	if( node.apiType() == MFn::Type::kMesh )
-	{
-		// Create an attribute changed callback to use in order to wait for the mesh to be ready
-		scenegraph_parser->GetModelParser().SubscribeObject( node );
-	}
+	// Create an attribute changed callback to use in order to wait for the mesh to be ready
+	scenegraph_parser->GetModelParser().SubscribeObject( node );
+}
+
+void MeshRemovedCallback( MObject& node, void* client_data )
+{
+	assert( node.apiType() == MFn::Type::kMesh );
+	wmr::ScenegraphParser* scenegraph_parser = reinterpret_cast< wmr::ScenegraphParser* >( client_data );
+
+	// Create an attribute changed callback to use in order to wait for the mesh to be ready
+	scenegraph_parser->GetModelParser().UnSubscribeObject( node );
 }
 
 wmr::ScenegraphParser::ScenegraphParser( ) :
