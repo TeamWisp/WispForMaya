@@ -36,7 +36,6 @@
 #include <maya/MUuid.h>
 #include <maya/MDGMessage.h>
 
-#include <maya/MApiNamespace.h>
 
 // region for internally used functions, these functions cannot be use outside this cpp file
 #pragma region INTERNAL_FUNCTIONS
@@ -92,7 +91,15 @@ auto getTransformFindAlgorithm( MFnTransform& transform)
 {
 	return [ &transform ]( std::pair<MObject, std::shared_ptr<wr::MeshNode>> pair ) -> bool
 	{
-		if( transform.object() == pair.first )
+		MStatus status;
+		MFnMesh fn_mesh( pair.first );
+		MFnDagNode dagnode = fn_mesh.parent( 0, &status );
+		MObject object = dagnode.object();
+		MFnTransform transform_rhs( dagnode.object(), &status );
+		
+		assert( status == MS::kSuccess );
+
+		if( transform.object() == transform_rhs.object() )
 		{
 			return true;
 		}
@@ -120,21 +127,22 @@ namespace wmr
 			MGlobal::displayInfo( status.errorString() );
 			return;
 		}
-
 		wmr::ModelParser* model_parser = reinterpret_cast< wmr::ModelParser* >( client_data );
 
 		// specialized find_if algorithm
 		
 
 		auto it = std::find_if( model_parser->m_object_transform_vector.begin(), model_parser->m_object_transform_vector.end(), getTransformFindAlgorithm(transform) );
+		
+		MFnMesh fn_mesh( it->first );
+		MFnDagNode dagnode = fn_mesh.parent( 0, &status );
+		MObject object = dagnode.object();
+		MFnTransform transform_rhs( dagnode.object(), &status );
 		if( it->first != transform.object() )
 		{
 			return; // find_if returns last element even if it is not a positive result
 		}
-		if( it->first != transform.object() )
-		{
-			return; // find_if returns last element even if it is not a positive result
-		}
+
 
 		updateTransform( transform, it->second );
 
@@ -224,17 +232,16 @@ void wmr::ModelParser::UnSubscribeObject( MObject & maya_object )
 
 	MFnMesh fnmesh( maya_object );
 
-	MFnDagNode dagnode = fnmesh.parent( 0, &status );
-	MObject maya_object_transform = dagnode.object();
-	MFnTransform transform( maya_object_transform, &status );
-	if( status != MS::kSuccess )
+	auto findCallback = [ &maya_object ]( std::pair<MObject, std::shared_ptr<wr::MeshNode>> pair ) -> bool
 	{
-		MGlobal::displayError( "Error: " + status.errorString() );
-		assert( false );
-	}
-
-	auto it = std::find_if( m_object_transform_vector.begin(), m_object_transform_vector.end(), getTransformFindAlgorithm( transform ) );
-	if( it->first != transform.object() )
+		if( maya_object == pair.first )
+		{
+			return true;
+		}
+		return false;
+	};
+	auto it = std::find_if( m_object_transform_vector.begin(), m_object_transform_vector.end(), findCallback );
+	if( it->first != maya_object )
 	{
 		assert( false );
 		return; // find_if returns last element even if it is not a positive result
@@ -445,7 +452,7 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 
 	model->m_meshes[0].second = m_renderer.GetMaterialManager().GetDefaultMaterial();
 
-	m_object_transform_vector.push_back( std::make_pair( transform.object(), model_node ) );
+	m_object_transform_vector.push_back( std::make_pair( fnmesh.object(), model_node ) );
 
 
 	MCallbackId attributeId = MNodeMessage::addAttributeChangedCallback(
