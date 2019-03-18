@@ -19,6 +19,11 @@ namespace wmr
 		return m_instance == nullptr ? *(m_instance = new CallbackManager()) : *m_instance;
 	}
 
+	void CallbackManager::Destroy()
+	{
+		delete m_instance;
+	}
+
 	void CallbackManager::RegisterCallback(MCallbackId mcid)
 	{
 		// Save the callback ID for future use
@@ -32,7 +37,8 @@ namespace wmr
 		// Only reset the callback if there are any in the first place
 		if( count > 0 )
 		{
-			MCallbackIdArray( m_callback_vector.data(), count );
+			auto cbarray = MCallbackIdArray( m_callback_vector.data(), count );
+			MMessage::removeCallbacks( cbarray );
 			m_callback_vector.clear();
 		}
 	}

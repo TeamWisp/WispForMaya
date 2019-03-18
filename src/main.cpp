@@ -3,6 +3,7 @@
 #include "miscellaneous/settings.hpp"
 #include "plugin/renderer/render_pipeline_select_command.hpp"
 #include "plugin/viewport_renderer_override.hpp"
+#include "plugin/callback_manager.hpp"
 
 // Maya API
 #include <maya/MCommandResult.h>
@@ -99,13 +100,13 @@ MStatus uninitializePlugin(MObject object)
 {
 	MFnPlugin plugin(object);
 
-	// Unregister the render pipeline switch command
-	plugin.deregisterCommand(wmr::settings::RENDER_PIPELINE_SELECT_COMMAND_NAME);
 
 	// Workaround for avoiding dirtying the scene when registering overrides
 	const auto is_scene_dirty = IsSceneDirty();
 	// Clean-up any used resources
 	delete viewport_renderer_override;
+	wmr::CallbackManager::Destroy();
+
 	// If the scene was previously unmodified, return it to that state to avoid dirtying
 	ActOnCurrentDirtyState( is_scene_dirty );
 

@@ -24,6 +24,8 @@ namespace wmr
 
 		void Initialize();
 
+		ModelParser& GetModelParser() const noexcept;
+		MaterialParser& GetMaterialParser() const noexcept;
 		CameraParser& GetCameraParser() const noexcept;
 
 	private:
