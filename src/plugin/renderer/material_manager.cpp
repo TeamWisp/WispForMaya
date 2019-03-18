@@ -1,18 +1,22 @@
 #include "material_manager.hpp"
 
+#include "plugin/parsers/model_parser.hpp"
+#include "plugin/parsers/scene_graph_parser.hpp"
 #include "plugin/renderer/renderer.hpp"
 #include "plugin/viewport_renderer_override.hpp"
 #include "plugin/renderer/texture_manager.hpp"
 #include "miscellaneous/settings.hpp"
 
 #include "d3d12/d3d12_renderer.hpp"
+#include "scene_graph/mesh_node.hpp"
 
 #include <maya/MFnTransform.h>
 #include <maya/MGlobal.h>
 #include <maya/MViewport2Renderer.h>
 
 
-wmr::MaterialManager::MaterialManager()
+wmr::MaterialManager::MaterialManager() :
+	m_scenegraph_parser(nullptr)
 {
 }
 
@@ -41,12 +45,26 @@ wr::MaterialHandle wmr::MaterialManager::GetDefaultMaterial() noexcept
 	return m_default_material_handle;
 }
 
-wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& transform)
+wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& fnmesh)
 {
 	MStatus status;
 	wr::MaterialHandle material_handle = m_material_pool->Create();
 
-	m_object_material_vector.push_back(std::make_pair(transform, material_handle));
+	m_object_material_vector.push_back(std::make_pair(fnmesh, material_handle));
+
+	// Assign material handle to all meshes of the mesh node
+	if (m_scenegraph_parser == nullptr)
+	{
+		m_scenegraph_parser = &dynamic_cast<const ViewportRendererOverride*>(
+			MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME)
+			)->GetSceneGraphParser();
+	}
+	std::shared_ptr<wr::MeshNode> wr_mesh_node = m_scenegraph_parser->GetModelParser().GetWRModel(fnmesh);
+	wr::Model* wr_model = wr_mesh_node->m_model;
+	for (auto& m : wr_model->m_meshes)
+	{
+		m.second = material_handle;
+	}
 
 	return material_handle;
 }

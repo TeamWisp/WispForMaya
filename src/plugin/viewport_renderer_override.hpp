@@ -72,6 +72,10 @@ namespace wmr
 		/*! /return Renderer reference. */
 		Renderer& GetRenderer() const;
 
+		//! Get hold of the scene graph parser
+		/*! /return SceneGraphParser reference. */
+		wmr::ScenegraphParser& GetSceneGraphParser() const;
+
 	private:
 		//! Assign the correct render operations to the render operation container
 		/*! The names specified by the ConfigureRenderOperations() function indicate the order in which the render

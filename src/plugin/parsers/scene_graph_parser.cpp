@@ -61,25 +61,23 @@ void MeshRemovedCallback( MObject& node, void* client_data )
 
 void MaterialAddedCallback(MObject& node, void* client_data)
 {
+	assert( node.apiType() == MFn::Type::kMesh );
 	auto* material_parser = reinterpret_cast<wmr::MaterialParser*>(client_data);
 
-	if (node.apiType() == MFn::Type::kMesh)
+	MStatus status = MStatus::kSuccess;
+
+	// Get the DAG node
+	MFnDagNode dag_node(node, &status);
+
+	if (status == MStatus::kSuccess)
 	{
-		MStatus status = MStatus::kSuccess;
-
-		// Get the DAG node
-		MFnDagNode dag_node(node, &status);
-
-		if (status == MStatus::kSuccess)
-		{
-			MFnMesh mesh(node);
-			MGlobal::displayInfo("A material on the mesh \"" + dag_node.name() + "\" has been added!");
-			material_parser->Parse(mesh);
-		}
-		else
-		{
-			MGlobal::displayInfo(status.errorString());
-		}
+		MFnMesh mesh(node);
+		MGlobal::displayInfo("A material on the mesh \"" + dag_node.name() + "\" has been added!");
+		material_parser->Parse(mesh);
+	}
+	else
+	{
+		MGlobal::displayInfo(status.errorString());
 	}
 }
 

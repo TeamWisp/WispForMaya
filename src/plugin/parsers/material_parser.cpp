@@ -38,24 +38,6 @@ void MaterialCallback(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &ot
 	MGlobal::displayInfo("Hey! Im a material callback!");
 }
 
-const MObject wmr::MaterialParser::GetTransformFromFnMesh(const MFnMesh & fn_mesh)
-{
-	MStatus status;
-	MFnDagNode dagnode = fn_mesh.parent(0, &status);
-	if (status != MS::kSuccess)
-	{
-		MGlobal::displayError("Error: " + status.errorString());
-	}
-
-	MObject object = dagnode.object();
-	MFnTransform transform(dagnode.object(), &status);
-	if (status != MS::kSuccess)
-	{
-		MGlobal::displayError("Error: " + status.errorString());
-	}
-	return transform.object();
-}
-
 // https://nccastaff.bournemouth.ac.uk/jmacey/RobTheBloke/www/research/maya/mfnmesh.htm
 void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 {
@@ -127,8 +109,8 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 						wr::MaterialHandle material_handle = m_renderer.GetMaterialManager().DoesExist(material_bound_object);
 						if (material_handle.m_pool == nullptr)
 						{
-							MObject transform = GetTransformFromFnMesh(mesh);
-							material_handle = m_renderer.GetMaterialManager().CreateMaterial(transform);
+							MObject object = mesh.object();
+							material_handle = m_renderer.GetMaterialManager().CreateMaterial(object);
 						}
 						// Add callback that filters on material changes
 						MStatus status;

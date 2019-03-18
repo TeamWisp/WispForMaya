@@ -1,6 +1,7 @@
 #pragma once
 
 #include "structs.hpp"
+#include "plugin/viewport_renderer_override.hpp"
 #include "d3d12/d3d12_material_pool.hpp"
 
 // Maya API
@@ -16,6 +17,8 @@ namespace wr
 
 namespace wmr
 {
+	class SceneGraphParser;
+
 	class MaterialManager
 	{
 	public:
@@ -28,7 +31,7 @@ namespace wmr
 		wr::MaterialHandle CreateMaterial(MObject& object);
 		wr::MaterialHandle DoesExist(MObject& object);
 	private:
-		// TODO added render_system..
+		wmr::ScenegraphParser * m_scenegraph_parser;
 
 		std::vector<std::pair<MObject, wr::MaterialHandle>> m_object_material_vector;
 		
