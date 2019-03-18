@@ -36,7 +36,6 @@
 #include <maya/MUuid.h>
 #include <maya/MDGMessage.h>
 
-#include <maya/MApiNamespace.h>
 
 // region for internally used functions, these functions cannot be use outside this cpp file
 #pragma region INTERNAL_FUNCTIONS
