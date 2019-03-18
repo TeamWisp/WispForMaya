@@ -7,6 +7,8 @@
 
 #include "d3d12/d3d12_renderer.hpp"
 
+#include <maya/MFnTransform.h>
+#include <maya/MGlobal.h>
 #include <maya/MViewport2Renderer.h>
 
 
@@ -37,4 +39,42 @@ void wmr::MaterialManager::Initialize()
 wr::MaterialHandle wmr::MaterialManager::GetDefaultMaterial() noexcept
 {
 	return m_default_material_handle;
+}
+
+wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& object)
+{
+	MStatus status;
+	wr::MaterialHandle material_handle = m_material_pool->Create();
+
+	MFnTransform transform(object, &status);
+	if (status != MS::kSuccess)
+	{
+		MGlobal::displayError("Error: " + status.errorString());
+	}
+
+	m_object_material_vector.push_back(std::make_pair(transform.object(), material_handle));
+
+	return material_handle;
+}
+
+wr::MaterialHandle wmr::MaterialManager::DoesExist(MObject& object)
+{
+	MStatus status;
+	MFnTransform transform(object, &status);
+	if (status != MS::kSuccess)
+	{
+		MGlobal::displayError("Error: " + status.errorString());
+	}
+
+	wr::MaterialHandle handle;
+	handle.m_pool = nullptr;
+
+	for (auto& entry : m_object_material_vector)
+	{
+		if (entry.first == transform.object())
+		{
+			handle = entry.second;
+		}
+	}
+	return handle;
 }

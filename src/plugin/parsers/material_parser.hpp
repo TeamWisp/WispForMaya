@@ -1,13 +1,22 @@
 #pragma once
 
+#include <vector>
+
 // Maya API
 #include <maya/MApiNamespace.h>
 
 // C++ standard
 #include <optional>
 
+namespace wr
+{
+	class MaterialHandle;
+}
+
 namespace wmr
 {
+	class Renderer;
+
 	namespace detail
 	{
 		enum class SurfaceShaderType
@@ -26,7 +35,7 @@ namespace wmr
 	class MaterialParser
 	{
 	public:
-		MaterialParser() = default;
+		MaterialParser();
 		~MaterialParser() = default;
 
 		void Parse(const MFnMesh& mesh);
@@ -36,5 +45,7 @@ namespace wmr
 		const MString GetPlugTexture(MPlug& plug);
 		const MPlug GetPlugByName(const MObject& node, MString name);
 		const std::optional<MPlug> GetSurfaceShader(const MObject& node);
+
+		Renderer& m_renderer;
 	};
 }

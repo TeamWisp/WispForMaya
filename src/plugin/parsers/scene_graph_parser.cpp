@@ -81,6 +81,7 @@ void MaterialAddedCallback(MObject& node, void* client_data)
 		if (status == MStatus::kSuccess)
 		{
 			MFnMesh mesh(node);
+			MGlobal::displayInfo("A material on the mesh \"" + dag_node.name() + "\" has been added!");
 			material_parser->Parse(mesh);
 		}
 		else

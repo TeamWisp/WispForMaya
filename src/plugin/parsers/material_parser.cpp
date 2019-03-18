@@ -1,12 +1,17 @@
 #include "material_parser.hpp"
 
+#include "plugin/callback_manager.hpp"
+#include "plugin/viewport_renderer_override.hpp"
+
 // Maya API
+#include <maya/MDGMessage.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFnLambertShader.h>
 #include <maya/MFnMesh.h>
 #include <maya/MFnSet.h>
 #include <maya/MIntArray.h>
 #include <maya/MItDependencyGraph.h>
+#include <maya/MNodeMessage.h>
 #include <maya/MObjectArray.h>
 #include <maya/MPlug.h>
 #include <maya/MPlugArray.h>
@@ -16,6 +21,19 @@
 
 #include <maya/MGlobal.h>
 #include <sstream>
+
+wmr::MaterialParser::MaterialParser() :
+	m_renderer(dynamic_cast<const ViewportRendererOverride*>(
+	MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME)
+	)->GetRenderer())
+{
+
+}
+
+void MaterialCallback(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData)
+{
+	MGlobal::displayInfo("Hey! Im a material callback!");
+}
 
 // https://nccastaff.bournemouth.ac.uk/jmacey/RobTheBloke/www/research/maya/mfnmesh.htm
 void wmr::MaterialParser::Parse(const MFnMesh& mesh)
@@ -41,7 +59,8 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 		{
 			// No shaders applied to this mesh instance
 			case 0:
-				{}
+				{
+				}
 				break;
 
 				// All faces use the same material
@@ -82,6 +101,16 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 
 						// Print the texture location
 						os << texture_path.asChar() << std::endl;
+
+						// Add callback that filters on material changes
+						MStatus status;
+						MCallbackId attributeId = MNodeMessage::addAttributeChangedCallback(
+							shaders[0],
+							MaterialCallback,
+							this,
+							&status
+						);
+						CallbackManager::GetInstance().RegisterCallback(attributeId);
 					}
 
 					// Log the string stream to the Maya script output window
