@@ -1,7 +1,9 @@
 #include "material_parser.hpp"
 
 #include "plugin/callback_manager.hpp"
+#include "plugin/renderer/renderer.hpp"
 #include "plugin/viewport_renderer_override.hpp"
+#include "plugin/renderer/material_manager.hpp"
 
 // Maya API
 #include <maya/MDGMessage.h>
@@ -9,6 +11,7 @@
 #include <maya/MFnLambertShader.h>
 #include <maya/MFnMesh.h>
 #include <maya/MFnSet.h>
+#include <maya/MFnTransform.h>
 #include <maya/MIntArray.h>
 #include <maya/MItDependencyGraph.h>
 #include <maya/MNodeMessage.h>
@@ -33,6 +36,24 @@ wmr::MaterialParser::MaterialParser() :
 void MaterialCallback(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData)
 {
 	MGlobal::displayInfo("Hey! Im a material callback!");
+}
+
+const MObject wmr::MaterialParser::GetTransformFromFnMesh(const MFnMesh & fn_mesh)
+{
+	MStatus status;
+	MFnDagNode dagnode = fn_mesh.parent(0, &status);
+	if (status != MS::kSuccess)
+	{
+		MGlobal::displayError("Error: " + status.errorString());
+	}
+
+	MObject object = dagnode.object();
+	MFnTransform transform(dagnode.object(), &status);
+	if (status != MS::kSuccess)
+	{
+		MGlobal::displayError("Error: " + status.errorString());
+	}
+	return transform.object();
 }
 
 // https://nccastaff.bournemouth.ac.uk/jmacey/RobTheBloke/www/research/maya/mfnmesh.htm
@@ -102,10 +123,17 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 						// Print the texture location
 						os << texture_path.asChar() << std::endl;
 
+						MObject material_bound_object = shaders[0];
+						wr::MaterialHandle material_handle = m_renderer.GetMaterialManager().DoesExist(material_bound_object);
+						if (material_handle.m_pool == nullptr)
+						{
+							MObject transform = GetTransformFromFnMesh(mesh);
+							material_handle = m_renderer.GetMaterialManager().CreateMaterial(transform);
+						}
 						// Add callback that filters on material changes
 						MStatus status;
 						MCallbackId attributeId = MNodeMessage::addAttributeChangedCallback(
-							shaders[0],
+							material_bound_object,
 							MaterialCallback,
 							this,
 							&status

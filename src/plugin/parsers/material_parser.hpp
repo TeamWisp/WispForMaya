@@ -46,6 +46,8 @@ namespace wmr
 		const MPlug GetPlugByName(const MObject& node, MString name);
 		const std::optional<MPlug> GetSurfaceShader(const MObject& node);
 
+		const MObject GetTransformFromFnMesh(const MFnMesh& fn_mesh);
+
 		Renderer& m_renderer;
 	};
 }

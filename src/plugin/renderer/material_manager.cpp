@@ -41,18 +41,12 @@ wr::MaterialHandle wmr::MaterialManager::GetDefaultMaterial() noexcept
 	return m_default_material_handle;
 }
 
-wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& object)
+wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& transform)
 {
 	MStatus status;
 	wr::MaterialHandle material_handle = m_material_pool->Create();
 
-	MFnTransform transform(object, &status);
-	if (status != MS::kSuccess)
-	{
-		MGlobal::displayError("Error: " + status.errorString());
-	}
-
-	m_object_material_vector.push_back(std::make_pair(transform.object(), material_handle));
+	m_object_material_vector.push_back(std::make_pair(transform, material_handle));
 
 	return material_handle;
 }
