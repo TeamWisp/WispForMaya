@@ -144,6 +144,9 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 						{
 							MObject transform = GetTransformFromFnMesh(mesh);
 							material_handle = material_manager.CreateMaterial(transform);
+
+							auto material = material_manager.GetMaterial(material_handle);
+							material->SetAlbedo(*albedo_texture);
 						}
 
 						// Add callback that filters on material changes

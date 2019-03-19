@@ -72,3 +72,21 @@ wr::MaterialHandle wmr::MaterialManager::DoesExist(MObject& object)
 	}
 	return handle;
 }
+
+wr::Material* wmr::MaterialManager::GetMaterial(wr::MaterialHandle handle) noexcept
+{
+	auto it = std::find_if(m_object_material_vector.begin(), m_object_material_vector.end(), [&handle](std::pair<MObject, wr::MaterialHandle> pair) {
+		return (pair.second == handle);
+	});
+
+	auto end_it = --m_object_material_vector.end();
+
+	if (it != end_it)
+	{
+		// Material does not exist!
+		return nullptr;
+	}
+
+	// Retrieve the material from the pool and give it to the caller
+	return m_material_pool->GetMaterial(handle.m_id);
+}
