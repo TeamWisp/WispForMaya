@@ -1,9 +1,10 @@
 #include "material_parser.hpp"
 
 #include "plugin/callback_manager.hpp"
-#include "plugin/renderer/renderer.hpp"
-#include "plugin/viewport_renderer_override.hpp"
 #include "plugin/renderer/material_manager.hpp"
+#include "plugin/renderer/renderer.hpp"
+#include "plugin/renderer/texture_manager.hpp"
+#include "plugin/viewport_renderer_override.hpp"
 
 // Maya API
 #include <maya/MDGMessage.h>
@@ -20,6 +21,7 @@
 #include <maya/MPlugArray.h>
 
 // C++ standard
+#include <string>
 #include <vector>
 
 #include <maya/MGlobal.h>
@@ -59,13 +61,18 @@ const MObject wmr::MaterialParser::GetTransformFromFnMesh(const MFnMesh & fn_mes
 // https://nccastaff.bournemouth.ac.uk/jmacey/RobTheBloke/www/research/maya/mfnmesh.htm
 void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 {
+	auto material_manager = m_renderer.GetMaterialManager();
+	auto texture_manager = m_renderer.GetTextureManager();
+
 	// Number of instances of this mesh
 	std::uint32_t instance_count = mesh.parentCount();
 
 	for (auto instance_index = 0; instance_index < instance_count; ++instance_index)
 	{
+		auto instance = mesh.parent(instance_index);
+
 		// Attach a function set to the instance
-		MFnDependencyNode mesh_fn(mesh.parent(instance_index));
+		MFnDependencyNode mesh_fn(instance);
 
 		// References to the shaders used on the meshes
 		MObjectArray shaders;
@@ -118,22 +125,31 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 						auto color_plug = GetPlugByName(connected_plugs[0].node(), "color");
 
 						// Retrieve the texture associated with this plug
-						auto texture_path = GetPlugTexture(color_plug);
+						auto albedo_texture_path = GetPlugTexture(color_plug);
+
+						// The name of the object is needed when constructing an unique name for the texture
+						std::string mesh_name = mesh_fn.name().asChar();
+
+						// Unique names for the textures
+						std::string albedo_name = mesh_name + "_albedo";
+
+						// Request new Wisp textures
+						auto albedo_texture = texture_manager.CreateTexture(albedo_name.c_str(), albedo_texture_path.asChar());
 
 						// Print the texture location
-						os << texture_path.asChar() << std::endl;
+						os << albedo_texture_path.asChar() << std::endl;
 
-						MObject material_bound_object = shaders[0];
-						wr::MaterialHandle material_handle = m_renderer.GetMaterialManager().DoesExist(material_bound_object);
+						wr::MaterialHandle material_handle = material_manager.DoesExist(instance);
 						if (material_handle.m_pool == nullptr)
 						{
 							MObject transform = GetTransformFromFnMesh(mesh);
-							material_handle = m_renderer.GetMaterialManager().CreateMaterial(transform);
+							material_handle = material_manager.CreateMaterial(transform);
 						}
+
 						// Add callback that filters on material changes
 						MStatus status;
 						MCallbackId attributeId = MNodeMessage::addAttributeChangedCallback(
-							material_bound_object,
+							instance,
 							MaterialCallback,
 							this,
 							&status
@@ -220,7 +236,7 @@ const MString wmr::MaterialParser::GetPlugTexture(MPlug& plug)
 
 const MPlug wmr::MaterialParser::GetPlugByName(const MObject& node, MString name)
 {
-	return MFnDependencyNode(node).findPlug("color");
+	return MFnDependencyNode(node).findPlug(name);
 }
 
 const std::optional<MPlug> wmr::MaterialParser::GetSurfaceShader(const MObject& node)
