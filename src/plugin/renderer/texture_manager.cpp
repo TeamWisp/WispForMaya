@@ -33,9 +33,7 @@ namespace wmr
 			return (vt.first == hash);
 		});
 
-		auto end_it = --m_texture_container.end();
-
-		if (it != end_it)
+		if (it == m_texture_container.end())
 		{
 			// Texture does not exist yet
 			auto texture_handle = m_texture_pool->Load(path, false, false);
@@ -59,9 +57,7 @@ namespace wmr
 			return (vt.first == hash);
 		});
 
-		auto end_it = --m_texture_container.end();
-
-		if (it != end_it)
+		if (it == m_texture_container.end())
 		{
 			// Failed to find a valid texture
 			return nullptr;
@@ -80,9 +76,7 @@ namespace wmr
 			return (vt.first == hash);
 		});
 
-		auto end_it = --m_texture_container.end();
-
-		if (it != end_it)
+		if (it == m_texture_container.end())
 		{
 			// Texture does not even exist!
 			return true;
