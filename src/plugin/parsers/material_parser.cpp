@@ -35,10 +35,44 @@ wmr::MaterialParser::MaterialParser() :
 
 }
 
-void MaterialCallback(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData)
+namespace wmr
 {
-	MGlobal::displayInfo("Hey! Im a material callback!");
-}
+	void DirtyNodeCallback(MObject &node, MPlug &plug, void *clientData)
+	{
+		wmr::MaterialParser *material_parser = reinterpret_cast<wmr::MaterialParser*>(clientData);
+
+		if (node.hasFn(MFn::kLambert))
+		{
+			MGlobal::displayInfo("Lambert!");
+
+			const char * name = node.apiTypeStr();
+
+			MStatus status;
+			MFnLambertShader shader(plug.node(), &status);
+			if (status != MS::kSuccess)
+			{
+				MGlobal::displayInfo(status.errorString());
+				return;
+			}
+
+			const char * n = shader.name().asChar();
+
+			//auto file_name_plug = MFnDependencyNode(texture_node).findPlug("color", true);
+
+			//float texture_path;
+			//file_name_plug.getValue(texture_path);
+			
+
+			material_parser->GetMeshObjectFromMaterial(node, plug);
+		}
+		else if (node.hasFn(MFn::kPhong))
+		{
+			MGlobal::displayInfo("Phong!");
+		}
+	}
+} /* namespace wmr */
+
+
 
 // https://nccastaff.bournemouth.ac.uk/jmacey/RobTheBloke/www/research/maya/mfnmesh.htm
 void wmr::MaterialParser::Parse(const MFnMesh& mesh)
@@ -104,7 +138,8 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 					{
 						os << "Found a Lambert shader!" << std::endl;
 
-						auto color_plug = GetPlugByName(connected_plugs[0].node(), "color");
+						MObject connected_plug = connected_plugs[0].node();
+						auto color_plug = GetPlugByName(connected_plug, "color");
 
 						// Retrieve the texture associated with this plug
 						auto albedo_texture_path = GetPlugTexture(color_plug);
@@ -133,9 +168,9 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 
 						// Add callback that filters on material changes
 						MStatus status;
-						MCallbackId attributeId = MNodeMessage::addAttributeChangedCallback(
-							instance,
-							MaterialCallback,
+						MCallbackId attributeId = MNodeMessage::addNodeDirtyCallback(
+							connected_plug,
+							DirtyNodeCallback,
 							this,
 							&status
 						);
@@ -232,4 +267,26 @@ const std::optional<MPlug> wmr::MaterialParser::GetSurfaceShader(const MObject& 
 		return shader_plug;
 	else
 		return std::nullopt;
+}
+
+const std::optional<MObject> wmr::MaterialParser::GetMeshObjectFromMaterial(MObject & material_object, MPlug &plug)
+{
+
+	MPlugArray connected_plugs;
+	plug.connectedTo(connected_plugs, false, true);
+	for (int i = 0; i < connected_plugs.length(); ++i)
+	{
+		const char * plug_name = connected_plugs[i].name().asChar();
+		MGlobal::displayInfo(plug_name);
+	}
+
+	MFnDagNode dag_material(material_object);
+	auto num = dag_material.parentCount();
+	for (size_t i = 0; i < num; ++i)
+	{
+		MObject object = dag_material.parent(i);
+		MGlobal::displayInfo(object.apiTypeStr());
+	}
+
+	return MObject();
 }

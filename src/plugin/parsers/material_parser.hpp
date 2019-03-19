@@ -39,12 +39,17 @@ namespace wmr
 		~MaterialParser() = default;
 
 		void Parse(const MFnMesh& mesh);
+		const std::optional<MObject> GetMeshObjectFromMaterial(MObject & material_object, MPlug &plug);
 
 	private:
 		const detail::SurfaceShaderType GetShaderType(const MObject& node);
 		const MString GetPlugTexture(MPlug& plug);
 		const MPlug GetPlugByName(const MObject& node, MString name);
 		const std::optional<MPlug> GetSurfaceShader(const MObject& node);
+
+		void DirtyShaderNodeCallback(MObject &node, MPlug &plug, void *clientData);
+
+
 
 		Renderer& m_renderer;
 	};
