@@ -1,9 +1,10 @@
 #include "material_parser.hpp"
 
 #include "plugin/callback_manager.hpp"
-#include "plugin/renderer/renderer.hpp"
-#include "plugin/viewport_renderer_override.hpp"
 #include "plugin/renderer/material_manager.hpp"
+#include "plugin/renderer/renderer.hpp"
+#include "plugin/renderer/texture_manager.hpp"
+#include "plugin/viewport_renderer_override.hpp"
 
 // Maya API
 #include <maya/MDGMessage.h>
@@ -20,6 +21,7 @@
 #include <maya/MPlugArray.h>
 
 // C++ standard
+#include <string>
 #include <vector>
 
 #include <maya/MGlobal.h>
@@ -67,6 +69,9 @@ namespace wmr
 // https://nccastaff.bournemouth.ac.uk/jmacey/RobTheBloke/www/research/maya/mfnmesh.htm
 void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 {
+	auto material_manager = m_renderer.GetMaterialManager();
+	auto texture_manager = m_renderer.GetTextureManager();
+
 	// Number of instances of this mesh
 	std::uint32_t instance_count = mesh.parentCount();
 
@@ -127,10 +132,19 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 						auto color_plug = GetPlugByName(connected_plug, "color");
 
 						// Retrieve the texture associated with this plug
-						auto texture_path = GetPlugTexture(color_plug);
+						auto albedo_texture_path = GetPlugTexture(color_plug);
+
+						// The name of the object is needed when constructing an unique name for the texture
+						std::string mesh_name = mesh_fn.name().asChar();
+
+						// Unique names for the textures
+						std::string albedo_name = mesh_name + "_albedo";
+
+						// Request new Wisp textures
+						auto albedo_texture = texture_manager.CreateTexture(albedo_name.c_str(), albedo_texture_path.asChar());
 
 						// Print the texture location
-						os << texture_path.asChar() << std::endl;
+						os << albedo_texture_path.asChar() << std::endl;
 
 						MObject object = mesh.object();
 						wr::MaterialHandle material_handle = m_renderer.GetMaterialManager().DoesExist(object);

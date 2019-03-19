@@ -44,7 +44,12 @@ GLSLShader PS_BlitColorDepth
 		//
 		vec2 uv = VSUV;
 
-		colorOut = texture2D(gColorSampler, uv); 
+		colorOut = texture2D(gColorSampler, uv);
+
+		// Gamma correction (inverted, so 1/2.2=0.45...)
+		float gamma = 0.45454545;
+    	colorOut.rgb = pow(colorOut.rgb, vec3(1.0/gamma));
+
 		if (gDisableAlpha)
 		{
 			colorOut.a = 1.0;
