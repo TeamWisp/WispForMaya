@@ -40,6 +40,7 @@ namespace wmr
 
 		void Parse(const MFnMesh& mesh);
 		const std::optional<MObject> GetMeshObjectFromMaterial(MObject & object);
+		const Renderer & GetRenderer();
 
 	private:
 		const detail::SurfaceShaderType GetShaderType(const MObject& node);

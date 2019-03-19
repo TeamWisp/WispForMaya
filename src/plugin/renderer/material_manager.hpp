@@ -31,6 +31,7 @@ namespace wmr
 		wr::MaterialHandle CreateMaterial(MObject& object);
 		wr::MaterialHandle DoesExist(MObject& object);
 
+		wr::Material* GetMaterial(MObject& object);
 		wr::Material* GetMaterial(wr::MaterialHandle handle) noexcept;
 	private:
 		wmr::ScenegraphParser * m_scenegraph_parser;

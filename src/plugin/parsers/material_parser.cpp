@@ -39,13 +39,9 @@ namespace wmr
 {
 	void DirtyNodeCallback(MObject &node, MPlug &plug, void *clientData)
 	{
-		wmr::MaterialParser *material_parser = reinterpret_cast<wmr::MaterialParser*>(clientData);
-
 		if (node.hasFn(MFn::kLambert))
 		{
-			MGlobal::displayInfo("Lambert!");
-
-			const char * name = node.apiTypeStr();
+			wmr::MaterialParser *material_parser = reinterpret_cast<wmr::MaterialParser*>(clientData);
 
 			MStatus status;
 			MFnLambertShader shader(plug.node(), &status);
@@ -55,7 +51,15 @@ namespace wmr
 				return;
 			}
 
-			material_parser->GetMeshObjectFromMaterial(node);
+			std::optional<MObject> mesh_object = material_parser->GetMeshObjectFromMaterial(node);
+			if (!mesh_object.has_value())
+			{
+				MGlobal::displayInfo("A connect to a material could not be found! (wmr::DirtyNodeCallback)");
+				return;
+			}
+
+			wr::Material *material = material_parser->GetRenderer().GetMaterialManager().GetMaterial(mesh_object.value());
+
 		}
 		else if (node.hasFn(MFn::kPhong))
 		{
@@ -141,7 +145,7 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 						std::string albedo_name = mesh_name + "_albedo";
 
 						// Request new Wisp textures
-						auto albedo_texture = texture_manager.CreateTexture(albedo_name.c_str(), albedo_texture_path.asChar());
+						//auto albedo_texture = texture_manager.CreateTexture(albedo_name.c_str(), albedo_texture_path.asChar());
 
 						// Print the texture location
 						os << albedo_texture_path.asChar() << std::endl;
@@ -152,6 +156,9 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 						{
 							material_handle = m_renderer.GetMaterialManager().CreateMaterial(object);
 							mesh_material_relations.push_back(std::make_pair(connected_plug, object));
+
+							//auto material = material_manager.GetMaterial(material_handle);
+							//material->SetAlbedo(*albedo_texture);
 
 							// Add callback that filters on material changes
 							MStatus status;
@@ -259,5 +266,23 @@ const std::optional<MPlug> wmr::MaterialParser::GetSurfaceShader(const MObject& 
 
 const std::optional<MObject> wmr::MaterialParser::GetMeshObjectFromMaterial(MObject & object)
 {
+	auto it = std::find_if(mesh_material_relations.begin(), mesh_material_relations.end(), [&object] (std::pair<MObject, MObject> pair)
+	{
+		return (pair.first == object);
+	});
 
+	auto end_it = --mesh_material_relations.end();
+
+	if (it != end_it)
+	{
+		// Material does not exist!
+		return std::nullopt;
+	}
+
+	return it->second;
+}
+
+const wmr::Renderer & wmr::MaterialParser::GetRenderer()
+{
+	return m_renderer;
 }

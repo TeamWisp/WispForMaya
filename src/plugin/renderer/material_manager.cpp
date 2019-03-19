@@ -71,24 +71,27 @@ wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& fnmesh)
 
 wr::MaterialHandle wmr::MaterialManager::DoesExist(MObject& object)
 {
-	MStatus status;
-	MFnTransform transform(object, &status);
-	if (status != MS::kSuccess)
-	{
-		MGlobal::displayError("Error: " + status.errorString());
-	}
-
 	wr::MaterialHandle handle;
 	handle.m_pool = nullptr;
 
 	for (auto& entry : m_object_material_vector)
 	{
-		if (entry.first == transform.object())
+		if (entry.first == object)
 		{
-			handle = entry.second;
+			return entry.second;
 		}
 	}
 	return handle;
+}
+
+wr::Material * wmr::MaterialManager::GetMaterial(MObject & object)
+{
+	wr::MaterialHandle material_handle = DoesExist(object);
+	if (material_handle.m_pool != nullptr)
+	{
+		return m_material_pool->GetMaterial(material_handle.m_id);
+	}
+	return nullptr;
 }
 
 wr::Material* wmr::MaterialManager::GetMaterial(wr::MaterialHandle handle) noexcept
@@ -108,3 +111,5 @@ wr::Material* wmr::MaterialManager::GetMaterial(wr::MaterialHandle handle) noexc
 	// Retrieve the material from the pool and give it to the caller
 	return m_material_pool->GetMaterial(handle.m_id);
 }
+
+
