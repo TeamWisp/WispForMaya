@@ -85,10 +85,8 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 
 	for (auto instance_index = 0; instance_index < instance_count; ++instance_index)
 	{
-		auto instance = mesh.parent(instance_index);
-
 		// Attach a function set to the instance
-		MFnDependencyNode mesh_fn(instance);
+		MFnDependencyNode mesh_fn(mesh.parent(instance_index));
 
 		// References to the shaders used on the meshes
 		MObjectArray shaders;
@@ -156,11 +154,12 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 						// Print the texture location
 						os << albedo_texture_path.asChar() << std::endl;
 
-						wr::MaterialHandle material_handle = material_manager.DoesExist(instance);
+						MObject object = mesh.object();
+
+						wr::MaterialHandle material_handle = material_manager.DoesExist(object);
 						if (material_handle.m_pool == nullptr)
 						{
-							MObject transform = GetTransformFromFnMesh(mesh);
-							material_handle = material_manager.CreateMaterial(transform);
+							material_handle = material_manager.CreateMaterial(object);
 
 							auto material = material_manager.GetMaterial(material_handle);
 							material->SetAlbedo(*albedo_texture);
