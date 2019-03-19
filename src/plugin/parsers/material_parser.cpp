@@ -53,15 +53,7 @@ namespace wmr
 				return;
 			}
 
-			const char * n = shader.name().asChar();
-
-			//auto file_name_plug = MFnDependencyNode(texture_node).findPlug("color", true);
-
-			//float texture_path;
-			//file_name_plug.getValue(texture_path);
-			
-
-			material_parser->GetMeshObjectFromMaterial(node, plug);
+			material_parser->GetMeshObjectFromMaterial(node);
 		}
 		else if (node.hasFn(MFn::kPhong))
 		{
@@ -140,22 +132,23 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 						// Print the texture location
 						os << texture_path.asChar() << std::endl;
 
-						MObject material_bound_object = shaders[0];
-						wr::MaterialHandle material_handle = m_renderer.GetMaterialManager().DoesExist(material_bound_object);
+						MObject object = mesh.object();
+						wr::MaterialHandle material_handle = m_renderer.GetMaterialManager().DoesExist(object);
 						if (material_handle.m_pool == nullptr)
 						{
-							MObject object = mesh.object();
 							material_handle = m_renderer.GetMaterialManager().CreateMaterial(object);
+							mesh_material_relations.push_back(std::make_pair(connected_plug, object));
+
+							// Add callback that filters on material changes
+							MStatus status;
+							MCallbackId attributeId = MNodeMessage::addNodeDirtyCallback(
+								connected_plug,
+								DirtyNodeCallback,
+								this,
+								&status
+							);
+							CallbackManager::GetInstance().RegisterCallback(attributeId);
 						}
-						// Add callback that filters on material changes
-						MStatus status;
-						MCallbackId attributeId = MNodeMessage::addNodeDirtyCallback(
-							connected_plug,
-							DirtyNodeCallback,
-							this,
-							&status
-						);
-						CallbackManager::GetInstance().RegisterCallback(attributeId);
 					}
 
 					// Log the string stream to the Maya script output window
@@ -250,24 +243,7 @@ const std::optional<MPlug> wmr::MaterialParser::GetSurfaceShader(const MObject& 
 		return std::nullopt;
 }
 
-const std::optional<MObject> wmr::MaterialParser::GetMeshObjectFromMaterial(MObject & material_object, MPlug &plug)
+const std::optional<MObject> wmr::MaterialParser::GetMeshObjectFromMaterial(MObject & object)
 {
 
-	MPlugArray connected_plugs;
-	plug.connectedTo(connected_plugs, false, true);
-	for (int i = 0; i < connected_plugs.length(); ++i)
-	{
-		const char * plug_name = connected_plugs[i].name().asChar();
-		MGlobal::displayInfo(plug_name);
-	}
-
-	MFnDagNode dag_material(material_object);
-	auto num = dag_material.parentCount();
-	for (size_t i = 0; i < num; ++i)
-	{
-		MObject object = dag_material.parent(i);
-		MGlobal::displayInfo(object.apiTypeStr());
-	}
-
-	return MObject();
 }
