@@ -41,12 +41,13 @@ namespace wmr
 
 		void Parse(const MFnMesh& mesh);
 		const std::optional<MObject> GetMeshObjectFromMaterial(MObject & object);
-		void HandleMaterialChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
+		void HandleLambertChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
+		void HandlePhongChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 		const Renderer & GetRenderer();
 
 	private:
 		const detail::SurfaceShaderType GetShaderType(const MObject& node);
-		const MString GetPlugTexture(MPlug& plug);
+		const std::optional<MString> GetPlugTexture(MPlug& plug);
 		const MPlug GetPlugByName(const MObject& node, MString name);
 		const std::optional<MPlug> GetSurfaceShader(const MObject& node);
 

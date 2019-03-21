@@ -39,35 +39,34 @@ namespace wmr
 {
 	void DirtyNodeCallback(MObject &node, MPlug &plug, void *clientData)
 	{
-		if (node.hasFn(MFn::kLambert))
+		// Get material parser from client data
+		wmr::MaterialParser *material_parser = reinterpret_cast<wmr::MaterialParser*>(clientData);
+		
+		// Get Maya mesh object that is using the Maya material
+		std::optional<MObject> mesh_object = material_parser->GetMeshObjectFromMaterial(node);
+		if (!mesh_object.has_value())
 		{
-			wmr::MaterialParser *material_parser = reinterpret_cast<wmr::MaterialParser*>(clientData);
-
-			MStatus status;
-			MFnLambertShader shader(plug.node(), &status);
-			if (status != MS::kSuccess)
-			{
-				MGlobal::displayError(status.errorString());
-				return;
-			}
-
-			std::optional<MObject> mesh_object = material_parser->GetMeshObjectFromMaterial(node);
-			if (!mesh_object.has_value())
-			{
-				MGlobal::displayError("A connect to a material could not be found! (wmr::DirtyNodeCallback)");
-				return;
-			}
-
-			wr::Material *material = material_parser->GetRenderer().GetMaterialManager().GetMaterial(mesh_object.value());
-			MString changedPlugName = plug.partialName(false, false, false, false, false, true);
-			MFnDependencyNode fn_material(node);
-
-			material_parser->HandleMaterialChange(fn_material, plug, changedPlugName, *material);
-			
+			MGlobal::displayError("A connect to a material could not be found! (wmr::DirtyNodeCallback)");
+			return;
 		}
-		else if (node.hasFn(MFn::kPhong))
+
+		// Get Wisp material that is used by the found Maya mesh object
+		wr::Material *material = material_parser->GetRenderer().GetMaterialManager().GetMaterial(mesh_object.value());
+
+		// Get plug name that has changed value
+		MString changedPlugName = plug.partialName(false, false, false, false, false, true);
+
+		MFnDependencyNode fn_material(node);
+		if (material != nullptr)
 		{
-			MGlobal::displayInfo("Phong!");
+			if (node.hasFn(MFn::kLambert))
+			{
+				material_parser->HandleLambertChange(fn_material, plug, changedPlugName, *material);
+			}
+			else if (node.hasFn(MFn::kPhong))
+			{
+				material_parser->HandlePhongChange(fn_material, plug, changedPlugName, *material);
+			}
 		}
 	}
 } /* namespace wmr */
@@ -152,7 +151,7 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 						//auto albedo_texture = texture_manager.CreateTexture(albedo_name.c_str(), albedo_texture_path.asChar());
 
 						// Print the texture location
-						os << albedo_texture_path.asChar() << std::endl;
+						//os << albedo_texture_path.asChar() << std::endl;
 
 						MObject object = mesh.object();
 						wr::MaterialHandle material_handle = m_renderer.GetMaterialManager().DoesExist(object);
@@ -233,7 +232,7 @@ const wmr::detail::SurfaceShaderType wmr::MaterialParser::GetShaderType(const MO
 	return shader_type;
 }
 
-const MString wmr::MaterialParser::GetPlugTexture(MPlug& plug)
+const std::optional<MString> wmr::MaterialParser::GetPlugTexture(MPlug& plug)
 {
 	MItDependencyGraph dependency_graph_iterator(
 		plug,
@@ -245,11 +244,21 @@ const MString wmr::MaterialParser::GetPlugTexture(MPlug& plug)
 	dependency_graph_iterator.disablePruningOnFilter();
 
 	auto texture_node = dependency_graph_iterator.currentItem();
+	// Check if texture was found
+	if (texture_node.apiType() == MFn::Type::kInvalid)
+	{
+		return std::nullopt;
+	}
 	auto file_name_plug = MFnDependencyNode(texture_node).findPlug("fileTextureName", true);
+	auto type = file_name_plug.node().apiType();
 
 	MString texture_path;
 	file_name_plug.getValue(texture_path);
-
+	// No texture has been found
+	if (texture_path.length() <= 0)
+	{
+		return std::nullopt;
+	}
 	return texture_path;
 }
 
@@ -280,13 +289,30 @@ MColor wmr::MaterialParser::GetColor(MFnDependencyNode & fn, MString & plug_name
 	return color;
 }
 
-void wmr::MaterialParser::HandleMaterialChange(MFnDependencyNode & fn, MPlug & plug, MString & plug_name, wr::Material & material)
+void wmr::MaterialParser::HandleLambertChange(MFnDependencyNode & fn, MPlug & plug, MString & plug_name, wr::Material & material)
 {
 	if (strcmp(plug_name.asChar(), "color") == 0)
 	{
 		MColor color = GetColor(fn, plug_name);
 		material.SetConstantAlbedo({color.r, color.g, color.b});
 		material.SetUseConstantAlbedo(true);
+	}
+}
+
+void wmr::MaterialParser::HandlePhongChange(MFnDependencyNode & fn, MPlug & plug, MString & plug_name, wr::Material & material)
+{
+	if (strcmp(plug_name.asChar(), "color") == 0)
+	{
+		MColor color = GetColor(fn, plug_name);
+		material.SetConstantAlbedo({color.r, color.g, color.b});
+		material.SetUseConstantAlbedo(true);
+	}
+	else if (strcmp(plug_name.asChar(), "reflectivity"))
+	{
+		float reflectivity = 0.0f;
+		fn.findPlug("reflectivity").getValue(reflectivity);
+		material.SetConstantMetallic({reflectivity, reflectivity, reflectivity});
+		material.SetUseConstantMetallic(true);
 	}
 }
 
