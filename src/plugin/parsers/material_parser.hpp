@@ -11,6 +11,7 @@
 namespace wr
 {
 	class MaterialHandle;
+	class Material;
 }
 
 namespace wmr
@@ -40,6 +41,7 @@ namespace wmr
 
 		void Parse(const MFnMesh& mesh);
 		const std::optional<MObject> GetMeshObjectFromMaterial(MObject & object);
+		void HandleMaterialChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 		const Renderer & GetRenderer();
 
 	private:
@@ -48,7 +50,8 @@ namespace wmr
 		const MPlug GetPlugByName(const MObject& node, MString name);
 		const std::optional<MPlug> GetSurfaceShader(const MObject& node);
 
-		void DirtyShaderNodeCallback(MObject &node, MPlug &plug, void *clientData);
+		// Material parsing
+		MColor GetColor(MFnDependencyNode & fn);
 
 		// std::pair
 		//    first: MObject, connected lambert plug

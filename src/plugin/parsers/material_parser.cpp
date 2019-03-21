@@ -47,19 +47,23 @@ namespace wmr
 			MFnLambertShader shader(plug.node(), &status);
 			if (status != MS::kSuccess)
 			{
-				MGlobal::displayInfo(status.errorString());
+				MGlobal::displayError(status.errorString());
 				return;
 			}
 
 			std::optional<MObject> mesh_object = material_parser->GetMeshObjectFromMaterial(node);
 			if (!mesh_object.has_value())
 			{
-				MGlobal::displayInfo("A connect to a material could not be found! (wmr::DirtyNodeCallback)");
+				MGlobal::displayError("A connect to a material could not be found! (wmr::DirtyNodeCallback)");
 				return;
 			}
 
 			wr::Material *material = material_parser->GetRenderer().GetMaterialManager().GetMaterial(mesh_object.value());
+			MString changedPlugName = plug.partialName(false, false, false, false, false, true);
+			MFnDependencyNode fn_material(node);
 
+			material_parser->HandleMaterialChange(fn_material, plug, changedPlugName, *material);
+			
 		}
 		else if (node.hasFn(MFn::kPhong))
 		{
@@ -262,6 +266,33 @@ const std::optional<MPlug> wmr::MaterialParser::GetSurfaceShader(const MObject& 
 		return shader_plug;
 	else
 		return std::nullopt;
+}
+
+MColor wmr::MaterialParser::GetColor(MFnDependencyNode & fn)
+{
+	MColor color;
+
+	// get a plug to the attribute
+	MPlug p;
+	p = fn.findPlug("colorR");
+	p.getValue(color.r);
+	p = fn.findPlug("colorG");
+	p.getValue(color.g);
+	p = fn.findPlug("colorB");
+	p.getValue(color.b);
+	p = fn.findPlug("colorA");
+	p.getValue(color.a);
+
+	return color;
+}
+
+void wmr::MaterialParser::HandleMaterialChange(MFnDependencyNode & fn, MPlug & plug, MString & plug_name, wr::Material & material)
+{
+	if (strcmp(plug_name.asChar(), "color") == 0)
+	{
+		MColor color = GetColor(fn);
+		material.SetConstantAlbedo({color.r, color.g, color.b});
+	}
 }
 
 const std::optional<MObject> wmr::MaterialParser::GetMeshObjectFromMaterial(MObject & object)
