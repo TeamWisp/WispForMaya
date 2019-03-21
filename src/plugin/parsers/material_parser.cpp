@@ -152,9 +152,6 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 
 						mesh_material_relations.push_back(std::make_pair(connected_plug, object));
 
-						// Get a Wisp material for this handle
-						auto material = material_manager.GetMaterial(material_handle);
-
 						// Add callback that filters on material changes
 						MStatus status;
 						MCallbackId attributeId = MNodeMessage::addNodeDirtyCallback(
@@ -166,16 +163,15 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 
 						CallbackManager::GetInstance().RegisterCallback(attributeId);
 
+						// Get a Wisp material for this handle
+						auto material = material_manager.GetMaterial(material_handle);
 						// If there is no color available, use the RGBA values
-						if (albedo_texture_path == "")
+						if (albedo_texture_path.has_value())
 						{
-							MColor albedo_color;
 
 							MFnDependencyNode dep_node_fn(connected_plug);
-							dep_node_fn.findPlug("colorR").getValue(albedo_color.r);
-							dep_node_fn.findPlug("colorG").getValue(albedo_color.g);
-							dep_node_fn.findPlug("colorB").getValue(albedo_color.b);
-
+							MColor albedo_color = GetColor(dep_node_fn, "color");
+							
 							material->SetConstantAlbedo({ albedo_color.r, albedo_color.g, albedo_color.b });
 							material->SetUseConstantAlbedo(true);
 						}
@@ -188,7 +184,7 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 							std::string albedo_name = mesh_name + "_albedo";
 
 							// Request new Wisp textures
-							auto albedo_texture = texture_manager.CreateTexture(albedo_name.c_str(), albedo_texture_path.asChar());
+							auto albedo_texture = texture_manager.CreateTexture(albedo_name.c_str(), albedo_texture_path.value().asChar());
 
 							// Use this texture as the material albedo texture
 							material->SetAlbedo(*albedo_texture);
