@@ -268,14 +268,14 @@ const std::optional<MPlug> wmr::MaterialParser::GetSurfaceShader(const MObject& 
 		return std::nullopt;
 }
 
-MColor wmr::MaterialParser::GetColor(MFnDependencyNode & fn)
+MColor wmr::MaterialParser::GetColor(MFnDependencyNode & fn, MString & plug_name)
 {
 	MColor color;
 
 	// get a plug to the attribute
-	fn.findPlug("colorR").getValue(color.r);
-	fn.findPlug("colorG").getValue(color.g);
-	fn.findPlug("colorB").getValue(color.b);
+	fn.findPlug(plug_name + "R").getValue(color.r);
+	fn.findPlug(plug_name + "G").getValue(color.g);
+	fn.findPlug(plug_name + "B").getValue(color.b);
 
 	return color;
 }
@@ -284,7 +284,7 @@ void wmr::MaterialParser::HandleMaterialChange(MFnDependencyNode & fn, MPlug & p
 {
 	if (strcmp(plug_name.asChar(), "color") == 0)
 	{
-		MColor color = GetColor(fn);
+		MColor color = GetColor(fn, plug_name);
 		material.SetConstantAlbedo({color.r, color.g, color.b});
 		material.SetUseConstantAlbedo(true);
 	}

@@ -51,7 +51,7 @@ namespace wmr
 		const std::optional<MPlug> GetSurfaceShader(const MObject& node);
 
 		// Material parsing
-		MColor GetColor(MFnDependencyNode & fn);
+		MColor GetColor(MFnDependencyNode & fn, MString & plug_name);
 
 		// std::pair
 		//    first: MObject, connected lambert plug
