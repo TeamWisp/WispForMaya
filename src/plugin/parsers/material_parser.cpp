@@ -286,6 +286,7 @@ void wmr::MaterialParser::HandleMaterialChange(MFnDependencyNode & fn, MPlug & p
 	{
 		MColor color = GetColor(fn);
 		material.SetConstantAlbedo({color.r, color.g, color.b});
+		material.SetUseConstantAlbedo(true);
 	}
 }
 
