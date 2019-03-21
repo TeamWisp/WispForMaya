@@ -29,8 +29,18 @@ namespace wmr
 		};
 	}
 
-	struct MaterialData
+	namespace MayaMaterialProps
 	{
+		const char const * surface_shader = "surfaceShader";
+		
+		const char const * plug_color = "color";
+		const char const * plug_reflectivity = "reflectivity";
+		const char const * plug_file_texture_name = "fileTextureName";
+
+		const char const * plug_color_r = "R";
+		const char const * plug_color_g = "G";
+		const char const * plug_color_b = "B";
+		const char const * plug_color_a = "A";
 	};
 
 	class MaterialParser

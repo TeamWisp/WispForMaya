@@ -136,7 +136,7 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 						os << "Found a Lambert shader!" << std::endl;
 
 						MObject connected_plug = connected_plugs[0].node();
-						auto color_plug = GetPlugByName(connected_plug, "color");
+						auto color_plug = GetPlugByName(connected_plug, MayaMaterialProps::plug_color);
 
 						// Retrieve the texture associated with this plug
 						auto albedo_texture_path = GetPlugTexture(color_plug);
@@ -170,7 +170,7 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 						{
 
 							MFnDependencyNode dep_node_fn(connected_plug);
-							MString color_str("color");
+							MString color_str(MayaMaterialProps::plug_color);
 							MColor albedo_color = GetColor(dep_node_fn, color_str);
 							
 							material->SetConstantAlbedo({ albedo_color.r, albedo_color.g, albedo_color.b });
@@ -270,7 +270,7 @@ const std::optional<MString> wmr::MaterialParser::GetPlugTexture(MPlug& plug)
 	{
 		return std::nullopt;
 	}
-	auto file_name_plug = MFnDependencyNode(texture_node).findPlug("fileTextureName", true);
+	auto file_name_plug = MFnDependencyNode(texture_node).findPlug(MayaMaterialProps::plug_file_texture_name, true);
 	auto type = file_name_plug.node().apiType();
 
 	MString texture_path;
@@ -290,7 +290,7 @@ const MPlug wmr::MaterialParser::GetPlugByName(const MObject& node, MString name
 
 const std::optional<MPlug> wmr::MaterialParser::GetSurfaceShader(const MObject& node)
 {
-	MPlug shader_plug = MFnDependencyNode(node).findPlug("surfaceShader", true);
+	MPlug shader_plug = MFnDependencyNode(node).findPlug(MayaMaterialProps::surface_shader, true);
 
 	if (!shader_plug.isNull())
 		return shader_plug;
@@ -303,16 +303,16 @@ MColor wmr::MaterialParser::GetColor(MFnDependencyNode & fn, MString & plug_name
 	MColor color;
 
 	// get a plug to the attribute
-	fn.findPlug(plug_name + "R").getValue(color.r);
-	fn.findPlug(plug_name + "G").getValue(color.g);
-	fn.findPlug(plug_name + "B").getValue(color.b);
+	fn.findPlug(plug_name + MayaMaterialProps::plug_color_r).getValue(color.r);
+	fn.findPlug(plug_name + MayaMaterialProps::plug_color_g).getValue(color.g);
+	fn.findPlug(plug_name + MayaMaterialProps::plug_color_b).getValue(color.b);
 
 	return color;
 }
 
 void wmr::MaterialParser::HandleLambertChange(MFnDependencyNode & fn, MPlug & plug, MString & plug_name, wr::Material & material)
 {
-	if (strcmp(plug_name.asChar(), "color") == 0)
+	if (strcmp(plug_name.asChar(), MayaMaterialProps::plug_color) == 0)
 	{
 		MColor color = GetColor(fn, plug_name);
 		material.SetConstantAlbedo({color.r, color.g, color.b});
@@ -322,16 +322,16 @@ void wmr::MaterialParser::HandleLambertChange(MFnDependencyNode & fn, MPlug & pl
 
 void wmr::MaterialParser::HandlePhongChange(MFnDependencyNode & fn, MPlug & plug, MString & plug_name, wr::Material & material)
 {
-	if (strcmp(plug_name.asChar(), "color") == 0)
+	if (strcmp(plug_name.asChar(), MayaMaterialProps::plug_color) == 0)
 	{
 		MColor color = GetColor(fn, plug_name);
 		material.SetConstantAlbedo({color.r, color.g, color.b});
 		material.SetUseConstantAlbedo(true);
 	}
-	else if (strcmp(plug_name.asChar(), "reflectivity"))
+	else if (strcmp(plug_name.asChar(), MayaMaterialProps::plug_reflectivity))
 	{
 		float reflectivity = 0.0f;
-		fn.findPlug("reflectivity").getValue(reflectivity);
+		fn.findPlug(MayaMaterialProps::plug_reflectivity).getValue(reflectivity);
 		material.SetConstantMetallic({reflectivity, reflectivity, reflectivity});
 		material.SetUseConstantMetallic(true);
 	}
