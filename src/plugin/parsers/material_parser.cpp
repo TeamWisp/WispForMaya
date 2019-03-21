@@ -273,15 +273,9 @@ MColor wmr::MaterialParser::GetColor(MFnDependencyNode & fn)
 	MColor color;
 
 	// get a plug to the attribute
-	MPlug p;
-	p = fn.findPlug("colorR");
-	p.getValue(color.r);
-	p = fn.findPlug("colorG");
-	p.getValue(color.g);
-	p = fn.findPlug("colorB");
-	p.getValue(color.b);
-	p = fn.findPlug("colorA");
-	p.getValue(color.a);
+	fn.findPlug("colorR").getValue(color.r);
+	fn.findPlug("colorG").getValue(color.g);
+	fn.findPlug("colorB").getValue(color.b);
 
 	return color;
 }
