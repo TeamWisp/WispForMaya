@@ -138,37 +138,61 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 						// Retrieve the texture associated with this plug
 						auto albedo_texture_path = GetPlugTexture(color_plug);
 
-						// The name of the object is needed when constructing an unique name for the texture
-						std::string mesh_name = mesh_fn.name().asChar();
-
-						// Unique names for the textures
-						std::string albedo_name = mesh_name + "_albedo";
-
-						// Request new Wisp textures
-						//auto albedo_texture = texture_manager.CreateTexture(albedo_name.c_str(), albedo_texture_path.asChar());
-
-						// Print the texture location
-						os << albedo_texture_path.asChar() << std::endl;
-
 						MObject object = mesh.object();
-						wr::MaterialHandle material_handle = m_renderer.GetMaterialManager().DoesExist(object);
-						if (material_handle.m_pool == nullptr)
+						wr::MaterialHandle material_handle = material_manager.DoesExist(object);
+
+						// Invalid material handle, create a new one
+						if (!material_handle.m_pool)
 						{
-							material_handle = m_renderer.GetMaterialManager().CreateMaterial(object);
-							mesh_material_relations.push_back(std::make_pair(connected_plug, object));
+							material_handle = material_manager.CreateMaterial(object);
+						}
 
-							//auto material = material_manager.GetMaterial(material_handle);
-							//material->SetAlbedo(*albedo_texture);
+						mesh_material_relations.push_back(std::make_pair(connected_plug, object));
 
-							// Add callback that filters on material changes
-							MStatus status;
-							MCallbackId attributeId = MNodeMessage::addNodeDirtyCallback(
-								connected_plug,
-								DirtyNodeCallback,
-								this,
-								&status
-							);
-							CallbackManager::GetInstance().RegisterCallback(attributeId);
+						// Get a Wisp material for this handle
+						auto material = material_manager.GetMaterial(material_handle);
+
+						// Add callback that filters on material changes
+						MStatus status;
+						MCallbackId attributeId = MNodeMessage::addNodeDirtyCallback(
+							connected_plug,
+							DirtyNodeCallback,
+							this,
+							&status
+						);
+
+						CallbackManager::GetInstance().RegisterCallback(attributeId);
+
+						// If there is no color available, use the RGBA values
+						if (albedo_texture_path == "")
+						{
+							MColor albedo_color;
+
+							MFnDependencyNode dep_node_fn(connected_plug);
+							dep_node_fn.findPlug("colorR").getValue(albedo_color.r);
+							dep_node_fn.findPlug("colorG").getValue(albedo_color.g);
+							dep_node_fn.findPlug("colorB").getValue(albedo_color.b);
+
+							material->SetConstantAlbedo({ albedo_color.r, albedo_color.g, albedo_color.b });
+							material->SetUseConstantAlbedo(true);
+						}
+						else
+						{
+							// The name of the object is needed when constructing an unique name for the texture
+							std::string mesh_name = mesh_fn.name().asChar();
+
+							// Unique names for the textures
+							std::string albedo_name = mesh_name + "_albedo";
+
+							// Request new Wisp textures
+							auto albedo_texture = texture_manager.CreateTexture(albedo_name.c_str(), albedo_texture_path.asChar());
+
+							// Use this texture as the material albedo texture
+							material->SetAlbedo(*albedo_texture);
+							material->SetUseConstantAlbedo(false);
+
+							// Print the texture location
+							os << albedo_texture_path.asChar() << std::endl;
 						}
 					}
 
