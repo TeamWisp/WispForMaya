@@ -170,7 +170,8 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 						{
 
 							MFnDependencyNode dep_node_fn(connected_plug);
-							MColor albedo_color = GetColor(dep_node_fn, "color");
+							MString color_str("color");
+							MColor albedo_color = GetColor(dep_node_fn, color_str);
 							
 							material->SetConstantAlbedo({ albedo_color.r, albedo_color.g, albedo_color.b });
 							material->SetUseConstantAlbedo(true);
@@ -191,7 +192,7 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 							material->SetUseConstantAlbedo(false);
 
 							// Print the texture location
-							os << albedo_texture_path.asChar() << std::endl;
+							os << albedo_texture_path.value().asChar() << std::endl;
 						}
 					}
 
