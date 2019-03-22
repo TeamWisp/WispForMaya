@@ -170,12 +170,8 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 						// If there is no color available, use the RGBA values
 						if (albedo_texture_path == "")
 						{
-							MColor albedo_color;
-
 							MFnDependencyNode dep_node_fn(connected_plug);
-							dep_node_fn.findPlug("colorR").getValue(albedo_color.r);
-							dep_node_fn.findPlug("colorG").getValue(albedo_color.g);
-							dep_node_fn.findPlug("colorB").getValue(albedo_color.b);
+							auto albedo_color = GetColor(dep_node_fn);
 
 							material->SetConstantAlbedo({ albedo_color.r, albedo_color.g, albedo_color.b });
 							material->SetUseConstantAlbedo(true);
@@ -239,6 +235,21 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 const wmr::detail::SurfaceShaderType wmr::MaterialParser::GetShaderType(const MObject& node)
 {
 	detail::SurfaceShaderType shader_type = detail::SurfaceShaderType::UNSUPPORTED;
+
+	MFnDependencyNode fn(node);
+	MGlobal::displayInfo(fn.name() + "\t" + MFnDependencyNode(node).typeName());
+
+	if (MFnDependencyNode(node).typeName() == "aiStandardSurface")
+	{
+		std::ostringstream os;
+
+		// Found an Arnold surface shader!
+		float metalNESSS = 0.0f;
+		MFnDependencyNode(node).findPlug("diffuseRoughness").getValue(metalNESSS);
+		os << metalNESSS << std::endl;
+
+		MGlobal::displayInfo(os.str().c_str());
+	}
 
 	switch (node.apiType())
 	{

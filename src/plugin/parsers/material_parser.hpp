@@ -26,6 +26,7 @@ namespace wmr
 
 			LAMBERT,
 			PHONG,
+			ARNOLD_SURFACE_SHADER
 		};
 	}
 
