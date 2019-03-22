@@ -30,8 +30,18 @@ namespace wmr
 		};
 	}
 
-	struct MaterialData
+	namespace MayaMaterialProps
 	{
+		static const constexpr char * surface_shader = "surfaceShader";
+					 
+		static const constexpr char * plug_color = "color";
+		static const constexpr char * plug_reflectivity = "reflectivity";
+		static const constexpr char * plug_file_texture_name = "fileTextureName";
+					 
+		static const constexpr char * plug_color_r = "R";
+		static const constexpr char * plug_color_g = "G";
+		static const constexpr char * plug_color_b = "B";
+		static const constexpr char * plug_color_a = "A";
 	};
 
 	class MaterialParser
@@ -42,17 +52,18 @@ namespace wmr
 
 		void Parse(const MFnMesh& mesh);
 		const std::optional<MObject> GetMeshObjectFromMaterial(MObject & object);
-		void HandleMaterialChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
+		void HandleLambertChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
+		void HandlePhongChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 		const Renderer & GetRenderer();
 
 	private:
 		const detail::SurfaceShaderType GetShaderType(const MObject& node);
-		const MString GetPlugTexture(MPlug& plug);
+		const std::optional<MString> GetPlugTexture(MPlug& plug);
 		const MPlug GetPlugByName(const MObject& node, MString name);
 		const std::optional<MPlug> GetSurfaceShader(const MObject& node);
 
 		// Material parsing
-		MColor GetColor(MFnDependencyNode & fn);
+		MColor GetColor(MFnDependencyNode & fn, MString & plug_name);
 
 		// std::pair
 		//    first: MObject, connected lambert plug
