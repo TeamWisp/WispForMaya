@@ -32,6 +32,10 @@ namespace wmr
 
 	namespace MayaMaterialProps
 	{
+		static const constexpr char* arnold_standard_shader_name = "aiStandardSurface";
+		static const constexpr char* maya_phong_shader_name = "phong";
+		static const constexpr char* maya_lambert_shader_name = "lambert";
+
 		static const constexpr char * surface_shader = "surfaceShader";
 					 
 		static const constexpr char * plug_color = "color";

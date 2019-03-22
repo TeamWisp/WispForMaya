@@ -124,7 +124,9 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 					if (connected_plugs.length() != 1)
 						return;
 
-					auto shader_type = GetShaderType(connected_plugs[0].node());
+					MObject connected_plug = connected_plugs[0].node();
+
+					auto shader_type = GetShaderType(connected_plug);
 
 					// Shader type not supported by this plug-in
 					if (shader_type == detail::SurfaceShaderType::UNSUPPORTED)
@@ -134,8 +136,7 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 					if (shader_type == detail::SurfaceShaderType::LAMBERT)
 					{
 						os << "Found a Lambert shader!" << std::endl;
-
-						MObject connected_plug = connected_plugs[0].node();
+						
 						auto color_plug = GetPlugByName(connected_plug, MayaMaterialProps::plug_color);
 
 						// Retrieve the texture associated with this plug
@@ -234,38 +235,25 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 
 const wmr::detail::SurfaceShaderType wmr::MaterialParser::GetShaderType(const MObject& node)
 {
-	detail::SurfaceShaderType shader_type = detail::SurfaceShaderType::UNSUPPORTED;
+	auto node_fn = MFnDependencyNode(node);
+	auto shader_type_name = node_fn.typeName();
 
-	MFnDependencyNode fn(node);
-	MGlobal::displayInfo(fn.name() + "\t" + MFnDependencyNode(node).typeName());
-
-	if (MFnDependencyNode(node).typeName() == "aiStandardSurface")
+	if (shader_type_name == MayaMaterialProps::maya_phong_shader_name)
 	{
-		std::ostringstream os;
-
-		// Found an Arnold surface shader!
-		float metalNESSS = 0.0f;
-		MFnDependencyNode(node).findPlug("diffuseRoughness").getValue(metalNESSS);
-		os << metalNESSS << std::endl;
-
-		MGlobal::displayInfo(os.str().c_str());
+		return detail::SurfaceShaderType::PHONG;
 	}
-
-	switch (node.apiType())
+	else if (shader_type_name == MayaMaterialProps::maya_lambert_shader_name)
 	{
-		case MFn::kLambert:
-			shader_type = detail::SurfaceShaderType::LAMBERT;
-			break;
-
-		case MFn::kPhong:
-			shader_type = detail::SurfaceShaderType::PHONG;
-			break;
-
-		default:
-			break;
+		return detail::SurfaceShaderType::LAMBERT;
 	}
-
-	return shader_type;
+	else if (shader_type_name == MayaMaterialProps::arnold_standard_shader_name)
+	{
+		return detail::SurfaceShaderType::ARNOLD_SURFACE_SHADER;
+	}
+	else
+	{
+		return detail::SurfaceShaderType::UNSUPPORTED;
+	}
 }
 
 const std::optional<MString> wmr::MaterialParser::GetPlugTexture(MPlug& plug)
