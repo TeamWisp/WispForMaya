@@ -87,7 +87,7 @@ static void updateTransform( MFnTransform& transform, std::shared_ptr<wr::MeshNo
 	mesh_node->SetScale( { static_cast< float >( scale[0] ), static_cast< float >( scale[1] ),static_cast< float >( scale[2] ) } );
 }
 
-auto getTransformFindAlgorithm( MFnTransform& transform)
+auto getTransformFindAlgorithm( MFnTransform& transform )
 {
 	return [ &transform ]( std::pair<MObject, std::shared_ptr<wr::MeshNode>> pair ) -> bool
 	{
@@ -96,7 +96,7 @@ auto getTransformFindAlgorithm( MFnTransform& transform)
 		MFnDagNode dagnode = fn_mesh.parent( 0, &status );
 		MObject object = dagnode.object();
 		MFnTransform transform_rhs( dagnode.object(), &status );
-		
+
 		assert( status == MS::kSuccess );
 
 		if( transform.object() == transform_rhs.object() )
@@ -130,15 +130,15 @@ namespace wmr
 		wmr::ModelParser* model_parser = reinterpret_cast< wmr::ModelParser* >( client_data );
 
 		// specialized find_if algorithm
-		
 
-		auto it = std::find_if( model_parser->m_object_transform_vector.begin(), model_parser->m_object_transform_vector.end(), getTransformFindAlgorithm(transform) );
-		
+
+		auto it = std::find_if( model_parser->m_object_transform_vector.begin(), model_parser->m_object_transform_vector.end(), getTransformFindAlgorithm( transform ) );
+
 		MFnMesh fn_mesh( it->first );
 		MFnDagNode dagnode = fn_mesh.parent( 0, &status );
 		MObject object = dagnode.object();
 		MFnTransform transform_rhs( dagnode.object(), &status );
-		if( it->first != transform.object() )
+		if( transform_rhs.object() != transform.object() )
 		{
 			return; // find_if returns last element even if it is not a positive result
 		}
@@ -176,6 +176,8 @@ namespace wmr
 		std::vector<std::pair<MObject, MCallbackId>>::iterator it =
 			std::find_if( model_parser->m_mesh_added_callback_vector.begin(), model_parser->m_mesh_added_callback_vector.end(), findCallback );
 
+		assert( model_parser->m_mesh_added_callback_vector.size() > 0 );
+
 		auto it_end = --model_parser->m_mesh_added_callback_vector.end();
 
 		if( it == it_end )
@@ -192,6 +194,7 @@ namespace wmr
 			model_parser->m_mesh_added_callback_vector.pop_back();
 
 		}
+
 	}
 }
 #pragma endregion
@@ -247,6 +250,22 @@ void wmr::ModelParser::UnSubscribeObject( MObject & maya_object )
 		return; // find_if returns last element even if it is not a positive result
 	}
 	m_renderer.GetScenegraph().DestroyNode( it->second );
+
+	assert( m_object_transform_vector.size() > 0 );
+
+	auto it_end = --m_object_transform_vector.end();
+
+	if( it == it_end )
+	{
+		m_object_transform_vector.pop_back();
+	}
+	else
+	{
+		std::iter_swap( it, it_end );
+		m_object_transform_vector.pop_back();
+	}
+
+
 }
 
 void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
