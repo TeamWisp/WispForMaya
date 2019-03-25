@@ -45,14 +45,78 @@ wr::MaterialHandle wmr::MaterialManager::GetDefaultMaterial() noexcept
 	return m_default_material_handle;
 }
 
-wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& fnmesh)
+wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& fnmesh, MObject &shading_engine, MPlug &surface_shader)
 {
 	MStatus status;
-	wr::MaterialHandle material_handle = m_material_pool->Create();
+	// Add mesh and shading engine relationship
+	m_mesh_shading_relations.push_back({
+		fnmesh,				// mesh
+		shading_engine		// shadingEngine
+	});
 
-	m_object_material_vector.push_back(std::make_pair(fnmesh, material_handle));
+	// Add shading engine relationship
+	wr::MaterialHandle material_handle;
+	SurfaceShaderShadingEngineRelation *relation = DoesSurfaceShaderExist(surface_shader);
+	// Create new relationship the surface shader doesn't exist
+	if (relation == nullptr)
+	{
+		// Create Wisp Material handle
+		material_handle = m_material_pool->Create();
+		// Create a vector for the shading engines
+		std::vector<MObject> shading_engines;
+		shading_engines.push_back(shading_engine);
+		// Create relationship between surface shader and shading engine
+		m_surface_shader_shading_relations.push_back({
+			material_handle,		// Wisp Material handle
+			surface_shader,			// Maya surface shader plug
+			shading_engines			// Vector of shading engines
+		});
+	}
+	// Get material handle from existing relationship 
+	else
+	{
+		material_handle = relation->material_handle;
+	}
 
 	// Assign material handle to all meshes of the mesh node
+	ApplyMaterialToModel(material_handle, fnmesh);
+	
+	return material_handle;
+}
+
+wr::Material * wmr::MaterialManager::GetWispMaterial(wr::MaterialHandle & material_handle)
+{
+	return m_material_pool->GetMaterial(material_handle.m_id);
+}
+
+wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::DoesMaterialHandleExist(wr::MaterialHandle & material_handle)
+{
+	// Search relationships for material handle
+	for (auto& relation : m_surface_shader_shading_relations)
+	{
+		if (relation.material_handle == material_handle)
+		{
+			return &relation;
+		}
+	}
+	return nullptr;
+}
+
+wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::DoesSurfaceShaderExist(MPlug & surface_shader)
+{
+	// Search relationships for shading engines
+	for (auto& relation : m_surface_shader_shading_relations)
+	{
+		if (relation.surface_shader == surface_shader)
+		{
+			return &relation;
+		}
+	}
+	return nullptr;
+}
+
+void wmr::MaterialManager::ApplyMaterialToModel(wr::MaterialHandle material_handle, MObject & fnmesh)
+{
 	if (m_scenegraph_parser == nullptr)
 	{
 		m_scenegraph_parser = &dynamic_cast<const ViewportRendererOverride*>(
@@ -61,55 +125,10 @@ wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& fnmesh)
 	}
 	std::shared_ptr<wr::MeshNode> wr_mesh_node = m_scenegraph_parser->GetModelParser().GetWRModel(fnmesh);
 	wr::Model* wr_model = wr_mesh_node->m_model;
-	for (auto& m : wr_model->m_meshes)
+	for (auto& mesh : wr_model->m_meshes)
 	{
-		m.second = material_handle;
+		mesh.second = material_handle;
 	}
-
-	return material_handle;
-}
-
-wr::MaterialHandle wmr::MaterialManager::DoesExist(MObject& object)
-{
-	wr::MaterialHandle handle;
-	handle.m_pool = nullptr;
-
-	for (auto& entry : m_object_material_vector)
-	{
-		if (entry.first == object)
-		{
-			return entry.second;
-		}
-	}
-	return handle;
-}
-
-wr::Material * wmr::MaterialManager::GetMaterial(MObject & object)
-{
-	wr::MaterialHandle material_handle = DoesExist(object);
-	if (material_handle.m_pool != nullptr)
-	{
-		return m_material_pool->GetMaterial(material_handle.m_id);
-	}
-	return nullptr;
-}
-
-wr::Material* wmr::MaterialManager::GetMaterial(wr::MaterialHandle handle) noexcept
-{
-	auto it = std::find_if(m_object_material_vector.begin(), m_object_material_vector.end(), [&handle](std::pair<MObject, wr::MaterialHandle> pair) {
-		return (pair.second == handle);
-	});
-
-	auto end_it = --m_object_material_vector.end();
-
-	if (it != end_it)
-	{
-		// Material does not exist!
-		return nullptr;
-	}
-
-	// Retrieve the material from the pool and give it to the caller
-	return m_material_pool->GetMaterial(handle.m_id);
 }
 
 
