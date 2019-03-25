@@ -375,11 +375,11 @@ wmr::detail::ArnoldStandardSurfaceShaderData wmr::MaterialParser::ParseArnoldSta
 	MFnDependencyNode dep_node_fn(plug);
 
 	// Get all PBR variables
-	auto diffuse_color_plug			= dep_node_fn.findPlug(plug, detail::ArnoldStandardSurfaceShaderData::diffuse_color_plug_name);
-	auto diffuse_roughness_plug		= dep_node_fn.findPlug(plug, detail::ArnoldStandardSurfaceShaderData::diffuse_roughness_plug_name);
-	auto metalness_plug				= dep_node_fn.findPlug(plug, detail::ArnoldStandardSurfaceShaderData::metalness_plug_name);
-	auto specular_color_plug		= dep_node_fn.findPlug(plug, detail::ArnoldStandardSurfaceShaderData::specular_color_plug_name);
-	auto specular_roughness_plug	= dep_node_fn.findPlug(plug, detail::ArnoldStandardSurfaceShaderData::specular_roughness_plug_name);
+	auto diffuse_color_plug			= GetPlugByName(plug, detail::ArnoldStandardSurfaceShaderData::diffuse_color_plug_name);
+	auto diffuse_roughness_plug		= GetPlugByName(plug, detail::ArnoldStandardSurfaceShaderData::diffuse_roughness_plug_name);
+	auto metalness_plug				= GetPlugByName(plug, detail::ArnoldStandardSurfaceShaderData::metalness_plug_name);
+	auto specular_color_plug		= GetPlugByName(plug, detail::ArnoldStandardSurfaceShaderData::specular_color_plug_name);
+	auto specular_roughness_plug	= GetPlugByName(plug, detail::ArnoldStandardSurfaceShaderData::specular_roughness_plug_name);
 
 	// Attempt to retrieve a texture for each PBR variable
 	auto diffuse_color_texture_path			= GetPlugTexture(diffuse_color_plug);
