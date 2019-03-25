@@ -17,6 +17,7 @@ namespace wr
 namespace wmr
 {
 	class Renderer;
+	class TextureManager;
 
 	namespace detail
 	{
@@ -26,7 +27,39 @@ namespace wmr
 
 			LAMBERT,
 			PHONG,
-			ARNOLD_SURFACE_SHADER
+			ARNOLD_STANDARD_SURFACE_SHADER
+		};
+
+		struct ArnoldStandardSurfaceShaderData
+		{
+			// Plug names to retrieve values
+			static const constexpr char* diffuse_color_plug_name		= "baseColor";
+			static const constexpr char* diffuse_roughness_plug_name	= "diffuseRoughness";
+			static const constexpr char* metalness_plug_name			= "metalness";
+			static const constexpr char* specular_color_plug_name		= "specularColor";
+			static const constexpr char* specular_roughness_plug_name	= "specularRoughness";
+
+			// Flags
+			bool using_diffuse_color_value		= true;
+			bool using_diffuse_roughness_value	= true;
+			bool using_metalness_value			= true;
+			bool using_specular_color_value		= true;
+			bool using_specular_roughness_value	= true;
+
+			// Values
+			float diffuse_color[3]		= { 0.0f, 0.0f, 0.0f };
+			float diffuse_roughness		= 0.0f;
+			float metalness				= 0.0f;
+			float specular_color[3]		= { 0.0f, 0.0f, 0.0f };
+			float specular_roughness	= 0.0f;
+
+			// Files
+			const char* bump_map_texture_path			= "";
+			const char* diffuse_color_texture_path		= "";
+			const char* diffuse_roughness_texture_path	= "";
+			const char* metalness_texture_path			= "";
+			const char* specular_color_texture_path		= "";
+			const char* specular_roughness_texture_path = "";
 		};
 	}
 
@@ -66,9 +99,14 @@ namespace wmr
 		const MPlug GetPlugByName(const MObject& node, MString name);
 		const std::optional<MPlug> GetSurfaceShader(const MObject& node);
 
+		void ConfigureWispMaterial(const detail::ArnoldStandardSurfaceShaderData& data, wr::Material* material, MString mesh_name, TextureManager& texture_manager) const;
+
+		detail::ArnoldStandardSurfaceShaderData ParseArnoldStandardSurfaceShaderData(const MObject& plug);
+
 		// Material parsing
 		MColor GetColor(MFnDependencyNode & fn, MString & plug_name);
 
+	private:
 		// std::pair
 		//    first: MObject, connected lambert plug
 		//    second: MObject, MFnMesh.object()
