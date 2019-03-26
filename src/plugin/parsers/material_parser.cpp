@@ -76,8 +76,8 @@ namespace wmr
 // https://nccastaff.bournemouth.ac.uk/jmacey/RobTheBloke/www/research/maya/mfnmesh.htm
 void wmr::MaterialParser::OnMeshAdded(const MFnMesh& mesh)
 {
-	auto material_manager = m_renderer.GetMaterialManager();
-	auto texture_manager = m_renderer.GetTextureManager();
+	auto& material_manager = m_renderer.GetMaterialManager();
+	auto& texture_manager = m_renderer.GetTextureManager();
 
 	// Number of instances of this mesh
 	std::uint32_t instance_count = mesh.parentCount();

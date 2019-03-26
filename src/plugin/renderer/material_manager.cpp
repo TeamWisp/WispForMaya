@@ -18,10 +18,12 @@
 
 wmr::MaterialManager::MaterialManager() :
 	m_scenegraph_parser(nullptr)
-{ }
+{
+}
 
 wmr::MaterialManager::~MaterialManager()
-{ }
+{
+}
 
 void wmr::MaterialManager::Initialize()
 {
