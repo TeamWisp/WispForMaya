@@ -62,7 +62,7 @@ namespace wmr
 
 		// Unbinds the shader and shading engine relationship. Removes the relationship entry if the relation was found.
 		// This doesn't bind the relationship between the shading engine and surface shader!
-		void DisconnectMeshFromShadingEngine(MFnMesh & fnmesh, MObject & shading_engine);
+		void DisconnectMeshFromShadingEngine(MFnMesh & fnmesh, MObject & shading_engine, bool reset_material = true);
 
 
 		wr::MaterialHandle GetDefaultMaterial() noexcept;
@@ -75,7 +75,10 @@ namespace wmr
 
 	private:
 		wmr::ScenegraphParser * GetSceneParser();
-		void ApplyMaterialToModel(wr::MaterialHandle material_handle, MObject & fnmesh);
+
+		wr::MaterialHandle FindWispMaterialByShadingEngine(MObject & shading_engine);
+
+		void ApplyMaterialToModel(wr::MaterialHandle& material_handle, MObject & fnmesh);
 
 		wmr::ScenegraphParser * m_scenegraph_parser;
 		

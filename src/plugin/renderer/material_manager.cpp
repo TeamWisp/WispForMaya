@@ -47,38 +47,11 @@ wr::MaterialHandle wmr::MaterialManager::GetDefaultMaterial() noexcept
 wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& fnmesh, MObject &shading_engine, MPlug &surface_shader)
 {
 	MStatus status;
-	// Add mesh and shading engine relationship
-	m_mesh_shading_relations.push_back({
-		fnmesh,				// mesh
-		shading_engine		// shadingEngine
-									   });
+	MFnMesh mesh(fnmesh);
 
-	// Add shading engine relationship
-	wr::MaterialHandle material_handle;
-	SurfaceShaderShadingEngineRelation *relation = DoesSurfaceShaderExist(surface_shader);
-	// Create new relationship the surface shader doesn't exist
-	if (relation == nullptr)
-	{
-		// Create Wisp Material handle
-		material_handle = m_material_pool->Create();
-		// Create a vector for the shading engines
-		std::vector<MObject> shading_engines;
-		shading_engines.push_back(shading_engine);
-		// Create relationship between surface shader and shading engine
-		m_surface_shader_shading_relations.push_back({
-			material_handle,		// Wisp Material handle
-			surface_shader,			// Maya surface shader plug
-			shading_engines			// Vector of shading engines
-													 });
-	}
-	// Get material handle from existing relationship 
-	else
-	{
-		material_handle = relation->material_handle;
-	}
+	wr::MaterialHandle material_handle = ConnectShaderToShadingEngine(surface_shader, shading_engine);
 
-	// Assign material handle to all meshes of the mesh node
-	ApplyMaterialToModel(material_handle, fnmesh);
+	ConnectMeshToShadingEngine(mesh, shading_engine);
 
 	return material_handle;
 }
@@ -146,10 +119,30 @@ void wmr::MaterialManager::ConnectMeshToShadingEngine(MFnMesh & fnmesh, MObject 
 		newRelation.shading_engine = shading_engine;
 		m_mesh_shading_relations.push_back(newRelation);
 	}
+
+	wr::MaterialHandle material_handle = FindWispMaterialByShadingEngine(shading_engine);
+	ApplyMaterialToModel(material_handle, mesh_obj);
 }
 
-void wmr::MaterialManager::DisconnectMeshFromShadingEngine(MFnMesh & fnmesh, MObject & shading_engine)
-{ }
+void wmr::MaterialManager::DisconnectMeshFromShadingEngine(MFnMesh & fnmesh, MObject & shading_engine, bool reset_material)
+{
+	MObject mesh_obj = fnmesh.object();
+	auto it = std::find_if(m_mesh_shading_relations.begin(), m_mesh_shading_relations.end(), [&mesh_obj, &shading_engine] (const std::vector<MeshShadingEngineRelation>::value_type& vt)
+	{
+		return (vt.mesh == mesh_obj && vt.shading_engine == shading_engine);
+	});
+	// Found the relation between the two given parameters (mesh and shading engine)
+	if (it != m_mesh_shading_relations.end())
+	{
+		m_mesh_shading_relations.erase(it);
+
+		if (reset_material)
+		{
+			MObject mesh = fnmesh.object();
+			ApplyMaterialToModel(m_default_material_handle, mesh);
+		}
+	}
+}
 
 wr::Material * wmr::MaterialManager::GetWispMaterial(wr::MaterialHandle & material_handle)
 {
@@ -193,7 +186,27 @@ wmr::ScenegraphParser * wmr::MaterialManager::GetSceneParser()
 	return m_scenegraph_parser;
 }
 
-void wmr::MaterialManager::ApplyMaterialToModel(wr::MaterialHandle material_handle, MObject & fnmesh)
+wr::MaterialHandle wmr::MaterialManager::FindWispMaterialByShadingEngine(MObject & shading_engine)
+{
+	auto it = std::find_if(m_surface_shader_shading_relations.begin(), m_surface_shader_shading_relations.end(), [&shading_engine] (const std::vector<SurfaceShaderShadingEngineRelation>::value_type& vt)
+	{
+		auto end_it = vt.shading_engines.end();
+		auto shading_engines_it = std::find_if(vt.shading_engines.begin(), end_it, [&shading_engine] (const std::vector<MObject>::value_type& vt)
+		{
+			return (vt == shading_engine);
+		});
+
+		return (shading_engines_it != end_it);
+	});
+
+	if (it != m_surface_shader_shading_relations.end())
+	{
+		return it->material_handle;
+	}
+	return m_default_material_handle;
+}
+
+void wmr::MaterialManager::ApplyMaterialToModel(wr::MaterialHandle & material_handle, MObject & fnmesh)
 {
 	
 	std::shared_ptr<wr::MeshNode> wr_mesh_node = GetSceneParser()->GetModelParser().GetWRModel(fnmesh);
