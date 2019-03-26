@@ -10,6 +10,7 @@
 #include "d3d12/d3d12_renderer.hpp"
 #include "scene_graph/mesh_node.hpp"
 
+#include <maya/MFnMesh.h>
 #include <maya/MFnTransform.h>
 #include <maya/MGlobal.h>
 #include <maya/MViewport2Renderer.h>
@@ -37,9 +38,6 @@ void wmr::MaterialManager::Initialize()
 	internal_material->SetMetallic(texture_manager.GetDefaultTexture());
 	internal_material->SetRoughness(texture_manager.GetDefaultTexture());
 }
-
-void wmr::MaterialManager::DisconnectMeshFromShadingEngine(MFnMesh & fnmesh, MObject & shading_engine)
-{ }
 
 wr::MaterialHandle wmr::MaterialManager::GetDefaultMaterial() noexcept
 {
@@ -87,9 +85,11 @@ wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& fnmesh, MObject
 
 wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine)
 {
+	// Find surface shader relationships
 	auto relation = DoesSurfaceShaderExist(surface_shader);
 	if (relation != nullptr)
 	{
+		// Add shading engine if surface shader doesn't have a relation with the shading engine
 		auto shading_engine_it = relation->FindShadingEngine(shading_engine);
 		if (shading_engine_it == relation->shading_engines.end())
 		{
@@ -127,6 +127,28 @@ void wmr::MaterialManager::DisonnectShaderFromShadingEngine(MPlug & surface_shad
 }
 
 void wmr::MaterialManager::ConnectMeshToShadingEngine(MFnMesh & fnmesh, MObject & shading_engine)
+{
+	MObject mesh_obj = fnmesh.object();
+	auto it = std::find_if(m_mesh_shading_relations.begin(), m_mesh_shading_relations.end(), [&mesh_obj] (const std::vector<MeshShadingEngineRelation>::value_type& vt)
+	{
+		return (vt.mesh == mesh_obj);
+	});
+	// If the mesh already has a shading engine
+	if (it != m_mesh_shading_relations.end())
+	{
+		it->shading_engine = shading_engine;
+	}
+	// If the mesh was not found
+	else
+	{
+		MeshShadingEngineRelation newRelation;
+		newRelation.mesh = mesh_obj;
+		newRelation.shading_engine = shading_engine;
+		m_mesh_shading_relations.push_back(newRelation);
+	}
+}
+
+void wmr::MaterialManager::DisconnectMeshFromShadingEngine(MFnMesh & fnmesh, MObject & shading_engine)
 { }
 
 wr::Material * wmr::MaterialManager::GetWispMaterial(wr::MaterialHandle & material_handle)
