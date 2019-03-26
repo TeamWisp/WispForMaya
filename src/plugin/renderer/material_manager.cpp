@@ -86,7 +86,7 @@ wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & su
 	return material_handle;
 }
 
-void wmr::MaterialManager::DisonnectShaderFromShadingEngine(MPlug & surface_shader, MObject & shading_engine)
+void wmr::MaterialManager::DisconnectShaderFromShadingEngine(MPlug & surface_shader, MObject & shading_engine)
 { 
 	auto relation = DoesSurfaceShaderExist(surface_shader);
 	if (relation != nullptr)

@@ -54,7 +54,7 @@ namespace wmr
 		// Unbinds the surface shader and shading engine relationship. 
 		// Tries to find the surface shader and a shader engine in the relationships of that shader. Removes the shading engine from the bound shading engines
 		// This doesn't bind the relationship between the shading engine and surface shader!
-		void DisonnectShaderFromShadingEngine(MPlug & surface_shader, MObject & shading_engine);
+		void DisconnectShaderFromShadingEngine(MPlug & surface_shader, MObject & shading_engine);
 		
 		// Binds the MFnMesh and shading engine relationship. Either replaces or adds an new relationship.
 		// This doesn't bind the relationship between the shading engine and surface shader!

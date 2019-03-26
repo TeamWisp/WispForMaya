@@ -128,13 +128,8 @@ void wmr::MaterialParser::OnMeshAdded(const MFnMesh& mesh)
 
 					// Wisp material
 					SurfaceShaderShadingEngineRelation *shader_relation = material_manager.DoesSurfaceShaderExist(surface_shader_plug);
-					wr::MaterialHandle material_handle;
-					// Create a new material if none exists yet
-					if (shader_relation == nullptr)
-					{
-						MObject mesh_object = mesh.object();
-						material_handle = material_manager.CreateMaterial(mesh_object, shading_engine, surface_shader_plug);
-					}
+					MObject mesh_object = mesh.object();
+					wr::MaterialHandle material_handle = material_manager.CreateMaterial(mesh_object, shading_engine, surface_shader_plug);
 
 					// Get a Wisp material for this handle
 					auto material = material_manager.GetWispMaterial(material_handle);
@@ -219,6 +214,26 @@ void wmr::MaterialParser::OnMeshAdded(const MFnMesh& mesh)
 				break;
 		}
 	}
+}
+
+void wmr::MaterialParser::ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine)
+{
+	m_renderer.GetMaterialManager().ConnectShaderToShadingEngine(surface_shader, shading_engine);
+}
+
+void wmr::MaterialParser::DisconnectShaderFromShadingEngine(MPlug & surface_shader, MObject & shading_engine)
+{
+	m_renderer.GetMaterialManager().DisconnectShaderFromShadingEngine(surface_shader, shading_engine);
+}
+
+void wmr::MaterialParser::ConnectMeshToShadingEngine(MFnMesh & fnmesh, MObject & shading_engine)
+{
+	m_renderer.GetMaterialManager().ConnectMeshToShadingEngine(fnmesh, shading_engine);
+}
+
+void wmr::MaterialParser::DisconnectMeshFromShadingEngine(MFnMesh & fnmesh, MObject & shading_engine)
+{
+	m_renderer.GetMaterialManager().DisconnectMeshFromShadingEngine(fnmesh, shading_engine);
 }
 
 const wmr::detail::SurfaceShaderType wmr::MaterialParser::GetShaderType(const MObject& node)

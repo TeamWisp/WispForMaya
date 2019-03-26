@@ -78,21 +78,59 @@ void MaterialMeshAddedCallback(MObject& node, void* client_data)
 	}
 }
 
-void ConnectionAddedCallback(MPlug& srcPlug, MPlug& destPlug, bool made, void* clientData)
+void ConnectionAddedCallback(MPlug& src_plug, MPlug& dest_plug, bool made, void* client_data)
 {
+	auto* material_parser = reinterpret_cast<wmr::MaterialParser*>(client_data);
+
 	// Get plug types
-	auto srcType = srcPlug.node().apiType();
-	auto destType = destPlug.node().apiType();
+	auto srcType = src_plug.node().apiType();
+	auto destType = dest_plug.node().apiType();
 
 	// Check if a connection is made or broken
 	if (made)
 	{
-		// Check if shading engine is connected to mesh
+		if (destType == MFn::kShadingEngine)
+		{
+			// Get destination object from destination plug
+			MObject dest_object = dest_plug.node();
+			switch (srcType)
+			{
+				case MFn::kMesh:
+				{
+					MFnMesh src_object(src_plug.node());
+					material_parser->ConnectMeshToShadingEngine(src_object, dest_object);
+					break;
+				}
+				case MFn::kLambert:
+				{
+					material_parser->ConnectShaderToShadingEngine(src_plug, dest_object);
+					break;
+				}
+			}
+		}
 	}
 	// Connection broken
 	else
 	{
-		// Check if shading engine is disconnected to mesh
+		if (destType == MFn::kShadingEngine)
+		{
+			// Get destination object from destination plug
+			MObject dest_object = dest_plug.node();
+			switch (srcType)
+			{
+				case MFn::kMesh:
+				{
+					MFnMesh src_object(src_plug.node());
+					material_parser->DisconnectMeshFromShadingEngine(src_object, dest_object);
+					break;
+				}
+				case MFn::kLambert:
+				{
+					material_parser->DisconnectShaderFromShadingEngine(src_plug, dest_object);
+					break;
+				}
+			}
+		}
 	}
 }
 
@@ -115,6 +153,7 @@ void wmr::ScenegraphParser::Initialize()
 	m_camera_parser->Initialize();
 
 	MStatus status;
+	// Mesh added
 	MCallbackId addedId = MDGMessage::addNodeAddedCallback(
 		MeshAddedCallback,
 		"mesh",
@@ -123,6 +162,7 @@ void wmr::ScenegraphParser::Initialize()
 	);
 	AddCallbackValidation(status, addedId);
 
+	// Mesh added (material)
 	addedId = MDGMessage::addNodeAddedCallback(
 		MaterialMeshAddedCallback,
 		"mesh",
@@ -131,6 +171,7 @@ void wmr::ScenegraphParser::Initialize()
 	);
 	AddCallbackValidation(status, addedId);
 
+	// Mesh removed 
 	addedId = MDGMessage::addNodeRemovedCallback(
 		MeshRemovedCallback,
 		"mesh",
@@ -139,6 +180,7 @@ void wmr::ScenegraphParser::Initialize()
 	);
 	AddCallbackValidation(status, addedId);
 
+	// Connection added (material)
 	addedId = MDGMessage::addConnectionCallback(
 		ConnectionAddedCallback,
 		m_material_parser.get(),
@@ -146,6 +188,7 @@ void wmr::ScenegraphParser::Initialize()
 	);
 	AddCallbackValidation(status, addedId);
 
+	// Initial parsing
 	MStatus load_status = MS::kSuccess;
 	MItDag itt( MItDag::kDepthFirst, MFn::kMesh, &load_status );
 	if( load_status != MS::kSuccess )

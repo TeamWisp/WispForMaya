@@ -90,6 +90,12 @@ namespace wmr
 		~MaterialParser() = default;
 
 		void OnMeshAdded(const MFnMesh& mesh);
+
+		void ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine);
+		void DisconnectShaderFromShadingEngine(MPlug & surface_shader, MObject & shading_engine);
+		void ConnectMeshToShadingEngine(MFnMesh & fnmesh, MObject & shading_engine);
+		void DisconnectMeshFromShadingEngine(MFnMesh & fnmesh, MObject & shading_engine);
+
 		void HandleLambertChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 		void HandlePhongChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 		const Renderer & GetRenderer();
