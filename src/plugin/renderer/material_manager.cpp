@@ -114,7 +114,17 @@ wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & su
 }
 
 void wmr::MaterialManager::DisonnectShaderFromShadingEngine(MPlug & surface_shader, MObject & shading_engine)
-{ }
+{ 
+	auto relation = DoesSurfaceShaderExist(surface_shader);
+	if (relation != nullptr)
+	{
+		auto shading_engine_it = relation->FindShadingEngine(shading_engine);
+		if (shading_engine_it != relation->shading_engines.end())
+		{
+			relation->shading_engines.erase(shading_engine_it);
+		}
+	}
+}
 
 void wmr::MaterialManager::ConnectMeshToShadingEngine(MFnMesh & fnmesh, MObject & shading_engine)
 { }
