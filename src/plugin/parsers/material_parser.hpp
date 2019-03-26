@@ -90,7 +90,6 @@ namespace wmr
 		~MaterialParser() = default;
 
 		void OnMeshAdded(const MFnMesh& mesh);
-		const std::optional<MObject> GetMeshObjectFromMaterial(MObject & object);
 		void HandleLambertChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 		void HandlePhongChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 		const Renderer & GetRenderer();

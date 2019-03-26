@@ -30,7 +30,7 @@ namespace wmr
 
 		void Initialize();
 
-		void AddCallbackId(MStatus status, MCallbackId id);
+		void AddCallbackValidation(MStatus status, MCallbackId id);
 
 		ModelParser& GetModelParser() const noexcept;
 		MaterialParser& GetMaterialParser() const noexcept;

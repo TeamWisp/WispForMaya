@@ -78,6 +78,24 @@ void MaterialMeshAddedCallback(MObject& node, void* client_data)
 	}
 }
 
+void ConnectionAddedCallback(MPlug& srcPlug, MPlug& destPlug, bool made, void* clientData)
+{
+	// Get plug types
+	auto srcType = srcPlug.node().apiType();
+	auto destType = destPlug.node().apiType();
+
+	// Check if a connection is made or broken
+	if (made)
+	{
+		// Check if shading engine is connected to mesh
+	}
+	// Connection broken
+	else
+	{
+		// Check if shading engine is disconnected to mesh
+	}
+}
+
 wmr::ScenegraphParser::ScenegraphParser( ) :
 	m_render_system( dynamic_cast< const ViewportRendererOverride* >(
 		MHWRender::MRenderer::theRenderer()->findRenderOverride( settings::VIEWPORT_OVERRIDE_NAME )
@@ -103,7 +121,7 @@ void wmr::ScenegraphParser::Initialize()
 		this,
 		&status
 	);
-	AddCallbackId(status, addedId);
+	AddCallbackValidation(status, addedId);
 
 	addedId = MDGMessage::addNodeAddedCallback(
 		MaterialMeshAddedCallback,
@@ -111,7 +129,7 @@ void wmr::ScenegraphParser::Initialize()
 		m_material_parser.get(),
 		&status
 	);
-	AddCallbackId(status, addedId);	
+	AddCallbackValidation(status, addedId);
 
 	addedId = MDGMessage::addNodeRemovedCallback(
 		MeshRemovedCallback,
@@ -119,7 +137,14 @@ void wmr::ScenegraphParser::Initialize()
 		this,
 		&status
 	);
-	AddCallbackId(status, addedId);
+	AddCallbackValidation(status, addedId);
+
+	addedId = MDGMessage::addConnectionCallback(
+		ConnectionAddedCallback,
+		m_material_parser.get(),
+		&status
+	);
+	AddCallbackValidation(status, addedId);
 
 	MStatus load_status = MS::kSuccess;
 	MItDag itt( MItDag::kDepthFirst, MFn::kMesh, &load_status );
@@ -140,7 +165,7 @@ void wmr::ScenegraphParser::Initialize()
 	}
 }
 
-void wmr::ScenegraphParser::AddCallbackId(MStatus status, MCallbackId id)
+void wmr::ScenegraphParser::AddCallbackValidation(MStatus status, MCallbackId id)
 {
 	if (status == MS::kSuccess)
 	{

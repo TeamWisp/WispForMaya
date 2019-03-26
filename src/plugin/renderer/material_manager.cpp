@@ -17,28 +17,29 @@
 
 wmr::MaterialManager::MaterialManager() :
 	m_scenegraph_parser(nullptr)
-{
-}
+{ }
 
 wmr::MaterialManager::~MaterialManager()
-{
-}
+{ }
 
 void wmr::MaterialManager::Initialize()
 {
-	auto& renderer = dynamic_cast< const ViewportRendererOverride* >( MHWRender::MRenderer::theRenderer()->findRenderOverride( settings::VIEWPORT_OVERRIDE_NAME ) )->GetRenderer();
-	m_material_pool = renderer.GetD3D12Renderer().CreateMaterialPool( 0 );
+	auto& renderer = dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer();
+	m_material_pool = renderer.GetD3D12Renderer().CreateMaterialPool(0);
 
 	m_default_material_handle = m_material_pool->Create();
 
-	wr::Material* internal_material = m_material_pool->GetMaterial( m_default_material_handle.m_id );
+	wr::Material* internal_material = m_material_pool->GetMaterial(m_default_material_handle.m_id);
 	auto& texture_manager = renderer.GetTextureManager();
 
-	internal_material->SetAlbedo( texture_manager.GetDefaultTexture() );
-	internal_material->SetNormal( texture_manager.GetDefaultTexture() );
-	internal_material->SetMetallic( texture_manager.GetDefaultTexture() );
-	internal_material->SetRoughness( texture_manager.GetDefaultTexture() );
+	internal_material->SetAlbedo(texture_manager.GetDefaultTexture());
+	internal_material->SetNormal(texture_manager.GetDefaultTexture());
+	internal_material->SetMetallic(texture_manager.GetDefaultTexture());
+	internal_material->SetRoughness(texture_manager.GetDefaultTexture());
 }
+
+void wmr::MaterialManager::DisconnectMeshFromShadingEngine(MFnMesh & fnmesh, MObject & shading_engine)
+{ }
 
 wr::MaterialHandle wmr::MaterialManager::GetDefaultMaterial() noexcept
 {
@@ -52,7 +53,7 @@ wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& fnmesh, MObject
 	m_mesh_shading_relations.push_back({
 		fnmesh,				// mesh
 		shading_engine		// shadingEngine
-	});
+									   });
 
 	// Add shading engine relationship
 	wr::MaterialHandle material_handle;
@@ -70,7 +71,7 @@ wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& fnmesh, MObject
 			material_handle,		// Wisp Material handle
 			surface_shader,			// Maya surface shader plug
 			shading_engines			// Vector of shading engines
-		});
+													 });
 	}
 	// Get material handle from existing relationship 
 	else
@@ -80,9 +81,20 @@ wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& fnmesh, MObject
 
 	// Assign material handle to all meshes of the mesh node
 	ApplyMaterialToModel(material_handle, fnmesh);
-	
+
 	return material_handle;
 }
+
+wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine)
+{
+	return wr::MaterialHandle();
+}
+
+void wmr::MaterialManager::DisonnectShaderFromShadingEngine(MPlug & surface_shader, MObject & shading_engine)
+{ }
+
+void wmr::MaterialManager::ConnectMeshToShadingEngine(MFnMesh & fnmesh, MObject & shading_engine)
+{ }
 
 wr::Material * wmr::MaterialManager::GetWispMaterial(wr::MaterialHandle & material_handle)
 {
@@ -115,7 +127,7 @@ wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::DoesSurfaceShade
 	return nullptr;
 }
 
-void wmr::MaterialManager::ApplyMaterialToModel(wr::MaterialHandle material_handle, MObject & fnmesh)
+wmr::ScenegraphParser * wmr::MaterialManager::GetSceneParser()
 {
 	if (m_scenegraph_parser == nullptr)
 	{
@@ -123,7 +135,13 @@ void wmr::MaterialManager::ApplyMaterialToModel(wr::MaterialHandle material_hand
 			MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME)
 			)->GetSceneGraphParser();
 	}
-	std::shared_ptr<wr::MeshNode> wr_mesh_node = m_scenegraph_parser->GetModelParser().GetWRModel(fnmesh);
+	return m_scenegraph_parser;
+}
+
+void wmr::MaterialManager::ApplyMaterialToModel(wr::MaterialHandle material_handle, MObject & fnmesh)
+{
+	
+	std::shared_ptr<wr::MeshNode> wr_mesh_node = GetSceneParser()->GetModelParser().GetWRModel(fnmesh);
 	wr::Model* wr_model = wr_mesh_node->m_model;
 	for (auto& mesh : wr_model->m_meshes)
 	{
@@ -131,4 +149,11 @@ void wmr::MaterialManager::ApplyMaterialToModel(wr::MaterialHandle material_hand
 	}
 }
 
-
+std::vector<MObject>::iterator wmr::SurfaceShaderShadingEngineRelation::FindShadingEngine(MObject & shading_engine)
+{
+	auto it = std::find_if(shading_engines.begin(), shading_engines.end(), [&shading_engine] (const std::vector<MObject>::value_type& vt)
+	{
+		return (vt == shading_engine);
+	});
+	return it;
+}
