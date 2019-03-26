@@ -93,8 +93,8 @@ namespace wmr
 
 		void ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine);
 		void DisconnectShaderFromShadingEngine(MPlug & surface_shader, MObject & shading_engine);
-		void ConnectMeshToShadingEngine(MFnMesh & fnmesh, MObject & shading_engine);
-		void DisconnectMeshFromShadingEngine(MFnMesh & fnmesh, MObject & shading_engine);
+		void ConnectMeshToShadingEngine(MObject & mesh, MObject & shading_engine);
+		void DisconnectMeshFromShadingEngine(MObject & mesh, MObject & shading_engine);
 
 		void HandleLambertChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 		void HandlePhongChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
@@ -108,7 +108,9 @@ namespace wmr
 		};
 
 	private:
-		const void SubscribeSurfaceShader(MObject actual_surface_shader, MObject shading_engine);
+		void SubscribeSurfaceShader(MObject actual_surface_shader, MObject shading_engine);
+		void ParseShadingEngineToWispMaterial(MObject & shading_engine, std::optional<MObject> fnmesh = std::nullopt);
+
 		const std::optional<MPlug> GetSurfaceShader(const MObject& node);
 		const std::optional<MPlug> GetActualSurfaceShaderPlug(const MPlug & surface_shader_plug);
 

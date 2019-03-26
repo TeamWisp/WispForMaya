@@ -45,7 +45,6 @@ namespace wmr
 		// Creates a wisp material and bind all neccessary relationships
 		wr::MaterialHandle CreateMaterial(MObject& fnmesh, MObject &shading_engine, MPlug &surface_shader);
 
-		
 		// Binds the surface shader and shading engine relationship. 
 		// Checks if shading engine is already bound: (true) remove connection and set new conn. (false) Set new conn
 		// This doesn't bind the relationship between the shading engine and surface shader!
@@ -58,12 +57,11 @@ namespace wmr
 		
 		// Binds the MFnMesh and shading engine relationship. Either replaces or adds an new relationship.
 		// This doesn't bind the relationship between the shading engine and surface shader!
-		void ConnectMeshToShadingEngine(MFnMesh & fnmesh, MObject & shading_engine);
+		void ConnectMeshToShadingEngine(MObject & mesh, MObject & shading_engine);
 
 		// Unbinds the shader and shading engine relationship. Removes the relationship entry if the relation was found.
 		// This doesn't bind the relationship between the shading engine and surface shader!
-		void DisconnectMeshFromShadingEngine(MFnMesh & fnmesh, MObject & shading_engine, bool reset_material = true);
-
+		void DisconnectMeshFromShadingEngine(MObject & mesh, MObject & shading_engine, bool reset_material = true);
 
 		wr::MaterialHandle GetDefaultMaterial() noexcept;
 		wr::Material * GetWispMaterial(wr::MaterialHandle & material_handle);

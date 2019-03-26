@@ -101,12 +101,11 @@ void wmr::MaterialManager::DisconnectShaderFromShadingEngine(MPlug & surface_sha
 	}
 }
 
-void wmr::MaterialManager::ConnectMeshToShadingEngine(MFnMesh & fnmesh, MObject & shading_engine)
+void wmr::MaterialManager::ConnectMeshToShadingEngine(MObject & mesh, MObject & shading_engine)
 {
-	MObject mesh_obj = fnmesh.object();
-	auto it = std::find_if(m_mesh_shading_relations.begin(), m_mesh_shading_relations.end(), [&mesh_obj] (const std::vector<MeshShadingEngineRelation>::value_type& vt)
+	auto it = std::find_if(m_mesh_shading_relations.begin(), m_mesh_shading_relations.end(), [&mesh] (const std::vector<MeshShadingEngineRelation>::value_type& vt)
 	{
-		return (vt.mesh == mesh_obj);
+		return (vt.mesh == mesh);
 	});
 	// If the mesh already has a shading engine
 	if (it != m_mesh_shading_relations.end())
@@ -117,21 +116,20 @@ void wmr::MaterialManager::ConnectMeshToShadingEngine(MFnMesh & fnmesh, MObject 
 	else
 	{
 		MeshShadingEngineRelation newRelation;
-		newRelation.mesh = mesh_obj;
+		newRelation.mesh = mesh;
 		newRelation.shading_engine = shading_engine;
 		m_mesh_shading_relations.push_back(newRelation);
 	}
 
 	wr::MaterialHandle material_handle = FindWispMaterialByShadingEngine(shading_engine);
-	ApplyMaterialToModel(material_handle, mesh_obj);
+	ApplyMaterialToModel(material_handle, mesh);
 }
 
-void wmr::MaterialManager::DisconnectMeshFromShadingEngine(MFnMesh & fnmesh, MObject & shading_engine, bool reset_material)
+void wmr::MaterialManager::DisconnectMeshFromShadingEngine(MObject & mesh, MObject & shading_engine, bool reset_material)
 {
-	MObject mesh_obj = fnmesh.object();
-	auto it = std::find_if(m_mesh_shading_relations.begin(), m_mesh_shading_relations.end(), [&mesh_obj, &shading_engine] (const std::vector<MeshShadingEngineRelation>::value_type& vt)
+	auto it = std::find_if(m_mesh_shading_relations.begin(), m_mesh_shading_relations.end(), [&mesh, &shading_engine] (const std::vector<MeshShadingEngineRelation>::value_type& vt)
 	{
-		return (vt.mesh == mesh_obj && vt.shading_engine == shading_engine);
+		return (vt.mesh == mesh && vt.shading_engine == shading_engine);
 	});
 	// Found the relation between the two given parameters (mesh and shading engine)
 	if (it != m_mesh_shading_relations.end())
@@ -140,7 +138,6 @@ void wmr::MaterialManager::DisconnectMeshFromShadingEngine(MFnMesh & fnmesh, MOb
 
 		if (reset_material)
 		{
-			MObject mesh = fnmesh.object();
 			ApplyMaterialToModel(m_default_material_handle, mesh);
 		}
 	}
