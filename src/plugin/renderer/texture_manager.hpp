@@ -20,10 +20,8 @@ namespace wmr
 	class TextureManager
 	{
 	public:
-		TextureManager(): m_texture_container() {}
+		TextureManager() = default;
 		~TextureManager() = default;
-
-		static int counter;
 
 		//! Initialization
 		void Initialize() noexcept;

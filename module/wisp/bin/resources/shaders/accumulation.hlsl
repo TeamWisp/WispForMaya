@@ -1,32 +1,27 @@
-Texture2D<float4> src_texture : register(t0);
+#include "vignette.hlsl"
+#include "hdr_util.hlsl"
+
+Texture2D<float4> input : register(t0);
+RWTexture2D<float4> output : register(u0);
 SamplerState s0 : register(s0);
 
-cbuffer CameraProperties : register(b0)
+cbuffer Properties : register(b0)
 {
-	float4x4 view;
-	float4x4 inv_projection_view;
-	float3 camera_position;
-	float padding;
-
-	float unused0;
-	float unused1;
 	float frame_idx;
-	float intensity;
 };
 
-struct VS_OUTPUT
-{
-	float4 pos : SV_POSITION;
-	float2 uv : TEXCOORD;
-};
 
-float4 main(VS_OUTPUT input) : SV_TARGET
+[numthreads(16, 16, 1)]
+void main(uint3 DTid : SV_DispatchThreadID)
 {
-	float2 pos = input.pos;
-	float4 current = src_texture[pos];
-
-	float accum_count = frame_idx;
+	float2 resolution;
+	input.GetDimensions(resolution.x, resolution.y);
 	
-	return current;
-	return current / accum_count;
+	float2 uv = float2(DTid.xy) / resolution;
+	float gamma = 2.2;
+	float exposure = 1;
+
+	float3 color = input[DTid.xy].rgb / (frame_idx);
+
+	output[DTid.xy] = float4(color, 1);
 }
