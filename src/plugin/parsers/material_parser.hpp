@@ -99,7 +99,7 @@ namespace wmr
 		const MPlug GetPlugByName(const MObject& node, MString name);
 		const std::optional<MPlug> GetSurfaceShader(const MObject& node);
 
-		void ConfigureWispMaterial(const detail::ArnoldStandardSurfaceShaderData& data, wr::Material* material, MString mesh_name, TextureManager& texture_manager) const;
+		void ConfigureWispMaterial(const detail::ArnoldStandardSurfaceShaderData& data, wr::Material* material, TextureManager& texture_manager) const;
 
 		detail::ArnoldStandardSurfaceShaderData ParseArnoldStandardSurfaceShaderData(const MObject& plug);
 

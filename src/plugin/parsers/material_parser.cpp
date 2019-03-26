@@ -157,7 +157,7 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 
 						CallbackManager::GetInstance().RegisterCallback(attributeId);
 
-						ConfigureWispMaterial(data, material, mesh_fn.name(), texture_manager);
+						ConfigureWispMaterial(data, material, texture_manager);
 					}
 
 					// Found a Lambert shader
@@ -194,14 +194,8 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 						}
 						else
 						{
-							// The name of the object is needed when constructing an unique name for the texture
-							std::string mesh_name = mesh_fn.name().asChar();
-
-							// Unique names for the textures
-							std::string albedo_name = mesh_name + "_albedo";
-
 							// Request new Wisp textures
-							auto albedo_texture = texture_manager.CreateTexture(albedo_name.c_str(), albedo_texture_path.value().asChar());
+							auto albedo_texture = texture_manager.CreateTexture(albedo_texture_path.value().asChar());
 
 							// Use this texture as the material albedo texture
 							material->SetAlbedo(*albedo_texture);
@@ -310,7 +304,7 @@ const std::optional<MPlug> wmr::MaterialParser::GetSurfaceShader(const MObject& 
 		return std::nullopt;
 }
 
-void wmr::MaterialParser::ConfigureWispMaterial(const wmr::detail::ArnoldStandardSurfaceShaderData& data, wr::Material* material, MString mesh_name, TextureManager& texture_manager) const
+void wmr::MaterialParser::ConfigureWispMaterial(const wmr::detail::ArnoldStandardSurfaceShaderData& data, wr::Material* material, TextureManager& texture_manager) const
 {
 	material->SetUseConstantAlbedo(data.using_diffuse_color_value);
 	material->SetUseConstantMetallic(data.using_metalness_value);
@@ -322,11 +316,8 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::detail::ArnoldStandar
 	}
 	else
 	{
-		// Unique names for the textures
-		std::string albedo_name = std::string(mesh_name.asChar()) + "_albedo";
-
 		// Request new Wisp textures
-		auto albedo_texture = texture_manager.CreateTexture(albedo_name.c_str(), data.diffuse_color_texture_path);
+		auto albedo_texture = texture_manager.CreateTexture(data.diffuse_color_texture_path);
 
 		// Use this texture as the material albedo texture
 		material->SetAlbedo(*albedo_texture);
@@ -338,11 +329,8 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::detail::ArnoldStandar
 	}
 	else
 	{
-		// Unique names for the textures
-		std::string roughness_name = std::string(mesh_name.asChar()) + "_roughness";
-
 		// Request new Wisp textures
-		auto roughness_texture = texture_manager.CreateTexture(roughness_name.c_str(), data.diffuse_roughness_texture_path);
+		auto roughness_texture = texture_manager.CreateTexture(data.diffuse_roughness_texture_path);
 
 		// Use this texture as the material albedo texture
 		material->SetRoughness(*roughness_texture);
@@ -354,11 +342,8 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::detail::ArnoldStandar
 	}
 	else
 	{
-		// Unique names for the textures
-		std::string metalness_name = std::string(mesh_name.asChar()) + "_metalness";
-
 		// Request new Wisp textures
-		auto metalness_texture = texture_manager.CreateTexture(metalness_name.c_str(), data.metalness_texture_path);
+		auto metalness_texture = texture_manager.CreateTexture(data.metalness_texture_path);
 
 		// Use this texture as the material albedo texture
 		material->SetMetallic(*metalness_texture);
