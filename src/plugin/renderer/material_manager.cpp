@@ -87,7 +87,30 @@ wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& fnmesh, MObject
 
 wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine)
 {
-	return wr::MaterialHandle();
+	auto relation = DoesSurfaceShaderExist(surface_shader);
+	if (relation != nullptr)
+	{
+		auto shading_engine_it = relation->FindShadingEngine(shading_engine);
+		if (shading_engine_it == relation->shading_engines.end())
+		{
+			relation->shading_engines.push_back(shading_engine);
+		}
+		return relation->material_handle;
+	}
+	// Surface shader doesn't have a material assigned to it yet
+	// Create Wisp Material handle
+	wr::MaterialHandle material_handle = m_material_pool->Create();
+	// Create a vector for the shading engines
+	std::vector<MObject> shading_engines;
+	shading_engines.push_back(shading_engine);
+	// Create relationship between surface shader and shading engine
+	m_surface_shader_shading_relations.push_back({
+		material_handle,		// Wisp Material handle
+		surface_shader,			// Maya surface shader plug
+		shading_engines			// Vector of shading engines
+	});
+
+	return material_handle;
 }
 
 void wmr::MaterialManager::DisonnectShaderFromShadingEngine(MPlug & surface_shader, MObject & shading_engine)
