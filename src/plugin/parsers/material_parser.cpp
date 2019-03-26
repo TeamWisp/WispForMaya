@@ -228,8 +228,8 @@ void wmr::MaterialParser::OnMeshAdded(const MFnMesh& mesh)
 void wmr::MaterialParser::ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine)
 {
 	auto shader_relation = m_renderer.GetMaterialManager().DoesSurfaceShaderExist(surface_shader);
-	// Surface shader exists
-	if (shader_relation != nullptr)
+	// Surface shader doesn't exists
+	if (shader_relation == nullptr)
 	{
 		ParseShadingEngineToWispMaterial(shading_engine);
 	}

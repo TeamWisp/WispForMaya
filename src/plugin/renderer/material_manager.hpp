@@ -43,7 +43,7 @@ namespace wmr
 		void Initialize();
 
 		// Creates a wisp material and bind all neccessary relationships
-		wr::MaterialHandle CreateMaterial(MObject& fnmesh, MObject &shading_engine, MPlug &surface_shader);
+		wr::MaterialHandle CreateMaterial(MObject& mesh, MObject &shading_engine, MPlug &surface_shader);
 
 		// Binds the surface shader and shading engine relationship. 
 		// Checks if shading engine is already bound: (true) remove connection and set new conn. (false) Set new conn

@@ -120,7 +120,7 @@ void ConnectionAddedCallback(MPlug& src_plug, MPlug& dest_plug, bool made, void*
 			{
 				case MFn::kMesh:
 				{
-					MFnMesh src_object(src_plug.node());
+					MObject src_object(src_plug.node());
 					material_parser->DisconnectMeshFromShadingEngine(src_object, dest_object);
 					break;
 				}

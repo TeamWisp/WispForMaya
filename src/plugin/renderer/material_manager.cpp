@@ -46,10 +46,9 @@ wr::MaterialHandle wmr::MaterialManager::GetDefaultMaterial() noexcept
 	return m_default_material_handle;
 }
 
-wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& fnmesh, MObject &shading_engine, MPlug &surface_shader)
+wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& mesh, MObject &shading_engine, MPlug &surface_shader)
 {
 	MStatus status;
-	MFnMesh mesh(fnmesh);
 
 	wr::MaterialHandle material_handle = ConnectShaderToShadingEngine(surface_shader, shading_engine);
 
