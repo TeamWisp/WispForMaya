@@ -76,8 +76,8 @@ namespace wmr
 // https://nccastaff.bournemouth.ac.uk/jmacey/RobTheBloke/www/research/maya/mfnmesh.htm
 void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 {
-	auto material_manager = m_renderer.GetMaterialManager();
-	auto texture_manager = m_renderer.GetTextureManager();
+	auto& material_manager = m_renderer.GetMaterialManager();
+	auto& texture_manager = m_renderer.GetTextureManager();
 
 	// Number of instances of this mesh
 	std::uint32_t instance_count = mesh.parentCount();
@@ -323,14 +323,14 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::detail::ArnoldStandar
 		material->SetAlbedo(*albedo_texture);
 	}
 
-	if (data.using_diffuse_roughness_value)
+	if (data.using_specular_roughness_value)
 	{
 		material->SetConstantRoughness(data.diffuse_roughness);
 	}
 	else
 	{
 		// Request new Wisp textures
-		auto roughness_texture = texture_manager.CreateTexture(data.diffuse_roughness_texture_path);
+		auto roughness_texture = texture_manager.CreateTexture(data.specular_roughness_texture_path);
 
 		// Use this texture as the material albedo texture
 		material->SetRoughness(*roughness_texture);
