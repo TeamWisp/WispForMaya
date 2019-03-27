@@ -28,10 +28,13 @@ void wmr::MaterialManager::Initialize()
 	wr::Material* internal_material = m_material_pool->GetMaterial( m_default_material_handle.m_id );
 	auto& texture_manager = renderer.GetTextureManager();
 
-	internal_material->SetAlbedo( texture_manager.GetDefaultTexture() );
-	internal_material->SetNormal( texture_manager.GetDefaultTexture() );
-	internal_material->SetMetallic( texture_manager.GetDefaultTexture() );
-	internal_material->SetRoughness( texture_manager.GetDefaultTexture() );
+	internal_material->SetUseConstantAlbedo( true );
+	internal_material->SetUseConstantMetallic( true );
+	internal_material->SetUseConstantRoughness( true );
+
+	internal_material->SetConstantAlbedo( { 0.9f,0.9f,0.9f } );
+	internal_material->SetConstantRoughness(  1.0f );
+	internal_material->SetConstantMetallic( { 1.0f, 0.0f, 0.0f } );
 }
 
 wr::MaterialHandle wmr::MaterialManager::GetDefaultMaterial() noexcept

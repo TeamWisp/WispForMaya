@@ -8,6 +8,8 @@
 #include "render_tasks/d3d12_deferred_composition.hpp"
 #include "render_tasks/d3d12_deferred_main.hpp"
 #include "render_tasks/d3d12_deferred_render_target_copy.hpp"
+#include "render_tasks/d3d12_brdf_lut_precalculation.hpp"
+
 #include "render_tasks/d3d12_raytracing_task.hpp"
 #include "render_tasks/d3d12_rt_hybrid_task.hpp"
 #include "render_tasks/d3d12_equirect_to_cubemap.hpp"
@@ -39,14 +41,15 @@ namespace wmr
 
 		// Add required tasks to each frame graph
 		CreateDeferredPipeline();
-		CreateHybridRTPipeline();
-		CreateFullRTPipeline();
+		//CreateHybridRTPipeline();
+		//CreateFullRTPipeline();
 
 		// Set-up the rendering pipelines (frame graph configuration)
-		for (auto& frame_graph : m_renderer_frame_graphs)
+		m_renderer_frame_graphs[0]->Setup( render_system );
+		/*for (auto& frame_graph : m_renderer_frame_graphs)
 		{
 			frame_graph->Setup(render_system);
-		}
+		}*/
 	}
 
 	void FrameGraphManager::SetType(RendererFrameGraphType new_renderer_frame_graph_type) noexcept
@@ -74,8 +77,9 @@ namespace wmr
 
 	void FrameGraphManager::CreateDeferredPipeline() noexcept
 	{
-		auto frame_graph = new wr::FrameGraph(8);
+		auto frame_graph = new wr::FrameGraph();
 
+		wr::AddBrdfLutPrecalculationTask( *frame_graph );
 		wr::AddEquirectToCubemapTask(*frame_graph);
 		wr::AddCubemapConvolutionTask(*frame_graph);
 
@@ -105,6 +109,9 @@ namespace wmr
 	{
 		auto frame_graph = new wr::FrameGraph(6);
 
+		wr::AddBrdfLutPrecalculationTask( *frame_graph );
+		wr::AddEquirectToCubemapTask( *frame_graph );
+		wr::AddCubemapConvolutionTask( *frame_graph );
 		// Construct the G-buffer
 		wr::AddDeferredMainTask(*frame_graph, std::nullopt, std::nullopt);
 

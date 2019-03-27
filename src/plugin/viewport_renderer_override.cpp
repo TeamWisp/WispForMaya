@@ -135,6 +135,7 @@ namespace wmr
 	MStatus ViewportRendererOverride::setup(const MString& destination)
 	{
 		// Update the viewport camera(s)
+		m_scenegraph_parser->Update();
 		m_scenegraph_parser->GetCameraParser().UpdateViewportCamera(destination);
 
 		// Check if the viewport has been resized

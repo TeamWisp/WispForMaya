@@ -24,6 +24,8 @@ namespace wmr
 		~ScenegraphParser();
 
 		void Initialize();
+		void Update();
+
 
 		ModelParser& GetModelParser() const noexcept;
 		MaterialParser& GetMaterialParser() const noexcept;

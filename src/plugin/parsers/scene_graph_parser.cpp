@@ -63,7 +63,8 @@ void MeshRemovedCallback( MObject& node, void* client_data )
 
 void LightAddedCallback( MObject &node, void *client_data )
 {
-	assert( node.apiType() == MFn::Type::kMesh );
+	
+	assert( node.hasFn( MFn::Type::kLight ));
 	wmr::ScenegraphParser* scenegraph_parser = reinterpret_cast< wmr::ScenegraphParser* >( client_data );
 
 	// Create an attribute changed callback to use in order to wait for the mesh to be ready
@@ -72,7 +73,7 @@ void LightAddedCallback( MObject &node, void *client_data )
 
 void LightRemovedCallback( MObject& node, void* client_data )
 {
-	assert( node.apiType() == MFn::Type::kMesh );
+	assert( node.hasFn( MFn::Type::kLight ));
 	wmr::ScenegraphParser* scenegraph_parser = reinterpret_cast< wmr::ScenegraphParser* >( client_data );
 
 	// Create an attribute changed callback to use in order to wait for the mesh to be ready
@@ -201,6 +202,11 @@ void wmr::ScenegraphParser::Initialize()
 		m_light_parser->LightAdded( light );
 		light_itt.next();
 	}
+}
+
+void wmr::ScenegraphParser::Update()
+{
+	m_model_parser->Update();
 }
 
 wmr::ModelParser & wmr::ScenegraphParser::GetModelParser() const noexcept

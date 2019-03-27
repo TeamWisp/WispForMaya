@@ -169,6 +169,18 @@ void wmr::LightParser::UnSubscribeObject( MObject & maya_object )
 		return; // find_if returns last element even if it is not a positive result
 	}
 	m_renderer.GetScenegraph().DestroyNode( it->second );
+	
+	auto it_end = --m_object_transform_vector.end();
+
+	if( it == it_end )
+	{
+		m_object_transform_vector.pop_back();
+	}
+	else
+	{
+		std::iter_swap( it, it_end );
+		m_object_transform_vector.pop_back();
+	}
 }
 
 void wmr::LightParser::LightAdded( MFnLight & fn_light )
@@ -199,7 +211,7 @@ void wmr::LightParser::LightAdded( MFnLight & fn_light )
 		auto light_color = fn_spot_light.color();
 		DirectX::XMVECTOR wisp_color{ light_color.r ,light_color.g ,light_color.b };
 		wisp_color *= fn_spot_light.intensity();
-		light_node = m_renderer.GetScenegraph().CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, wisp_color );
+		light_node = m_renderer.GetScenegraph().CreateChild<wr::LightNode>( nullptr, wr::LightType::SPOT, wisp_color );
 		light_node->SetAngle(fn_spot_light.coneAngle());
 	}
 		break;
@@ -209,7 +221,7 @@ void wmr::LightParser::LightAdded( MFnLight & fn_light )
 		auto light_color = fn_dir_light.color();
 		DirectX::XMVECTOR wisp_color{ light_color.r ,light_color.g ,light_color.b };
 		wisp_color *= fn_dir_light.intensity();
-		light_node = m_renderer.GetScenegraph().CreateChild<wr::LightNode>( nullptr, wr::LightType::POINT, wisp_color );
+		light_node = m_renderer.GetScenegraph().CreateChild<wr::LightNode>( nullptr, wr::LightType::DIRECTIONAL, wisp_color );
 	}
 		break;
 	default:

@@ -17,7 +17,7 @@ namespace wmr
 		m_texture_pool = dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer().GetD3D12Renderer().CreateTexturePool();
 
 		// The default texture needs to be loaded at all times
-		m_texture_container.push_back(m_texture_pool->Load("./resources/textures/default_texture.png", false, false));
+		m_texture_container.push_back(m_texture_pool->Load("./resources/textures/Circus_Backstage_3k.hdr", false, false));
 	}
 
 	const wr::TextureHandle& TextureManager::GetDefaultTexture() const noexcept
