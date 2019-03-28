@@ -99,6 +99,11 @@ void MaterialMeshAddedCallback(MObject& node, void* client_data)
 	}
 }
 
+void ShadingEngineRemoveCallback(MObject& node, void* client_data)
+{
+	int x= 0;
+}
+
 void ConnectionAddedCallback(MPlug& src_plug, MPlug& dest_plug, bool made, void* client_data)
 {
 	auto* material_parser = reinterpret_cast<wmr::MaterialParser*>(client_data);
@@ -184,6 +189,15 @@ void wmr::ScenegraphParser::Initialize()
 	);
 	AddCallbackValidation(status, addedId);
 
+	// Mesh added (material)
+	addedId = MDGMessage::addNodeRemovedCallback(
+		ShadingEngineRemoveCallback,
+		"shadingEngine",
+		m_material_parser.get(),
+		&status
+	);
+	AddCallbackValidation(status, addedId);
+
 	// Mesh removed 
 	addedId = MDGMessage::addNodeRemovedCallback(
 		MeshRemovedCallback,
@@ -259,6 +273,18 @@ void wmr::ScenegraphParser::Initialize()
 void wmr::ScenegraphParser::Update()
 {
 	m_model_parser->Update();
+}
+
+void wmr::ScenegraphParser::AddCallbackValidation(MStatus status, MCallbackId id)
+{
+	if (status == MS::kSuccess)
+	{
+		CallbackManager::GetInstance().RegisterCallback(id);
+	}
+	else
+	{
+		assert(false);
+	}
 }
 
 wmr::ModelParser & wmr::ScenegraphParser::GetModelParser() const noexcept

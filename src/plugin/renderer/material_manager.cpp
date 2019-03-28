@@ -23,6 +23,8 @@ wmr::MaterialManager::MaterialManager() :
 
 wmr::MaterialManager::~MaterialManager()
 {
+	m_mesh_shading_relations.clear();
+	m_mesh_shading_relations.clear();
 }
 
 void wmr::MaterialManager::Initialize()
@@ -191,7 +193,7 @@ wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::DoesSurfaceShade
 	// Search relationships for shading engines
 	for (auto& relation : m_surface_shader_shading_relations)
 	{
-		if (relation.surface_shader == surface_shader)
+		if (relation.surface_shader.node() == surface_shader.node())
 		{
 			return &relation;
 		}
@@ -225,10 +227,13 @@ void wmr::MaterialManager::ApplyMaterialToModel(wr::MaterialHandle & material_ha
 {
 	
 	std::shared_ptr<wr::MeshNode> wr_mesh_node = GetSceneParser()->GetModelParser().GetWRModel(fnmesh);
-	wr::Model* wr_model = wr_mesh_node->m_model;
-	for (auto& mesh : wr_model->m_meshes)
+	if (wr_mesh_node != nullptr)
 	{
-		mesh.second = material_handle;
+		wr::Model* wr_model = wr_mesh_node->m_model;
+		for (auto& mesh : wr_model->m_meshes)
+		{
+			mesh.second = material_handle;
+		}
 	}
 }
 

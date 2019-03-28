@@ -578,10 +578,9 @@ std::shared_ptr<wr::MeshNode> wmr::ModelParser::GetWRModel(MObject & maya_object
 		return false;
 	};
 	auto it = std::find_if(m_object_transform_vector.begin(), m_object_transform_vector.end(), findCallback);
-	if (it->first != maya_object)
+	if (it != m_object_transform_vector.end())
 	{
-		assert(false);
-		// find_if returns last element even if it is not a positive result
+		return it->second;
 	}
-	return it->second;
+	return nullptr;//std::make_shared<wr::MeshNode>();
 }
