@@ -18,6 +18,7 @@ namespace wmr
 {
 	class Renderer;
 	class TextureManager;
+	class MaterialManager;
 
 	namespace detail
 	{
@@ -94,6 +95,7 @@ namespace wmr
 		const Renderer & GetRenderer();
 
 	private:
+		void ParseSingleSurfaceShader(const MObject& node, const MFnMesh& mesh, MaterialManager& material_manager, TextureManager& texture_manager);
 		const detail::SurfaceShaderType GetShaderType(const MObject& node);
 		const std::optional<MString> GetPlugTexture(MPlug& plug);
 		const MPlug GetPlugByName(const MObject& node, MString name);
