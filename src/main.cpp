@@ -1,22 +1,20 @@
 // Wisp plug-in
 #include "miscellaneous/functions.hpp"
 #include "miscellaneous/settings.hpp"
-#include "plugin/viewport_renderer_override.hpp"
+#include "plugin/renderer/render_pipeline_select_command.hpp"
 #include "plugin/viewport_renderer_override.hpp"
 #include "plugin/callback_manager.hpp"
 
 // Maya API
-#include <maya/MFnPlugin.h>
 #include <maya/MCommandResult.h>
+#include <maya/MFnPlugin.h>
 #include <maya/MGlobal.h>
 
 // C++ standard
-#include <memory>
 #include <direct.h>
-
+#include <memory>
 
 wmr::ViewportRendererOverride* viewport_renderer_override;
-
 
 class SetWorkDir{							
 public:
@@ -76,12 +74,14 @@ MStatus initializePlugin(MObject object)
 	// Register the plug-in to Maya, using the name and version data from the settings header file
 	MFnPlugin plugin(object, wmr::settings::COMPANY_NAME, wmr::settings::PRODUCT_VERSION, "Any");
 
+	// Register the command that enabled a MEL script to switch rendering pipelines
+	plugin.registerCommand(wmr::settings::RENDER_PIPELINE_SELECT_COMMAND_NAME, wmr::RenderPipelineSelectCommand::creator);
+
 	// Workaround for avoiding dirtying the scene when registering overrides
 	const auto is_scene_dirty = IsSceneDirty();
 
 	// Initialize the renderer override
 	viewport_renderer_override = new wmr::ViewportRendererOverride( wmr::settings::VIEWPORT_OVERRIDE_NAME );
-
 
 	// If the scene was previously unmodified, return it to that state to avoid dirtying
 	ActOnCurrentDirtyState( is_scene_dirty );
