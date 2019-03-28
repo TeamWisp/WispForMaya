@@ -16,8 +16,7 @@ namespace wmr
 	class Renderer;
 	class ModelParser
 	{
-		//friend callbacks
-		friend void AttributeMeshTransformCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData );
+		
 		
 	public:
 		ModelParser();
@@ -28,13 +27,18 @@ namespace wmr
 		void MeshAdded( MFnMesh & fnmesh );
 		std::shared_ptr<wr::MeshNode> GetWRModel(MObject & maya_object);
 
+		void Update();
+
 	private:
 		//callbacks that require private access and are part of the ModelParser.
+		friend void AttributeMeshTransformCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData );
 		friend void AttributeMeshAddedCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData );
-		friend void MeshRemovedCallback( MObject& node, void* client_data );
+		friend void attributeMeshChangedCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &other_plug, void *client_data );
+
 
 		std::vector<std::pair<MObject, std::shared_ptr<wr::MeshNode>>> m_object_transform_vector;
 		std::vector<std::pair<MObject, MCallbackId>> m_mesh_added_callback_vector;
+		std::vector<MObject> m_changed_mesh_vector;
 
 		Renderer& m_renderer;
 	};

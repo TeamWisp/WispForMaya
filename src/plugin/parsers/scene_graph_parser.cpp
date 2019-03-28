@@ -7,6 +7,7 @@
 #include "plugin/parsers/model_parser.hpp"
 #include "plugin/parsers/material_parser.hpp"
 #include "plugin/parsers/camera_parser.hpp"
+#include "plugin/parsers/light_parser.hpp"
 
 #include "model_pool.hpp"
 #include "vertex.hpp"
@@ -23,6 +24,7 @@
 #include <maya/MFloatVectorArray.h>
 #include <maya/MFnCamera.h>
 #include <maya/MFnMesh.h>
+#include <maya/MFnLight.h>
 #include <maya/MFnTransform.h>
 #include <maya/MGlobal.h>
 #include <maya/MItDag.h>
@@ -59,6 +61,25 @@ void MeshRemovedCallback( MObject& node, void* client_data )
 	scenegraph_parser->GetModelParser().UnSubscribeObject( node );
 }
 
+void LightAddedCallback( MObject &node, void *client_data )
+{
+	
+	assert( node.hasFn( MFn::Type::kLight ));
+	wmr::ScenegraphParser* scenegraph_parser = reinterpret_cast< wmr::ScenegraphParser* >( client_data );
+
+	// Create an attribute changed callback to use in order to wait for the mesh to be ready
+	scenegraph_parser->GetLightParser().SubscribeObject( node );
+}
+
+void LightRemovedCallback( MObject& node, void* client_data )
+{
+	assert( node.hasFn( MFn::Type::kLight ));
+	wmr::ScenegraphParser* scenegraph_parser = reinterpret_cast< wmr::ScenegraphParser* >( client_data );
+
+	// Create an attribute changed callback to use in order to wait for the mesh to be ready
+	scenegraph_parser->GetLightParser().UnSubscribeObject( node );
+}
+
 void MaterialAddedCallback(MObject& node, void* client_data)
 {
 	assert( node.apiType() == MFn::Type::kMesh );
@@ -88,6 +109,7 @@ wmr::ScenegraphParser::ScenegraphParser( ) :
 {
 	m_camera_parser = std::make_unique<CameraParser>();
 	m_model_parser = std::make_unique<ModelParser>();
+	m_light_parser = std::make_unique<LightParser>();
 	m_material_parser = std::make_unique<MaterialParser>();
 }
 
@@ -139,29 +161,84 @@ void wmr::ScenegraphParser::Initialize()
 	{
 		assert( false );
 	}
+
+	addedId = MDGMessage::addNodeAddedCallback(
+		LightAddedCallback,
+		"light",
+		this,
+		&status
+	);
+
+	if( status == MS::kSuccess )
+	{
+		CallbackManager::GetInstance().RegisterCallback( addedId );
+	}
+	else
+	{
+		assert( false );
+	}
+
+	addedId = MDGMessage::addNodeRemovedCallback(
+		LightRemovedCallback,
+		"light",
+		this,
+		&status
+	);
+
+	if( status == MS::kSuccess )
+	{
+		CallbackManager::GetInstance().RegisterCallback( addedId );
+	}
+	else
+	{
+		assert( false );
+	}
 	
 	// TODO: add other types of addedCallbacks
 
+	//load meshes
 	MStatus load_status = MS::kSuccess;
 
-	MItDag itt( MItDag::kDepthFirst, MFn::kMesh, &load_status );
+	MItDag mesh_itt( MItDag::kDepthFirst, MFn::kMesh, &load_status );
 
 	if( load_status != MS::kSuccess )
 	{
 		MGlobal::displayError( "false to get iterator: " + load_status );
 	}
 
-	while( !itt.isDone() )
+	while( !mesh_itt.isDone() )
 	{
-		MFnMesh mesh( itt.currentItem() );
+		MFnMesh mesh( mesh_itt.currentItem() );
 		if( !mesh.isIntermediateObject() )
 		{
 			m_model_parser->MeshAdded( mesh );
 			m_material_parser->Parse(mesh);
 			//add callback here <--------!!
 		}
-		itt.next();
+		mesh_itt.next();
 	}
+
+	//load lights
+	load_status = MS::kSuccess;
+
+	MItDag light_itt( MItDag::kDepthFirst, MFn::kLight, &load_status );
+
+	if( load_status != MS::kSuccess )
+	{
+		MGlobal::displayError( "false to get itterator: " + load_status );
+	}
+
+	while( !light_itt.isDone() )
+	{
+		MFnLight light( light_itt.currentItem() );
+		m_light_parser->LightAdded( light );
+		light_itt.next();
+	}
+}
+
+void wmr::ScenegraphParser::Update()
+{
+	m_model_parser->Update();
 }
 
 wmr::ModelParser & wmr::ScenegraphParser::GetModelParser() const noexcept
@@ -177,4 +254,9 @@ wmr::MaterialParser & wmr::ScenegraphParser::GetMaterialParser() const noexcept
 wmr::CameraParser& wmr::ScenegraphParser::GetCameraParser() const noexcept
 {
 	return *m_camera_parser;
+}
+
+wmr::LightParser & wmr::ScenegraphParser::GetLightParser() const noexcept
+{
+	return *m_light_parser;
 }
