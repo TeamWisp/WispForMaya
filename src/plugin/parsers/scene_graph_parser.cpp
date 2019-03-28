@@ -80,30 +80,6 @@ void LightRemovedCallback( MObject& node, void* client_data )
 	scenegraph_parser->GetLightParser().UnSubscribeObject( node );
 }
 
-void MaterialMeshAddedCallback(MObject& node, void* client_data)
-{
-	assert( node.apiType() == MFn::Type::kMesh );
-
-	// Get the DAG node
-	MStatus status;
-	MFnDagNode dag_node(node, &status);
-	if (status == MStatus::kSuccess)
-	{
-		auto* material_parser = reinterpret_cast<wmr::MaterialParser*>(client_data);
-		MFnMesh mesh(node);
-		material_parser->OnMeshAdded(mesh);
-	}
-	else
-	{
-		MGlobal::displayInfo(status.errorString());
-	}
-}
-
-void ShadingEngineRemoveCallback(MObject& node, void* client_data)
-{
-	int x= 0;
-}
-
 void ConnectionAddedCallback(MPlug& src_plug, MPlug& dest_plug, bool made, void* client_data)
 {
 	auto* material_parser = reinterpret_cast<wmr::MaterialParser*>(client_data);
@@ -170,30 +146,19 @@ void wmr::ScenegraphParser::Initialize()
 {
 	m_camera_parser->Initialize();
 
+	auto on_mesh_added_callback = [this] (MFnMesh & mesh)
+	{
+		this->m_material_parser->OnMeshAdded(mesh);
+	};
+
+	m_model_parser->SetMeshAddCallback( on_mesh_added_callback);
+
 	MStatus status;
 	// Mesh added
 	MCallbackId addedId = MDGMessage::addNodeAddedCallback(
 		MeshAddedCallback,
 		"mesh",
 		this,
-		&status
-	);
-	AddCallbackValidation(status, addedId);
-
-	// Mesh added (material)
-	addedId = MDGMessage::addNodeAddedCallback(
-		MaterialMeshAddedCallback,
-		"mesh",
-		m_material_parser.get(),
-		&status
-	);
-	AddCallbackValidation(status, addedId);
-
-	// Mesh added (material)
-	addedId = MDGMessage::addNodeRemovedCallback(
-		ShadingEngineRemoveCallback,
-		"shadingEngine",
-		m_material_parser.get(),
 		&status
 	);
 	AddCallbackValidation(status, addedId);

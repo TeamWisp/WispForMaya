@@ -341,7 +341,11 @@ namespace wmr
 
 		wmr::ModelParser* model_parser = reinterpret_cast< wmr::ModelParser* >( client_data );
 		// Add the mesh
-		model_parser->MeshAdded( mesh );
+		model_parser->MeshAdded(mesh);
+		if (model_parser->mesh_add_callback != nullptr)
+		{
+			model_parser->mesh_add_callback(mesh);
+		}
 
 		// Unregister the callback
 		auto findCallback = [ &object ]( std::pair<MObject, MCallbackId> pair ) -> bool
@@ -371,7 +375,6 @@ namespace wmr
 			std::iter_swap( it, it_end );
 			MMessage::removeCallback( it_end->second );
 			model_parser->m_mesh_added_callback_vector.pop_back();
-
 		}
 
 	}
@@ -565,6 +568,15 @@ void wmr::ModelParser::Update()
 
 	}
 	m_changed_mesh_vector.clear();
+}
+
+void wmr::ModelParser::SetMeshAddCallback(std::function<void(MFnMesh&)> callback)
+{
+	if (mesh_add_callback != nullptr)
+	{
+		assert(false);
+	}
+	mesh_add_callback = callback;
 }
 
 std::shared_ptr<wr::MeshNode> wmr::ModelParser::GetWRModel(MObject & maya_object)

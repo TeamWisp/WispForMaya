@@ -117,6 +117,10 @@ void wmr::MaterialParser::ParseShadingEngineToWispMaterial(MObject & shading_eng
 			}
 		}
 	}
+	else
+	{
+
+	}
 
 	MObject mesh_object = fnmesh.value();
 	material_handle = material_manager.CreateMaterial(mesh_object, shading_engine, surface_shader_plug);
@@ -169,7 +173,7 @@ void wmr::MaterialParser::ParseShadingEngineToWispMaterial(MObject & shading_eng
 }
 
 // https://nccastaff.bournemouth.ac.uk/jmacey/RobTheBloke/www/research/maya/mfnmesh.htm
-void wmr::MaterialParser::OnMeshAdded(const MFnMesh& mesh)
+void wmr::MaterialParser::OnMeshAdded(MFnMesh& mesh)
 {
 	// Number of instances of this mesh
 	std::uint32_t instance_count = mesh.parentCount();

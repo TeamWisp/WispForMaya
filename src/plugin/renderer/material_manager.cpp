@@ -24,7 +24,7 @@ wmr::MaterialManager::MaterialManager() :
 wmr::MaterialManager::~MaterialManager()
 {
 	m_mesh_shading_relations.clear();
-	m_mesh_shading_relations.clear();
+	m_surface_shader_shading_relations.clear();
 }
 
 void wmr::MaterialManager::Initialize()
