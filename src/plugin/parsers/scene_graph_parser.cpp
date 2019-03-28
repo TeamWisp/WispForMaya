@@ -86,48 +86,38 @@ void ConnectionAddedCallback(MPlug& src_plug, MPlug& dest_plug, bool made, void*
 	auto srcType = src_plug.node().apiType();
 	auto destType = dest_plug.node().apiType();
 
-	// Check if a connection is made or broken
-	if (made)
+	if (destType == MFn::kShadingEngine)
 	{
-		if (destType == MFn::kShadingEngine)
+		// Get destination object from destination plug
+		MObject dest_object = dest_plug.node();
+		// Bind the mesh to the shading engine if the source plug is a mesh
+		if (srcType == MFn::kMesh) 
 		{
-			// Get destination object from destination plug
-			MObject dest_object = dest_plug.node();
-			switch (srcType)
+			MObject src_object(src_plug.node());
+			// Check if connection is made
+			if (made)
 			{
-				case MFn::kMesh:
-				{
-					MObject src_object(src_plug.node());
-					material_parser->ConnectMeshToShadingEngine(src_object, dest_object);
-					break;
-				}
-				case MFn::kLambert:
-				{
-					material_parser->ConnectShaderToShadingEngine(src_plug, dest_object);
-					break;
-				}
+				material_parser->ConnectMeshToShadingEngine(src_object, dest_object);
+			}
+			else
+			{
+				material_parser->DisconnectMeshFromShadingEngine(src_object, dest_object);
 			}
 		}
-	}
-	// Connection broken
-	else
-	{
-		if (destType == MFn::kShadingEngine)
+		else
 		{
-			// Get destination object from destination plug
-			MObject dest_object = dest_plug.node();
-			switch (srcType)
+			// Get shader type of source plug
+			auto shaderType = material_parser->GetShaderType(src_plug.node());
+			// The type is UNSUPPORTED if we don't support it or if it's not a surface shader
+			if (shaderType != wmr::detail::SurfaceShaderType::UNSUPPORTED)
 			{
-				case MFn::kMesh:
+				if (made)
 				{
-					MObject src_object(src_plug.node());
-					material_parser->DisconnectMeshFromShadingEngine(src_object, dest_object);
-					break;
+					material_parser->ConnectShaderToShadingEngine(src_plug, dest_object);
 				}
-				case MFn::kLambert:
+				else
 				{
 					material_parser->DisconnectShaderFromShadingEngine(src_plug, dest_object);
-					break;
 				}
 			}
 		}

@@ -96,6 +96,8 @@ namespace wmr
 		void ConnectMeshToShadingEngine(MObject & mesh, MObject & shading_engine);
 		void DisconnectMeshFromShadingEngine(MObject & mesh, MObject & shading_engine);
 
+		const detail::SurfaceShaderType GetShaderType(const MObject& node);
+
 		void HandleLambertChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 		void HandlePhongChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 		const Renderer & GetRenderer();
@@ -114,7 +116,6 @@ namespace wmr
 		const std::optional<MPlug> GetSurfaceShader(const MObject& node);
 		const std::optional<MPlug> GetActualSurfaceShaderPlug(const MPlug & surface_shader_plug);
 
-		const detail::SurfaceShaderType GetShaderType(const MObject& node);
 		const std::optional<MString> GetPlugTexture(MPlug& plug);
 		const MPlug GetPlugByName(const MObject& node, MString name);
 
