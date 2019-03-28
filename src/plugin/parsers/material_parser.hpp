@@ -20,6 +20,7 @@ namespace wmr
 {
 	class Renderer;
 	class TextureManager;
+	class MaterialManager;
 
 	namespace detail
 	{
@@ -100,6 +101,7 @@ namespace wmr
 
 		void HandleLambertChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 		void HandlePhongChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
+		void HandleArnoldChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 		const Renderer & GetRenderer();
 
 		struct ShaderDirtyData
@@ -119,7 +121,7 @@ namespace wmr
 		const std::optional<MString> GetPlugTexture(MPlug& plug);
 		const MPlug GetPlugByName(const MObject& node, MString name);
 
-		void ConfigureWispMaterial(const detail::ArnoldStandardSurfaceShaderData& data, wr::Material* material, MString mesh_name, TextureManager& texture_manager) const;
+		void ConfigureWispMaterial(const detail::ArnoldStandardSurfaceShaderData& data, wr::Material* material, TextureManager& texture_manager) const;
 
 		detail::ArnoldStandardSurfaceShaderData ParseArnoldStandardSurfaceShaderData(const MObject& plug);
 

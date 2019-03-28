@@ -132,7 +132,7 @@ void wmr::MaterialParser::ParseShadingEngineToWispMaterial(MObject & shading_eng
 		// Add callback that filters on material changes
 		SubscribeSurfaceShader(actual_surface_shader.node(), shading_engine);
 
-		ConfigureWispMaterial(data, material, "", texture_manager);
+		ConfigureWispMaterial(data, material, texture_manager);
 	}
 
 	// Found a Lambert shader
@@ -153,19 +153,13 @@ void wmr::MaterialParser::ParseShadingEngineToWispMaterial(MObject & shading_eng
 			MString color_str(MayaMaterialProps::plug_color);
 			MColor albedo_color = GetColor(dep_node_fn, color_str);
 
-			material->SetConstantAlbedo({albedo_color.r, albedo_color.g, albedo_color.b});
+			material->SetConstantAlbedo({ albedo_color.r, albedo_color.g, albedo_color.b });
 			material->SetUseConstantAlbedo(true);
 		}
 		else
 		{
-			// The name of the object is needed when constructing an unique name for the texture
-			std::string mesh_name = "";
-
-			// Unique names for the textures
-			std::string albedo_name = mesh_name + "_albedo";
-
 			// Request new Wisp textures
-			auto albedo_texture = texture_manager.CreateTexture(albedo_name.c_str(), albedo_texture_path.value().asChar());
+			auto albedo_texture = texture_manager.CreateTexture(albedo_texture_path.value().asChar());
 
 			// Use this texture as the material albedo texture
 			material->SetAlbedo(*albedo_texture);
@@ -195,8 +189,6 @@ void wmr::MaterialParser::OnMeshAdded(const MFnMesh& mesh)
 		{
 			// No shaders applied to this mesh instance
 			case 0:
-				{
-				}
 				break;
 
 				// All faces use the same material
@@ -209,32 +201,8 @@ void wmr::MaterialParser::OnMeshAdded(const MFnMesh& mesh)
 				}
 				break;
 
-				// Two or more materials are used
+				// Two or more materials are used (TODO)
 			default:
-				{
-					// Get the number of materials by doing:
-					// auto num_of_mats = shaders.length()
-
-					// Holds sorted face indices based on their applied material
-					std::vector<std::vector<std::uint32_t>> faces_by_material_index;
-
-					// Make sure the container has the same size as the number of shaders
-					faces_by_material_index.resize(shaders.length());
-
-					for (auto material_index = 0; material_index < material_indices.length(); ++material_index)
-					{
-						faces_by_material_index[material_indices[material_index]].push_back(material_index);
-					}
-
-					for (auto shader_index = 0; shader_index < shaders.length(); ++shader_index)
-					{
-						// Get all faces used by this material index
-						for (unsigned int & itr : faces_by_material_index[shader_index])
-						{
-							// Use faces by material ID here
-						}
-					}
-				}
 				break;
 		}
 	}
@@ -301,11 +269,13 @@ const std::optional<MString> wmr::MaterialParser::GetPlugTexture(MPlug& plug)
 	dependency_graph_iterator.disablePruningOnFilter();
 
 	auto texture_node = dependency_graph_iterator.currentItem();
+
 	// Check if texture was found
 	if (texture_node.apiType() == MFn::Type::kInvalid)
 	{
 		return std::nullopt;
 	}
+
 	auto file_name_plug = MFnDependencyNode(texture_node).findPlug(MayaMaterialProps::plug_file_texture_name, true);
 	auto type = file_name_plug.node().apiType();
 
@@ -316,6 +286,7 @@ const std::optional<MString> wmr::MaterialParser::GetPlugTexture(MPlug& plug)
 	{
 		return std::nullopt;
 	}
+
 	return texture_path;
 }
 
@@ -329,9 +300,13 @@ const std::optional<MPlug> wmr::MaterialParser::GetSurfaceShader(const MObject& 
 	MPlug shader_plug = MFnDependencyNode(node).findPlug(MayaMaterialProps::surface_shader, true);
 
 	if (!shader_plug.isNull())
+	{
 		return shader_plug;
+	}
 	else
+	{
 		return std::nullopt;
+	}
 }
 
 const std::optional<MPlug> wmr::MaterialParser::GetActualSurfaceShaderPlug(const MPlug & surface_shader_plug)
@@ -374,7 +349,7 @@ void wmr::MaterialParser::SubscribeSurfaceShader(MObject actual_surface_shader, 
 	}
 }
 
-void wmr::MaterialParser::ConfigureWispMaterial(const wmr::detail::ArnoldStandardSurfaceShaderData& data, wr::Material* material, MString mesh_name, TextureManager& texture_manager) const
+void wmr::MaterialParser::ConfigureWispMaterial(const wmr::detail::ArnoldStandardSurfaceShaderData& data, wr::Material* material, TextureManager& texture_manager) const
 {
 	material->SetUseConstantAlbedo(data.using_diffuse_color_value);
 	material->SetUseConstantMetallic(data.using_metalness_value);
@@ -386,27 +361,21 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::detail::ArnoldStandar
 	}
 	else
 	{
-		// Unique names for the textures
-		std::string albedo_name = std::string(mesh_name.asChar()) + "_albedo";
-
 		// Request new Wisp textures
-		auto albedo_texture = texture_manager.CreateTexture(albedo_name.c_str(), data.diffuse_color_texture_path);
+		auto albedo_texture = texture_manager.CreateTexture(data.diffuse_color_texture_path);
 
 		// Use this texture as the material albedo texture
 		material->SetAlbedo(*albedo_texture);
 	}
 
-	if (data.using_diffuse_roughness_value)
+	if (data.using_specular_roughness_value)
 	{
 		material->SetConstantRoughness(data.diffuse_roughness);
 	}
 	else
 	{
-		// Unique names for the textures
-		std::string roughness_name = std::string(mesh_name.asChar()) + "_roughness";
-
 		// Request new Wisp textures
-		auto roughness_texture = texture_manager.CreateTexture(roughness_name.c_str(), data.diffuse_roughness_texture_path);
+		auto roughness_texture = texture_manager.CreateTexture(data.specular_roughness_texture_path);
 
 		// Use this texture as the material albedo texture
 		material->SetRoughness(*roughness_texture);
@@ -418,11 +387,8 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::detail::ArnoldStandar
 	}
 	else
 	{
-		// Unique names for the textures
-		std::string metalness_name = std::string(mesh_name.asChar()) + "_metalness";
-
 		// Request new Wisp textures
-		auto metalness_texture = texture_manager.CreateTexture(metalness_name.c_str(), data.metalness_texture_path);
+		auto metalness_texture = texture_manager.CreateTexture(data.metalness_texture_path);
 
 		// Use this texture as the material albedo texture
 		material->SetMetallic(*metalness_texture);
@@ -439,11 +405,11 @@ wmr::detail::ArnoldStandardSurfaceShaderData wmr::MaterialParser::ParseArnoldSta
 	MFnDependencyNode dep_node_fn(plug);
 
 	// Get all PBR variables
-	auto diffuse_color_plug			= dep_node_fn.findPlug(plug, detail::ArnoldStandardSurfaceShaderData::diffuse_color_plug_name);
-	auto diffuse_roughness_plug		= dep_node_fn.findPlug(plug, detail::ArnoldStandardSurfaceShaderData::diffuse_roughness_plug_name);
-	auto metalness_plug				= dep_node_fn.findPlug(plug, detail::ArnoldStandardSurfaceShaderData::metalness_plug_name);
-	auto specular_color_plug		= dep_node_fn.findPlug(plug, detail::ArnoldStandardSurfaceShaderData::specular_color_plug_name);
-	auto specular_roughness_plug	= dep_node_fn.findPlug(plug, detail::ArnoldStandardSurfaceShaderData::specular_roughness_plug_name);
+	auto diffuse_color_plug			= GetPlugByName(plug, detail::ArnoldStandardSurfaceShaderData::diffuse_color_plug_name);
+	auto diffuse_roughness_plug		= GetPlugByName(plug, detail::ArnoldStandardSurfaceShaderData::diffuse_roughness_plug_name);
+	auto metalness_plug				= GetPlugByName(plug, detail::ArnoldStandardSurfaceShaderData::metalness_plug_name);
+	auto specular_color_plug		= GetPlugByName(plug, detail::ArnoldStandardSurfaceShaderData::specular_color_plug_name);
+	auto specular_roughness_plug	= GetPlugByName(plug, detail::ArnoldStandardSurfaceShaderData::specular_roughness_plug_name);
 
 	// Attempt to retrieve a texture for each PBR variable
 	auto diffuse_color_texture_path			= GetPlugTexture(diffuse_color_plug);
@@ -559,6 +525,12 @@ void wmr::MaterialParser::HandlePhongChange(MFnDependencyNode & fn, MPlug & plug
 		material.SetConstantMetallic({reflectivity, reflectivity, reflectivity});
 		material.SetUseConstantMetallic(true);
 	}
+}
+
+void wmr::MaterialParser::HandleArnoldChange(MFnDependencyNode & fn, MPlug & plug, MString & plug_name, wr::Material & material)
+{
+	// CHANGE Arnold MATERIAL DATA
+	// plug_name defines the attribute that is changed (e.g. "color" or "roughness")
 }
 
 const wmr::Renderer & wmr::MaterialParser::GetRenderer()

@@ -21,12 +21,12 @@ namespace wmr
 		m_texture_pool = dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer().GetD3D12Renderer().CreateTexturePool();
 
 		// The default texture needs to be loaded at all times
-		m_default_texture = m_texture_pool->Load("./resources/textures/default_texture.png", false, false);
+		m_default_texture = m_texture_pool->Load("./resources/textures/Circus_Backstage_3k.hdr", false, false);
 	}
 
-	const std::shared_ptr<wr::TextureHandle> TextureManager::CreateTexture(const char* identifier, const char* path) noexcept
+	const std::shared_ptr<wr::TextureHandle> TextureManager::CreateTexture(const char* path) noexcept
 	{
-		auto hash = func::HashCString(identifier);
+		auto hash = func::HashCString(path);
 
 		// Does the texture exist?
 		auto it = std::find_if(m_texture_container.begin(), m_texture_container.end(), [&hash](const std::unordered_map<size_t, std::shared_ptr<wr::TextureHandle>>::value_type& vt) {

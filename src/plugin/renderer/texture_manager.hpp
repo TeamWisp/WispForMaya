@@ -7,6 +7,8 @@
 #include <memory>
 #include <unordered_map>
 
+#include <maya/MGlobal.h>
+
 // Wisp forward declarations
 namespace wr
 {
@@ -25,7 +27,7 @@ namespace wmr
 		void Initialize() noexcept;
 
 		//! Create a new texture
-		const std::shared_ptr<wr::TextureHandle> CreateTexture(const char* identifier, const char* path) noexcept;
+		const std::shared_ptr<wr::TextureHandle> CreateTexture(const char* path) noexcept;
 
 		//! Get a texture handle to the fall-back texture
 		const wr::TextureHandle GetDefaultTexture() const noexcept;
@@ -43,7 +45,7 @@ namespace wmr
 
 	private:
 		//! Holds all texture handles of the texture manager
-		// TODO: make the texture manager keep refs (shared_ptr -> get refcount -> if 1, deallocate wisp texture)
+		// Texture manager keeps refs and automatically gets rid of the texture once the ref count equals 1
 		std::unordered_map<size_t, std::shared_ptr<wr::TextureHandle>> m_texture_container;
 
 		wr::TextureHandle m_default_texture;
