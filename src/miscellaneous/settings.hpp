@@ -13,10 +13,10 @@ namespace wmr
 	namespace settings
 	{
 		//! Maximum amount of vertex data in the model pool in MB
-		static const constexpr std::uint32_t MAX_VERTEX_DATA_SIZE_MB = 4MB;
+		static const constexpr std::uint32_t MAX_VERTEX_DATA_SIZE_MB = 16MB;
 
 		//! Maximum amount of index data in the model pool in MB
-		static const constexpr std::uint32_t MAX_INDEX_DATA_SIZE_MB = 4MB;
+		static const constexpr std::uint32_t MAX_INDEX_DATA_SIZE_MB = 2MB;
 
 		//! Name of the studio / company developing this product
 		static const constexpr char* COMPANY_NAME = "Team Wisp";
@@ -42,5 +42,8 @@ namespace wmr
 			"wisp_gizmo_render",	// Render gizmos									(gizmo_render_operation.hpp)
 			"wisp_present"			// Present the results to the viewport window		(using default Maya implementation)
 		};
+
+		//! Name of the command used to switch rendering pipelines
+		static const constexpr char* RENDER_PIPELINE_SELECT_COMMAND_NAME = "wisp_switch_rendering_pipeline";
 	};
 }

@@ -5,19 +5,18 @@
 
 // TODO: Find the best order of include in alphabetical order without breaking the dependencies
 // Wisp rendering framework
+#include "render_tasks/d3d12_brdf_lut_precalculation.hpp"
+#include "render_tasks/d3d12_build_acceleration_structures.hpp"
+#include "render_tasks/d3d12_cubemap_convolution.hpp"
 #include "render_tasks/d3d12_deferred_composition.hpp"
 #include "render_tasks/d3d12_deferred_main.hpp"
 #include "render_tasks/d3d12_deferred_render_target_copy.hpp"
-#include "render_tasks/d3d12_brdf_lut_precalculation.hpp"
-
-#include "render_tasks/d3d12_raytracing_task.hpp"
-#include "render_tasks/d3d12_rt_hybrid_task.hpp"
-#include "render_tasks/d3d12_equirect_to_cubemap.hpp"
-#include "render_tasks/d3d12_cubemap_convolution.hpp"
 #include "render_tasks/d3d12_depth_data_readback.hpp"
+#include "render_tasks/d3d12_equirect_to_cubemap.hpp"
 #include "render_tasks/d3d12_pixel_data_readback.hpp"
 #include "render_tasks/d3d12_post_processing.hpp"
-#include "render_tasks/d3d12_build_acceleration_structures.hpp"
+#include "render_tasks/d3d12_raytracing_task.hpp"
+#include "render_tasks/d3d12_rt_hybrid_task.hpp"
 
 namespace wmr
 {
@@ -77,8 +76,9 @@ namespace wmr
 
 	void FrameGraphManager::CreateDeferredPipeline() noexcept
 	{
-		auto frame_graph = new wr::FrameGraph();
+		auto frame_graph = new wr::FrameGraph(9);
 
+		// Precalculate BRDF Lut
 		wr::AddBrdfLutPrecalculationTask( *frame_graph );
 		wr::AddEquirectToCubemapTask(*frame_graph);
 		wr::AddCubemapConvolutionTask(*frame_graph);
@@ -107,7 +107,10 @@ namespace wmr
 
 	void FrameGraphManager::CreateHybridRTPipeline() noexcept
 	{
-		auto frame_graph = new wr::FrameGraph(6);
+		auto frame_graph = new wr::FrameGraph(7);
+
+		// Precalculate BRDF Lut
+		wr::AddBrdfLutPrecalculationTask(*frame_graph);
 
 		wr::AddBrdfLutPrecalculationTask( *frame_graph );
 		wr::AddEquirectToCubemapTask( *frame_graph );

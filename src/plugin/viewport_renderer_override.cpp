@@ -132,6 +132,11 @@ namespace wmr
 		return *m_renderer;
 	}
 
+	wmr::ScenegraphParser & ViewportRendererOverride::GetSceneGraphParser() const
+	{
+		return *m_scenegraph_parser;
+	}
+
 	MStatus ViewportRendererOverride::setup(const MString& destination)
 	{
 		// Update the viewport camera(s)

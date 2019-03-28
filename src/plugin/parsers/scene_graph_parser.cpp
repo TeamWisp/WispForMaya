@@ -80,6 +80,28 @@ void LightRemovedCallback( MObject& node, void* client_data )
 	scenegraph_parser->GetLightParser().UnSubscribeObject( node );
 }
 
+void MaterialAddedCallback(MObject& node, void* client_data)
+{
+	assert( node.apiType() == MFn::Type::kMesh );
+	auto* material_parser = reinterpret_cast<wmr::MaterialParser*>(client_data);
+
+	MStatus status = MStatus::kSuccess;
+
+	// Get the DAG node
+	MFnDagNode dag_node(node, &status);
+
+	if (status == MStatus::kSuccess)
+	{
+		MFnMesh mesh(node);
+		MGlobal::displayInfo("A material on the mesh \"" + dag_node.name() + "\" has been added!");
+		material_parser->Parse(mesh);
+	}
+	else
+	{
+		MGlobal::displayInfo(status.errorString());
+	}
+}
+
 wmr::ScenegraphParser::ScenegraphParser( ) :
 	m_render_system( dynamic_cast< const ViewportRendererOverride* >(
 		MHWRender::MRenderer::theRenderer()->findRenderOverride( settings::VIEWPORT_OVERRIDE_NAME )
@@ -88,6 +110,7 @@ wmr::ScenegraphParser::ScenegraphParser( ) :
 	m_camera_parser = std::make_unique<CameraParser>();
 	m_model_parser = std::make_unique<ModelParser>();
 	m_light_parser = std::make_unique<LightParser>();
+	m_material_parser = std::make_unique<MaterialParser>();
 }
 
 wmr::ScenegraphParser::~ScenegraphParser()
@@ -104,6 +127,13 @@ void wmr::ScenegraphParser::Initialize()
 		MeshAddedCallback,
 		"mesh",
 		this,
+		&status
+	);
+
+	MCallbackId material_added_id = MDGMessage::addNodeAddedCallback(
+		MaterialAddedCallback,
+		"mesh",
+		m_material_parser.get(),
 		&status
 	);
 	
@@ -173,7 +203,7 @@ void wmr::ScenegraphParser::Initialize()
 
 	if( load_status != MS::kSuccess )
 	{
-		MGlobal::displayError( "false to get itterator: " + load_status );
+		MGlobal::displayError( "false to get iterator: " + load_status );
 	}
 
 	while( !mesh_itt.isDone() )
@@ -182,6 +212,8 @@ void wmr::ScenegraphParser::Initialize()
 		if( !mesh.isIntermediateObject() )
 		{
 			m_model_parser->MeshAdded( mesh );
+			m_material_parser->Parse(mesh);
+			//add callback here <--------!!
 		}
 		mesh_itt.next();
 	}

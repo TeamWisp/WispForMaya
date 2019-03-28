@@ -566,3 +566,22 @@ void wmr::ModelParser::Update()
 	}
 	m_changed_mesh_vector.clear();
 }
+
+std::shared_ptr<wr::MeshNode> wmr::ModelParser::GetWRModel(MObject & maya_object)
+{
+	auto findCallback = [&maya_object] (std::pair<MObject, std::shared_ptr<wr::MeshNode>> pair) -> bool
+	{
+		if (maya_object == pair.first)
+		{
+			return true;
+		}
+		return false;
+	};
+	auto it = std::find_if(m_object_transform_vector.begin(), m_object_transform_vector.end(), findCallback);
+	if (it->first != maya_object)
+	{
+		assert(false);
+		// find_if returns last element even if it is not a positive result
+	}
+	return it->second;
+}

@@ -1,0 +1,17 @@
+global proc optionMenuChanged()
+{
+    int $selectedItem = `optionMenu -q -sl ChangeWispRenderingPipeline`;
+    
+    if (`exists "wisp_switch_rendering_pipeline"`)
+    {
+        wisp_switch_rendering_pipeline ($selectedItem - 1);
+    }
+}
+
+window;
+	columnLayout;
+	    optionMenu -label "Rendering Pipeline Type" -cc optionMenuChanged ChangeWispRenderingPipeline;
+            menuItem -label "Deferred";
+            menuItem -label "Hybrid Ray-Tracing";
+            menuItem -label "Full Ray-Tracing";
+showWindow;
