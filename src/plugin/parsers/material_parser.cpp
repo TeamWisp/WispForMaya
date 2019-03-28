@@ -341,7 +341,11 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::detail::ArnoldStandar
 		material->SetMetallic(*metalness_texture);
 	}
 
-	// #TODO: TAHAR --> normal / bump map!
+	if (data.bump_map_texture_path != "")
+	{
+		auto bump = texture_manager.CreateTexture(data.bump_map_texture_path);
+		material->SetNormal(*bump);
+	}
 }
 
 wmr::detail::ArnoldStandardSurfaceShaderData wmr::MaterialParser::ParseArnoldStandardSurfaceShaderData(const MObject& plug)
@@ -357,6 +361,7 @@ wmr::detail::ArnoldStandardSurfaceShaderData wmr::MaterialParser::ParseArnoldSta
 	auto metalness_plug				= GetPlugByName(plug, detail::ArnoldStandardSurfaceShaderData::metalness_plug_name);
 	auto specular_color_plug		= GetPlugByName(plug, detail::ArnoldStandardSurfaceShaderData::specular_color_plug_name);
 	auto specular_roughness_plug	= GetPlugByName(plug, detail::ArnoldStandardSurfaceShaderData::specular_roughness_plug_name);
+	auto bump_map_plug				= GetPlugByName(plug, detail::ArnoldStandardSurfaceShaderData::bump_map_plug_name);
 
 	// Attempt to retrieve a texture for each PBR variable
 	auto diffuse_color_texture_path			= GetPlugTexture(diffuse_color_plug);
@@ -364,6 +369,7 @@ wmr::detail::ArnoldStandardSurfaceShaderData wmr::MaterialParser::ParseArnoldSta
 	auto metalness_texture_path				= GetPlugTexture(metalness_plug);
 	auto specular_color_texture_path		= GetPlugTexture(specular_color_plug);
 	auto specular_roughness_texture_path	= GetPlugTexture(specular_roughness_plug);
+	auto bump_map_texture_path				= GetPlugTexture(bump_map_plug);
 
 	// Diffuse color
 	if (diffuse_color_texture_path.has_value())
@@ -430,6 +436,12 @@ wmr::detail::ArnoldStandardSurfaceShaderData wmr::MaterialParser::ParseArnoldSta
 	else
 	{
 		dep_node_fn.findPlug(detail::ArnoldStandardSurfaceShaderData::specular_roughness_plug_name).getValue(data.specular_roughness);
+	}
+
+	// Bump map
+	if (bump_map_texture_path.has_value())
+	{
+		data.bump_map_texture_path = bump_map_texture_path.value().asChar();
 	}
 
 	return data;
