@@ -54,6 +54,11 @@ wr::Model* wmr::ModelManager::AddModel(const MString& name, const wr::MeshData<w
 	return model;
 }
 
+void wmr::ModelManager::UpdateModel(wr::Model& model, const wr::MeshData<wr::Vertex>& data )
+{
+	m_model_pool->EditMesh( model.m_meshes[0].first, data.m_vertices, data.m_indices.value() );
+}
+
 wr::Model* wmr::ModelManager::GetModelByName(const char* name) noexcept
 {
 	auto hash = func::HashCString(name);

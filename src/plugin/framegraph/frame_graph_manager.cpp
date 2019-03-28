@@ -78,8 +78,7 @@ namespace wmr
 		auto frame_graph = new wr::FrameGraph(9);
 
 		// Precalculate BRDF Lut
-		wr::AddBrdfLutPrecalculationTask(*frame_graph);
-
+		wr::AddBrdfLutPrecalculationTask( *frame_graph );
 		wr::AddEquirectToCubemapTask(*frame_graph);
 		wr::AddCubemapConvolutionTask(*frame_graph);
 
@@ -112,6 +111,9 @@ namespace wmr
 		// Precalculate BRDF Lut
 		wr::AddBrdfLutPrecalculationTask(*frame_graph);
 
+		wr::AddBrdfLutPrecalculationTask( *frame_graph );
+		wr::AddEquirectToCubemapTask( *frame_graph );
+		wr::AddCubemapConvolutionTask( *frame_graph );
 		// Construct the G-buffer
 		wr::AddDeferredMainTask(*frame_graph, std::nullopt, std::nullopt);
 
