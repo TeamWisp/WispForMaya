@@ -40,15 +40,14 @@ namespace wmr
 
 		// Add required tasks to each frame graph
 		CreateDeferredPipeline();
-		//CreateHybridRTPipeline();
-		//CreateFullRTPipeline();
+		CreateHybridRTPipeline();
+		CreateFullRTPipeline();
 
 		// Set-up the rendering pipelines (frame graph configuration)
-		m_renderer_frame_graphs[0]->Setup( render_system );
-		/*for (auto& frame_graph : m_renderer_frame_graphs)
+		for (auto& frame_graph : m_renderer_frame_graphs)
 		{
 			frame_graph->Setup(render_system);
-		}*/
+		}
 	}
 
 	void FrameGraphManager::SetType(RendererFrameGraphType new_renderer_frame_graph_type) noexcept

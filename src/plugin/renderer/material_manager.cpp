@@ -34,6 +34,8 @@ void wmr::MaterialManager::Initialize()
 	wr::Material* internal_material = m_material_pool->GetMaterial( m_default_material_handle.m_id );
 	auto& texture_manager = renderer.GetTextureManager();
 
+	internal_material->UseNormalTexture( false );
+
 	internal_material->SetUseConstantAlbedo( true );
 	internal_material->SetUseConstantMetallic( true );
 	internal_material->SetUseConstantRoughness( true );

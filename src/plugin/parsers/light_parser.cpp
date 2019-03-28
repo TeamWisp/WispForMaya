@@ -30,11 +30,6 @@
 
 using namespace DirectX;
 
-namespace wr
-{
-	//template std::shared_ptr<LightNode> SceneGraph::CreateChild( std::shared_ptr<Node> const & parent, LightType tid, DirectX::XMVECTOR col );
-	
-}
 // region for internally used functions, these functions cannot be use outside this cpp file
 #pragma region INTERNAL_FUNCTIONS
 
@@ -113,10 +108,7 @@ namespace wmr
 		{
 			return; // find_if returns last element even if it is not a positive result
 		}
-
-
 		updateTransform( transform, it->second );
-
 	}
 }
 #pragma endregion

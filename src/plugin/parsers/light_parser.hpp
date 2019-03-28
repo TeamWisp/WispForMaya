@@ -11,8 +11,6 @@ namespace wr
 	class LightNode;
 }
 
-
-
 namespace wmr
 {
 	class Renderer;
@@ -37,6 +35,4 @@ namespace wmr
 
 		Renderer& m_renderer;
 	};
-
-	
 }
