@@ -19,6 +19,7 @@
 #include <maya/MObjectArray.h>
 #include <maya/MPlug.h>
 #include <maya/MPlugArray.h>
+#include <maya/MSelectionList.h>
 
 // C++ standard
 #include <string>
@@ -39,35 +40,40 @@ namespace wmr
 {
 	void DirtyNodeCallback(MObject &node, MPlug &plug, void *clientData)
 	{
-		//// Get material parser from client data
-		//wmr::MaterialParser *material_parser = reinterpret_cast<wmr::MaterialParser*>(clientData);
-		//
-		//// Get Maya mesh object that is using the Maya material
-		//std::optional<MObject> mesh_object = material_parser->GetMeshObjectFromMaterial(node);
-		//if (!mesh_object.has_value())
-		//{
-		//	MGlobal::displayError("A connect to a material could not be found! (wmr::DirtyNodeCallback)");
-		//	return;
-		//}
+		// Get material parser, material manager, and material handle from client data
+		wmr::MaterialParser::ShaderDirtyData *shader_dirty_shader = reinterpret_cast<wmr::MaterialParser::ShaderDirtyData*>(clientData);
+		wmr::MaterialParser * material_parser = shader_dirty_shader->material_parser;
+		wmr::MaterialManager & material_manager = material_parser->GetRenderer().GetMaterialManager();
 
-		//// Get Wisp material that is used by the found Maya mesh object
-		//wr::Material *material = material_parser->GetRenderer().GetMaterialManager().GetMaterial(mesh_object.value());
+		wr::MaterialHandle material_handle = material_manager.FindWispMaterialByShadingEngine(shader_dirty_shader->shading_engine);
 
-		//// Get plug name that has changed value
-		//MString changedPlugName = plug.partialName(false, false, false, false, false, true);
+		// Get Wisp material
+		wr::Material* material = material_parser->GetRenderer().GetMaterialManager().GetWispMaterial(material_handle);
 
-		//MFnDependencyNode fn_material(node);
-		//if (material != nullptr)
-		//{
-		//	if (node.hasFn(MFn::kLambert))
-		//	{
-		//		material_parser->HandleLambertChange(fn_material, plug, changedPlugName, *material);
-		//	}
-		//	else if (node.hasFn(MFn::kPhong))
-		//	{
-		//		material_parser->HandlePhongChange(fn_material, plug, changedPlugName, *material);
-		//	}
-		//}
+		// Get plug name that has changed value
+		MString changedPlugName = plug.partialName(false, false, false, false, false, true);
+
+		// Apply changes to material
+		MFnDependencyNode fn_dep_material(node);
+		auto shader_type = material_parser->GetShaderType(node);
+		switch (shader_type)
+		{
+			case wmr::detail::SurfaceShaderType::LAMBERT:
+			{
+				material_parser->HandleLambertChange(fn_dep_material, plug, changedPlugName, *material);
+				break;
+			}
+			case wmr::detail::SurfaceShaderType::PHONG:
+			{
+				material_parser->HandlePhongChange(fn_dep_material, plug, changedPlugName, *material);
+				break;
+			}
+			case wmr::detail::SurfaceShaderType::ARNOLD_STANDARD_SURFACE_SHADER:
+			{
+				// CHANGE ARNOLD SHADER
+				break;
+			}
+		}
 	}
 } /* namespace wmr */
 
@@ -95,16 +101,25 @@ void wmr::MaterialParser::ParseShadingEngineToWispMaterial(MObject & shading_eng
 
 	// Wisp material
 	wr::MaterialHandle material_handle;
-	// Create a new material with a mesh object if the mesh objects are set
-	if (fnmesh.has_value())
+	// Get the mesh from the given shading engine if the mesh wasn't set
+	if (!fnmesh.has_value())
 	{
-		MObject mesh_object = fnmesh.value();
-		material_handle = material_manager.CreateMaterial(mesh_object, shading_engine, surface_shader_plug);
+		MFnSet set(shading_engine);
+		MSelectionList list;
+		set.getMembers(list, true);
+		for (int i = 0; i < list.length(); ++i)
+		{
+			MObject object;
+			list.getDependNode(i, object);
+			if (object.apiType() == MFn::kMesh)
+			{
+				fnmesh = object;
+			}
+		}
 	}
-	else
-	{
-		material_handle = material_manager.ConnectShaderToShadingEngine(surface_shader_plug, shading_engine);
-	}
+
+	MObject mesh_object = fnmesh.value();
+	material_handle = material_manager.CreateMaterial(mesh_object, shading_engine, surface_shader_plug);
 
 	// Get a Wisp material for this handle
 	auto material = material_manager.GetWispMaterial(material_handle);
@@ -342,7 +357,7 @@ void wmr::MaterialParser::SubscribeSurfaceShader(MObject actual_surface_shader, 
 	MCallbackId addedId = MNodeMessage::addNodeDirtyCallback(
 		actual_surface_shader,
 		DirtyNodeCallback,
-		this,
+		data,
 		&status
 	);
 

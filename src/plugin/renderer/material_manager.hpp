@@ -69,12 +69,14 @@ namespace wmr
 		// Returns a pointer to an element from a vector (storing this reference might, over time, be invalid)
 		SurfaceShaderShadingEngineRelation * DoesMaterialHandleExist(wr::MaterialHandle & material_handle);
 		// Returns a pointer to an element from a vector (storing this reference might, over time, be invalid)
+		SurfaceShaderShadingEngineRelation * DoesShaderEngineExist(MObject & shading_engine);
+		// Returns a pointer to an element from a vector (storing this reference might, over time, be invalid)
 		SurfaceShaderShadingEngineRelation * DoesSurfaceShaderExist(MPlug & surface_shader);
+
+		wr::MaterialHandle FindWispMaterialByShadingEngine(MObject & shading_engine);
 
 	private:
 		wmr::ScenegraphParser * GetSceneParser();
-
-		wr::MaterialHandle FindWispMaterialByShadingEngine(MObject & shading_engine);
 
 		void ApplyMaterialToModel(wr::MaterialHandle& material_handle, MObject & fnmesh);
 

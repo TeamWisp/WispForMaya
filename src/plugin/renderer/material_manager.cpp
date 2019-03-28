@@ -160,6 +160,27 @@ wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::DoesMaterialHand
 	return nullptr;
 }
 
+wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::DoesShaderEngineExist(MObject & shading_engine)
+{
+	auto it = std::find_if(m_surface_shader_shading_relations.begin(), m_surface_shader_shading_relations.end(), [&shading_engine] (const std::vector<SurfaceShaderShadingEngineRelation>::value_type& vt)
+	{
+		auto end_it = vt.shading_engines.end();
+		auto shading_engines_it = std::find_if(vt.shading_engines.begin(), end_it, [&shading_engine] (const std::vector<MObject>::value_type& vt)
+		{
+			return (vt == shading_engine);
+		});
+
+		return (shading_engines_it != end_it);
+	});
+
+	if (it != m_surface_shader_shading_relations.end())
+	{
+		return &*it;
+	}
+
+	return nullptr;
+}
+
 wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::DoesSurfaceShaderExist(MPlug & surface_shader)
 {
 	// Search relationships for shading engines
@@ -186,20 +207,11 @@ wmr::ScenegraphParser * wmr::MaterialManager::GetSceneParser()
 
 wr::MaterialHandle wmr::MaterialManager::FindWispMaterialByShadingEngine(MObject & shading_engine)
 {
-	auto it = std::find_if(m_surface_shader_shading_relations.begin(), m_surface_shader_shading_relations.end(), [&shading_engine] (const std::vector<SurfaceShaderShadingEngineRelation>::value_type& vt)
-	{
-		auto end_it = vt.shading_engines.end();
-		auto shading_engines_it = std::find_if(vt.shading_engines.begin(), end_it, [&shading_engine] (const std::vector<MObject>::value_type& vt)
-		{
-			return (vt == shading_engine);
-		});
+	wmr::SurfaceShaderShadingEngineRelation * relation = DoesShaderEngineExist(shading_engine);
 
-		return (shading_engines_it != end_it);
-	});
-
-	if (it != m_surface_shader_shading_relations.end())
+	if (relation != nullptr)
 	{
-		return it->material_handle;
+		return relation->material_handle;
 	}
 	return m_default_material_handle;
 }

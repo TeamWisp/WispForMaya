@@ -111,6 +111,7 @@ void ConnectionAddedCallback(MPlug& src_plug, MPlug& dest_plug, bool made, void*
 			// The type is UNSUPPORTED if we don't support it or if it's not a surface shader
 			if (shaderType != wmr::detail::SurfaceShaderType::UNSUPPORTED)
 			{
+				// Check if connection is made
 				if (made)
 				{
 					material_parser->ConnectShaderToShadingEngine(src_plug, dest_object);
