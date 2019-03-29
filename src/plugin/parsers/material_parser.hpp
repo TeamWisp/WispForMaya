@@ -90,10 +90,11 @@ namespace wmr
 		MaterialParser();
 		~MaterialParser() = default;
 
+		void InitialMaterialBuild(MPlug & surface_shader, detail::SurfaceShaderType shader_type, wr::MaterialHandle material_handle, MaterialManager & material_manager, TextureManager & texture_manager);
+
 		void OnMeshAdded(MFnMesh& mesh);
 		void OnCreateSurfaceShader(MPlug & surface_shader);
 		void OnRemoveSurfaceShader(MPlug & surface_shader);
-		
 
 		void ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine);
 		void DisconnectShaderFromShadingEngine(MPlug & surface_shader, MObject & shading_engine);

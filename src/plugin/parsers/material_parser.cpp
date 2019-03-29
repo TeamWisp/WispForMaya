@@ -129,14 +129,19 @@ void wmr::MaterialParser::ParseShadingEngineToWispMaterial(MObject & shading_eng
 	{
 		material_handle = material_manager.CreateMaterial(fnmesh.value(), shading_engine, surface_shader_plug);
 	}
+	
+	InitialMaterialBuild(actual_surface_shader, shader_type, material_handle, material_manager, texture_manager);
+}
 
+void wmr::MaterialParser::InitialMaterialBuild(MPlug & surface_shader, detail::SurfaceShaderType shader_type, wr::MaterialHandle material_handle, MaterialManager & material_manager, TextureManager & texture_manager)
+{
 	// Get a Wisp material for this handle
 	auto material = material_manager.GetWispMaterial(material_handle);
 
 	// Arnold PBR standard surface shader
 	if (shader_type == detail::SurfaceShaderType::ARNOLD_STANDARD_SURFACE_SHADER)
 	{
-		auto data = ParseArnoldStandardSurfaceShaderData(actual_surface_shader);
+		auto data = ParseArnoldStandardSurfaceShaderData(surface_shader);
 
 		ConfigureWispMaterial(data, material, texture_manager);
 	}
@@ -146,18 +151,18 @@ void wmr::MaterialParser::ParseShadingEngineToWispMaterial(MObject & shading_eng
 	{
 
 		// Retrieve the texture associated with this plug
-		auto color_plug = GetPlugByName(actual_surface_shader.node(), MayaMaterialProps::plug_color);
+		auto color_plug = GetPlugByName(surface_shader.node(), MayaMaterialProps::plug_color);
 		auto albedo_texture_path = GetPlugTexture(color_plug);
 
 		// If there is no color available, use the RGBA values
 		if (!albedo_texture_path.has_value())
 		{
 
-			MFnDependencyNode dep_node_fn(actual_surface_shader.node());
+			MFnDependencyNode dep_node_fn(surface_shader.node());
 			MString color_str(MayaMaterialProps::plug_color);
 			MColor albedo_color = GetColor(dep_node_fn, color_str);
 
-			material->SetConstantAlbedo({ albedo_color.r, albedo_color.g, albedo_color.b });
+			material->SetConstantAlbedo({albedo_color.r, albedo_color.g, albedo_color.b});
 			material->SetUseConstantAlbedo(true);
 		}
 		else
@@ -214,11 +219,24 @@ void wmr::MaterialParser::OnMeshAdded(MFnMesh& mesh)
 
 void wmr::MaterialParser::OnCreateSurfaceShader(MPlug & surface_shader)
 {
-	m_renderer.GetMaterialManager().OnCreateSurfaceShader(surface_shader);
+	wmr::SurfaceShaderShadingEngineRelation * relation = m_renderer.GetMaterialManager().OnCreateSurfaceShader(surface_shader);
+	// When the surface shader already exists for some reason, don't do anything
+	if (relation != nullptr)
+	{
 
-	// Add callback that filters on material changes
-	MObject object = surface_shader.node();
-	SubscribeSurfaceShader(object);
+		// Add callback that filters on material changes
+		MObject object = surface_shader.node();
+		SubscribeSurfaceShader(object);
+
+		// Check if shader type not supported by this plug-in
+		auto shader_type = GetShaderType(surface_shader.node());
+		if (shader_type == detail::SurfaceShaderType::UNSUPPORTED)
+			return;
+
+		auto& material_manager = m_renderer.GetMaterialManager();
+		auto& texture_manager = m_renderer.GetTextureManager();
+		InitialMaterialBuild(surface_shader, shader_type, relation->material_handle, material_manager, texture_manager);
+	}
 }
 
 void wmr::MaterialParser::OnRemoveSurfaceShader(MPlug & surface_shader)

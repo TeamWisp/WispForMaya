@@ -64,13 +64,13 @@ wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& mesh, MObject &
 	return material_handle;
 }
 
-void wmr::MaterialManager::OnCreateSurfaceShader(MPlug & surface_shader)
+wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::OnCreateSurfaceShader(MPlug & surface_shader)
 {
 	MObject surface_shader_obj = surface_shader.node();
 	auto relation = DoesSurfaceShaderExist(surface_shader_obj);
 	if (relation != nullptr)
 	{
-		return;
+		return nullptr;
 	}
 	// Surface shader doesn't have a material assigned to it yet
 	// Create Wisp Material handle
@@ -82,7 +82,7 @@ void wmr::MaterialManager::OnCreateSurfaceShader(MPlug & surface_shader)
 		std::vector<MObject>()	// Vector of shading engines
 	});
 
-	return;
+	return &m_surface_shader_shading_relations[m_surface_shader_shading_relations.size() - 1];
 }
 
 void wmr::MaterialManager::OnRemoveSurfaceShader(MPlug & surface_shader)

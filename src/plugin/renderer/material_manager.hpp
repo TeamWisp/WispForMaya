@@ -42,7 +42,8 @@ namespace wmr
 
 		void Initialize();
 
-		void OnCreateSurfaceShader(MPlug & surface_shader);
+		// Returns a pointer to an element from a vector (storing this reference might, over time, be invalid)
+		SurfaceShaderShadingEngineRelation * OnCreateSurfaceShader(MPlug & surface_shader);
 		void OnRemoveSurfaceShader(MPlug & surface_shader);
 
 		// Creates a wisp material and bind all neccessary relationships
