@@ -37,6 +37,12 @@ namespace wmr
 		 *  /param msid Callback id. */
 		void RegisterCallback(MCallbackId mcid);
 
+		//! Unregisters a callback
+		/*! Used to unregister callbacks using a MCallbackId structure.
+		 *
+		 *  /param msid Callback id. */
+		void UnregisterCallback(MCallbackId mcid);
+
 		//! Reset the callback manager
 		/*! If any callbacks have been set, this function will make sure that they are properly disposed of.
 		 *  

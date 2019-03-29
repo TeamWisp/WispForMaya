@@ -86,7 +86,39 @@ wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::OnCreateSurfaceS
 }
 
 void wmr::MaterialManager::OnRemoveSurfaceShader(MPlug & surface_shader)
-{ }
+{
+	// Find surface shader
+	auto it = std::find_if(m_surface_shader_shading_relations.begin(), m_surface_shader_shading_relations.end(), [&surface_shader] (const std::vector<SurfaceShaderShadingEngineRelation>::value_type& vt)
+	{
+		return (vt.surface_shader == surface_shader);
+	});
+	// Set default material to all meshes that use this surface shader if it is found
+	if (it != m_surface_shader_shading_relations.end())
+	{
+		MObject shading_engine;
+		// Search for all shading engines until they are all removed from the meshes
+		while (it->shading_engines.size() > 0)
+		{
+			shading_engine = *--it->shading_engines.end();
+			// Find the mesh that the shading engine is attached to
+			auto mesh_shading_it = m_mesh_shading_relations.begin();
+			while (mesh_shading_it != m_mesh_shading_relations.end())
+			{
+				// Bind default material to mesh when the shading engine has been found
+				if (mesh_shading_it->shading_engine == shading_engine)
+				{
+					ApplyMaterialToModel(m_default_material_handle, mesh_shading_it->mesh);
+					m_mesh_shading_relations.erase(mesh_shading_it);
+				}
+				++mesh_shading_it;
+			}
+			it->shading_engines.pop_back();
+		}
+
+		// Remove surface shader from vector
+		m_surface_shader_shading_relations.erase(it);
+	}
+}
 
 wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine)
 {

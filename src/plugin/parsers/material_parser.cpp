@@ -83,7 +83,7 @@ namespace wmr
 	}
 } /* namespace wmr */
 
-void wmr::MaterialParser::ParseShadingEngineToWispMaterial(MObject & shading_engine, std::optional<MObject> fnmesh)
+void wmr::MaterialParser::ParseShadingEngineToWispMaterial(MObject & shading_engine, MObject & fnmesh)
 {
 	auto& material_manager = m_renderer.GetMaterialManager();
 	auto& texture_manager = m_renderer.GetTextureManager();
@@ -108,16 +108,20 @@ void wmr::MaterialParser::ParseShadingEngineToWispMaterial(MObject & shading_eng
 		return;
 
 	// Wisp material
-	wr::MaterialHandle material_handle = material_manager.CreateMaterial(fnmesh.value(), shading_engine, surface_shader_plug);
+	wr::MaterialHandle material_handle = material_manager.CreateMaterial(fnmesh, shading_engine, actual_surface_shader);
 	
 	InitialMaterialBuild(actual_surface_shader, shader_type, material_handle, material_manager, texture_manager);
 }
 
 void wmr::MaterialParser::InitialMaterialBuild(MPlug & surface_shader, detail::SurfaceShaderType shader_type, wr::MaterialHandle material_handle, MaterialManager & material_manager, TextureManager & texture_manager)
 {
+
 	// Get a Wisp material for this handle
 	auto material = material_manager.GetWispMaterial(material_handle);
 	MObject surface_shader_object = surface_shader.node();
+
+	// Subscribe the surface shader to listen for changes
+	SubscribeSurfaceShader(surface_shader_object);
 
 	// Arnold PBR standard surface shader
 	if (shader_type == detail::SurfaceShaderType::ARNOLD_STANDARD_SURFACE_SHADER)
@@ -204,7 +208,6 @@ void wmr::MaterialParser::OnCreateSurfaceShader(MPlug & surface_shader)
 	// When the surface shader already exists for some reason, don't do anything
 	if (relation != nullptr)
 	{
-
 		// Add callback that filters on material changes
 		MObject object = surface_shader.node();
 		SubscribeSurfaceShader(object);
@@ -223,7 +226,24 @@ void wmr::MaterialParser::OnCreateSurfaceShader(MPlug & surface_shader)
 void wmr::MaterialParser::OnRemoveSurfaceShader(MPlug & surface_shader)
 {
 	// Call material manager on remove
+	m_renderer.GetMaterialManager().OnRemoveSurfaceShader(surface_shader);
+
 	// Remove callback from material parser
+	MObject surface_shader_object = surface_shader.node();
+	auto it = std::find_if(shader_dirty_datas.begin(), shader_dirty_datas.end(), [&surface_shader_object] (const std::vector<ShaderDirtyData*>::value_type& vt)
+	{
+		return (vt->surface_shader == surface_shader_object);
+	});
+	if (it != shader_dirty_datas.end())
+	{
+		ShaderDirtyData* data = *it;
+
+		// Remove callback from callback manager
+		CallbackManager::GetInstance().UnregisterCallback(data->callback_id);
+		delete data;
+
+		shader_dirty_datas.erase(it);
+	}
 }
 
 void wmr::MaterialParser::ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine)
@@ -335,29 +355,38 @@ const std::optional<MPlug> wmr::MaterialParser::GetActualSurfaceShaderPlug(const
 
 void wmr::MaterialParser::SubscribeSurfaceShader(MObject & surface_shader)
 {
-	MaterialParser::ShaderDirtyData * data = new MaterialParser::ShaderDirtyData();
-	data->material_parser = this;
-	// Surface data is in this callback data, so I can figure out later what callback to remove (when a material is removed)
-	data->surface_shader = surface_shader;
-
-	MStatus status;
-	MCallbackId addedId = MNodeMessage::addNodeDirtyCallback(
-		surface_shader,
-		DirtyNodeCallback,
-		data,
-		&status
-	);
-
-	if (status != MS::kSuccess)
+	// Find surface shader change callback
+	auto it = std::find_if(shader_dirty_datas.begin(), shader_dirty_datas.end(), [&surface_shader] (const std::vector<ShaderDirtyData*>::value_type& vt)
 	{
-		delete data;
-	}
-	else
+		return (vt->surface_shader == surface_shader);
+	});
+	// Add new callback if the surface shader doesn't have a callback yet.
+	if (it == shader_dirty_datas.end())
 	{
-		CallbackManager::GetInstance().RegisterCallback(addedId);
-		data->callback_id = addedId;
+		MaterialParser::ShaderDirtyData * data = new MaterialParser::ShaderDirtyData();
+		data->material_parser = this;
+		// Surface data is in this callback data, so I can figure out later what callback to remove (when a material is removed)
+		data->surface_shader = surface_shader;
 
-		shader_dirty_datas.push_back(data);
+		MStatus status;
+		MCallbackId addedId = MNodeMessage::addNodeDirtyCallback(
+			surface_shader,
+			DirtyNodeCallback,
+			data,
+			&status
+		);
+
+		if (status != MS::kSuccess)
+		{
+			delete data;
+		}
+		else
+		{
+			CallbackManager::GetInstance().RegisterCallback(addedId);
+			data->callback_id = addedId;
+
+			shader_dirty_datas.push_back(data);
+		}
 	}
 }
 

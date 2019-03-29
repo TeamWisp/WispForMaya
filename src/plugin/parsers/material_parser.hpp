@@ -118,7 +118,7 @@ namespace wmr
 
 	private:
 		void SubscribeSurfaceShader(MObject & actual_surface_shader);
-		void ParseShadingEngineToWispMaterial(MObject & shading_engine, std::optional<MObject> fnmesh = std::nullopt);
+		void ParseShadingEngineToWispMaterial(MObject & shading_engine, MObject & fnmesh);
 
 		const std::optional<MPlug> GetSurfaceShader(const MObject& node);
 		const std::optional<MPlug> GetActualSurfaceShaderPlug(const MPlug & surface_shader_plug);
