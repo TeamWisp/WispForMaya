@@ -91,28 +91,31 @@ namespace wmr
 		~MaterialParser() = default;
 
 		void OnMeshAdded(MFnMesh& mesh);
+		void OnCreateSurfaceShader(MPlug & surface_shader);
+		void OnRemoveSurfaceShader(MPlug & surface_shader);
+		
 
 		void ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine);
 		void DisconnectShaderFromShadingEngine(MPlug & surface_shader, MObject & shading_engine);
 		void ConnectMeshToShadingEngine(MObject & mesh, MObject & shading_engine);
 		void DisconnectMeshFromShadingEngine(MObject & mesh, MObject & shading_engine);
 
-		const detail::SurfaceShaderType GetShaderType(const MObject& node);
-
 		void HandleLambertChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 		void HandlePhongChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 		void HandleArnoldChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
+
 		const Renderer & GetRenderer();
+		const detail::SurfaceShaderType GetShaderType(const MObject& node);
 
 		struct ShaderDirtyData
 		{
 			MCallbackId callback_id;				// When removing callbacks, use this id to find what callback must be deleted
 			wmr::MaterialParser * material_parser;	// Pointer to the material parser
-			MObject shading_engine;					// Shading engine
+			MObject surface_shader;					// Surface shader
 		};
 
 	private:
-		void SubscribeSurfaceShader(MObject actual_surface_shader, MObject shading_engine);
+		void SubscribeSurfaceShader(MObject & actual_surface_shader);
 		void ParseShadingEngineToWispMaterial(MObject & shading_engine, std::optional<MObject> fnmesh = std::nullopt);
 
 		const std::optional<MPlug> GetSurfaceShader(const MObject& node);

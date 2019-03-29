@@ -42,6 +42,9 @@ namespace wmr
 
 		void Initialize();
 
+		void OnCreateSurfaceShader(MPlug & surface_shader);
+		void OnRemoveSurfaceShader(MPlug & surface_shader);
+
 		// Creates a wisp material and bind all neccessary relationships
 		wr::MaterialHandle CreateMaterial(MObject& mesh, MObject &shading_engine, MPlug &surface_shader);
 
@@ -71,9 +74,10 @@ namespace wmr
 		// Returns a pointer to an element from a vector (storing this reference might, over time, be invalid)
 		SurfaceShaderShadingEngineRelation * DoesShaderEngineExist(MObject & shading_engine);
 		// Returns a pointer to an element from a vector (storing this reference might, over time, be invalid)
-		SurfaceShaderShadingEngineRelation * DoesSurfaceShaderExist(MPlug & surface_shader);
+		SurfaceShaderShadingEngineRelation * DoesSurfaceShaderExist(MObject & surface_shader);
 
 		wr::MaterialHandle FindWispMaterialByShadingEngine(MObject & shading_engine);
+		wr::MaterialHandle FindWispMaterialBySurfaceShader(MObject & surface_shader);
 
 	private:
 		wmr::ScenegraphParser * GetSceneParser();

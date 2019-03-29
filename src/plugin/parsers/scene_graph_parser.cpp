@@ -85,15 +85,17 @@ void ConnectionAddedCallback(MPlug& src_plug, MPlug& dest_plug, bool made, void*
 	auto* material_parser = reinterpret_cast<wmr::MaterialParser*>(client_data);
 
 	// Get plug types
-	auto srcType = src_plug.node().apiType();
-	auto destType = dest_plug.node().apiType();
+	auto src_type = src_plug.node().apiType();
+	auto dest_type = dest_plug.node().apiType();
 
-	if (destType == MFn::kShadingEngine)
+	// Check if anything is bound to a shading engine
+	// In that case, a material is either added or moved
+	if (dest_type == MFn::kShadingEngine)
 	{
 		// Get destination object from destination plug
 		MObject dest_object = dest_plug.node();
 		// Bind the mesh to the shading engine if the source plug is a mesh
-		if (srcType == MFn::kMesh) 
+		if (src_type == MFn::kMesh)
 		{
 			MObject src_object(src_plug.node());
 			// Check if connection is made
@@ -125,6 +127,24 @@ void ConnectionAddedCallback(MPlug& src_plug, MPlug& dest_plug, bool made, void*
 			}
 		}
 	}
+	// When the destination plug is a shader list, a material is either made or removed
+	else if (dest_type == MFn::kShaderList)
+	{
+		// Get shader type of source plug
+		auto shaderType = material_parser->GetShaderType(src_plug.node());
+		// The type is UNSUPPORTED if we don't support it or if it's not a surface shader
+		if (shaderType != wmr::detail::SurfaceShaderType::UNSUPPORTED)
+		{
+			if (made)
+			{
+				material_parser->OnCreateSurfaceShader(src_plug);
+			}
+			else
+			{
+				material_parser->OnRemoveSurfaceShader(src_plug);
+			}
+		}
+	}
 }
 
 wmr::ScenegraphParser::ScenegraphParser( ) :
@@ -146,12 +166,10 @@ void wmr::ScenegraphParser::Initialize()
 {
 	m_camera_parser->Initialize();
 
-	auto on_mesh_added_callback = [this] (MFnMesh & mesh)
+	m_model_parser->SetMeshAddCallback([this] (MFnMesh & mesh)
 	{
 		this->m_material_parser->OnMeshAdded(mesh);
-	};
-
-	m_model_parser->SetMeshAddCallback( on_mesh_added_callback);
+	});
 
 	MStatus status;
 	// Mesh added

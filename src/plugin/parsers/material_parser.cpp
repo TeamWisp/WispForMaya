@@ -45,10 +45,16 @@ namespace wmr
 		wmr::MaterialParser * material_parser = shader_dirty_shader->material_parser;
 		wmr::MaterialManager & material_manager = material_parser->GetRenderer().GetMaterialManager();
 
-		wr::MaterialHandle material_handle = material_manager.FindWispMaterialByShadingEngine(shader_dirty_shader->shading_engine);
+		// Check if surface shader exists. Quit the callback if it doesn't exists
+		wmr::SurfaceShaderShadingEngineRelation * relation = material_manager.DoesSurfaceShaderExist(node);
+		if (relation == nullptr)
+		{
+			return;
+		}
+		wr::MaterialHandle material_handle = relation->material_handle;
 
 		// Get Wisp material
-		wr::Material* material = material_parser->GetRenderer().GetMaterialManager().GetWispMaterial(material_handle);
+		wr::Material* material = material_manager.GetWispMaterial(material_handle);
 
 		// Get plug name that has changed value
 		MString changedPlugName = plug.partialName(false, false, false, false, false, true);
@@ -114,16 +120,15 @@ void wmr::MaterialParser::ParseShadingEngineToWispMaterial(MObject & shading_eng
 			if (object.apiType() == MFn::kMesh)
 			{
 				fnmesh = object;
+				break;
 			}
 		}
 	}
-	else
+
+	if (fnmesh.has_value())
 	{
-
+		material_handle = material_manager.CreateMaterial(fnmesh.value(), shading_engine, surface_shader_plug);
 	}
-
-	MObject mesh_object = fnmesh.value();
-	material_handle = material_manager.CreateMaterial(mesh_object, shading_engine, surface_shader_plug);
 
 	// Get a Wisp material for this handle
 	auto material = material_manager.GetWispMaterial(material_handle);
@@ -133,17 +138,12 @@ void wmr::MaterialParser::ParseShadingEngineToWispMaterial(MObject & shading_eng
 	{
 		auto data = ParseArnoldStandardSurfaceShaderData(actual_surface_shader);
 
-		// Add callback that filters on material changes
-		SubscribeSurfaceShader(actual_surface_shader.node(), shading_engine);
-
 		ConfigureWispMaterial(data, material, texture_manager);
 	}
 
 	// Found a Lambert shader
 	if (shader_type == detail::SurfaceShaderType::LAMBERT)
 	{
-		// Add callback that filters on material changes
-		SubscribeSurfaceShader(actual_surface_shader.node(), shading_engine);
 
 		// Retrieve the texture associated with this plug
 		auto color_plug = GetPlugByName(actual_surface_shader.node(), MayaMaterialProps::plug_color);
@@ -212,14 +212,23 @@ void wmr::MaterialParser::OnMeshAdded(MFnMesh& mesh)
 	}
 }
 
+void wmr::MaterialParser::OnCreateSurfaceShader(MPlug & surface_shader)
+{
+	m_renderer.GetMaterialManager().OnCreateSurfaceShader(surface_shader);
+
+	// Add callback that filters on material changes
+	MObject object = surface_shader.node();
+	SubscribeSurfaceShader(object);
+}
+
+void wmr::MaterialParser::OnRemoveSurfaceShader(MPlug & surface_shader)
+{
+	// Call material manager on remove
+	// Remove callback from material parser
+}
+
 void wmr::MaterialParser::ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine)
 {
-	auto shader_relation = m_renderer.GetMaterialManager().DoesSurfaceShaderExist(surface_shader);
-	// Surface shader doesn't exists
-	if (shader_relation == nullptr)
-	{
-		ParseShadingEngineToWispMaterial(shading_engine);
-	}
 	m_renderer.GetMaterialManager().ConnectShaderToShadingEngine(surface_shader, shading_engine);
 }
 
@@ -326,15 +335,16 @@ const std::optional<MPlug> wmr::MaterialParser::GetActualSurfaceShaderPlug(const
 	return connected_plugs[0];
 }
 
-void wmr::MaterialParser::SubscribeSurfaceShader(MObject actual_surface_shader, MObject shading_engine)
+void wmr::MaterialParser::SubscribeSurfaceShader(MObject & surface_shader)
 {
 	MaterialParser::ShaderDirtyData * data = new MaterialParser::ShaderDirtyData();
 	data->material_parser = this;
-	data->shading_engine = shading_engine;
+	// Surface data is in this callback data, so I can figure out later what callback to remove (when a material is removed)
+	data->surface_shader = surface_shader;
 
 	MStatus status;
 	MCallbackId addedId = MNodeMessage::addNodeDirtyCallback(
-		actual_surface_shader,
+		surface_shader,
 		DirtyNodeCallback,
 		data,
 		&status

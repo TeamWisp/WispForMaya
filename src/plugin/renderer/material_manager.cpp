@@ -64,10 +64,35 @@ wr::MaterialHandle wmr::MaterialManager::CreateMaterial(MObject& mesh, MObject &
 	return material_handle;
 }
 
+void wmr::MaterialManager::OnCreateSurfaceShader(MPlug & surface_shader)
+{
+	MObject surface_shader_obj = surface_shader.node();
+	auto relation = DoesSurfaceShaderExist(surface_shader_obj);
+	if (relation != nullptr)
+	{
+		return;
+	}
+	// Surface shader doesn't have a material assigned to it yet
+	// Create Wisp Material handle
+	wr::MaterialHandle material_handle = m_material_pool->Create();
+	// Create relationship between surface shader and shading engine
+	m_surface_shader_shading_relations.push_back({
+		material_handle,		// Wisp Material handle
+		surface_shader,			// Maya surface shader plug
+		std::vector<MObject>()	// Vector of shading engines
+	});
+
+	return;
+}
+
+void wmr::MaterialManager::OnRemoveSurfaceShader(MPlug & surface_shader)
+{ }
+
 wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine)
 {
 	// Find surface shader relationships
-	auto relation = DoesSurfaceShaderExist(surface_shader);
+	MObject surface_shader_obj = surface_shader.node();
+	auto relation = DoesSurfaceShaderExist(surface_shader_obj);
 	if (relation != nullptr)
 	{
 		// Add shading engine if surface shader doesn't have a relation with the shading engine
@@ -95,8 +120,9 @@ wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & su
 }
 
 void wmr::MaterialManager::DisconnectShaderFromShadingEngine(MPlug & surface_shader, MObject & shading_engine)
-{ 
-	auto relation = DoesSurfaceShaderExist(surface_shader);
+{
+	MObject surface_shader_obj = surface_shader.node();
+	auto relation = DoesSurfaceShaderExist(surface_shader_obj);
 	if (relation != nullptr)
 	{
 		auto shading_engine_it = relation->FindShadingEngine(shading_engine);
@@ -188,12 +214,12 @@ wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::DoesShaderEngine
 	return nullptr;
 }
 
-wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::DoesSurfaceShaderExist(MPlug & surface_shader)
+wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::DoesSurfaceShaderExist(MObject & surface_shader)
 {
 	// Search relationships for shading engines
 	for (auto& relation : m_surface_shader_shading_relations)
 	{
-		if (relation.surface_shader.node() == surface_shader.node())
+		if (relation.surface_shader.node() == surface_shader)
 		{
 			return &relation;
 		}
@@ -215,6 +241,17 @@ wmr::ScenegraphParser * wmr::MaterialManager::GetSceneParser()
 wr::MaterialHandle wmr::MaterialManager::FindWispMaterialByShadingEngine(MObject & shading_engine)
 {
 	wmr::SurfaceShaderShadingEngineRelation * relation = DoesShaderEngineExist(shading_engine);
+
+	if (relation != nullptr)
+	{
+		return relation->material_handle;
+	}
+	return m_default_material_handle;
+}
+
+wr::MaterialHandle wmr::MaterialManager::FindWispMaterialBySurfaceShader(MObject & surface_shader)
+{
+	wmr::SurfaceShaderShadingEngineRelation * relation = DoesSurfaceShaderExist(surface_shader);
 
 	if (relation != nullptr)
 	{
