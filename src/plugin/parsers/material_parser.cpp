@@ -341,7 +341,7 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::detail::ArnoldStandar
 		material->SetMetallic(*metalness_texture);
 	}
 
-	if (data.bump_map_texture_path != "")
+	if (strcmp(data.bump_map_texture_path, "") != 0)
 	{
 		auto bump = texture_manager.CreateTexture(data.bump_map_texture_path);
 		material->SetNormal(*bump);
