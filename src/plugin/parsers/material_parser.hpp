@@ -41,6 +41,7 @@ namespace wmr
 			static const constexpr char* metalness_plug_name			= "metalness";
 			static const constexpr char* specular_color_plug_name		= "specularColor";
 			static const constexpr char* specular_roughness_plug_name	= "specularRoughness";
+			static const constexpr char* bump_map_plug_name				= "normalCamera";
 
 			// Flags
 			bool using_diffuse_color_value		= true;
