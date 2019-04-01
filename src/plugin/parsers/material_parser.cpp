@@ -76,7 +76,7 @@ namespace wmr
 			}
 			case wmr::detail::SurfaceShaderType::ARNOLD_STANDARD_SURFACE_SHADER:
 			{
-				// CHANGE ARNOLD SHADER
+				material_parser->HandleArnoldChange(fn_dep_material, plug, changedPlugName, *material);
 				break;
 			}
 		}
@@ -117,7 +117,6 @@ void wmr::MaterialParser::ParseShadingEngineToWispMaterial(MObject & shading_eng
 
 void wmr::MaterialParser::InitialMaterialBuild(MPlug & surface_shader, detail::SurfaceShaderType shader_type, wr::MaterialHandle material_handle, MaterialManager & material_manager, TextureManager & texture_manager)
 {
-
 	// Get a Wisp material for this handle
 	auto material = material_manager.GetWispMaterial(material_handle);
 	MObject surface_shader_object = surface_shader.node();
@@ -250,7 +249,11 @@ void wmr::MaterialParser::OnRemoveSurfaceShader(MPlug & surface_shader)
 
 void wmr::MaterialParser::ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine)
 {
-	m_renderer.GetMaterialManager().ConnectShaderToShadingEngine(surface_shader, shading_engine);
+	m_renderer.GetMaterialManager().ConnectShaderToShadingEngine(surface_shader, shading_engine, true);
+
+	// Find if shader has callback
+	MObject surface_shader_object = surface_shader.node();
+	SubscribeSurfaceShader(surface_shader_object);
 }
 
 void wmr::MaterialParser::DisconnectShaderFromShadingEngine(MPlug & surface_shader, MObject & shading_engine)
@@ -585,7 +588,10 @@ void wmr::MaterialParser::HandlePhongChange(MFnDependencyNode & fn, MPlug & plug
 void wmr::MaterialParser::HandleArnoldChange(MFnDependencyNode & fn, MPlug & plug, MString & plug_name, wr::Material & material)
 {
 	// CHANGE Arnold MATERIAL DATA
-	// plug_name defines the attribute that is changed (e.g. "color" or "roughness")
+	MObject plug_object = plug.node();
+	auto data = ParseArnoldStandardSurfaceShaderData(plug_object);
+
+	ConfigureWispMaterial(data, &material, m_renderer.GetTextureManager());
 }
 
 const wmr::Renderer & wmr::MaterialParser::GetRenderer()

@@ -117,7 +117,7 @@ void wmr::MaterialManager::OnRemoveSurfaceShader(MPlug & surface_shader)
 	}
 }
 
-wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine)
+wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine, bool apply_material)
 {
 	// Find surface shader relationships
 	MObject surface_shader_obj = surface_shader.node();
@@ -130,6 +130,21 @@ wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & su
 		{
 			relation->shading_engines.push_back(shading_engine);
 		}
+
+		// Get mesh and bind surface shader
+		if (apply_material)
+		{
+			auto it = std::find_if(m_mesh_shading_relations.begin(), m_mesh_shading_relations.end(), [this, &relation, &shading_engine] (const std::vector<MeshShadingEngineRelation>::value_type& vt)
+			{
+				if (vt.shading_engine == shading_engine)
+				{
+					MObject obj = vt.mesh;
+					this->ApplyMaterialToModel(relation->material_handle, obj);
+				}
+				return false;
+			});
+		}
+
 		return relation->material_handle;
 	}
 	// Surface shader doesn't have a material assigned to it yet
@@ -144,6 +159,20 @@ wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & su
 		surface_shader,			// Maya surface shader plug
 		shading_engines			// Vector of shading engines
 	});
+
+	// Get mesh and bind surface shader
+	if (apply_material)
+	{
+		auto it = std::find_if(m_mesh_shading_relations.begin(), m_mesh_shading_relations.end(), [this, &material_handle, &shading_engine] (const std::vector<MeshShadingEngineRelation>::value_type& vt)
+		{
+			if (vt.shading_engine == shading_engine)
+			{
+				MObject obj = vt.mesh;
+				this->ApplyMaterialToModel(material_handle, obj);
+			}
+			return false;
+		});
+	}
 
 	return material_handle;
 }

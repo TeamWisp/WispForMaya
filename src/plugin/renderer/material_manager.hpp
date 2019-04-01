@@ -52,7 +52,7 @@ namespace wmr
 		// Binds the surface shader and shading engine relationship. 
 		// Checks if shading engine is already bound: (true) remove connection and set new conn. (false) Set new conn
 		// This doesn't bind the relationship between the shading engine and surface shader!
-		wr::MaterialHandle ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine);
+		wr::MaterialHandle ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine, bool apply_material = false);
 
 		// Unbinds the surface shader and shading engine relationship. 
 		// Tries to find the surface shader and a shader engine in the relationships of that shader. Removes the shading engine from the bound shading engines
