@@ -557,7 +557,6 @@ void wmr::ModelParser::Update()
 		auto itt = std::find_if( m_object_transform_vector.begin(), m_object_transform_vector.end(), getMeshObjectAlgorithm( object ) );
 		if( itt == m_object_transform_vector.end() )
 		{
-			//assert( false );
 			return; // find_if returns last element even if it is not a positive result
 		}
 
