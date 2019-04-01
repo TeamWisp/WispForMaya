@@ -61,7 +61,7 @@ namespace wmr
 		
 		// Binds the MFnMesh and shading engine relationship. Either replaces or adds an new relationship.
 		// This doesn't bind the relationship between the shading engine and surface shader!
-		void ConnectMeshToShadingEngine(MObject & mesh, MObject & shading_engine);
+		void ConnectMeshToShadingEngine(MObject & mesh, MObject & shading_engine, wr::MaterialHandle * material_handle = nullptr);
 
 		// Unbinds the shader and shading engine relationship. Removes the relationship entry if the relation was found.
 		// This doesn't bind the relationship between the shading engine and surface shader!

@@ -342,10 +342,15 @@ namespace wmr
 		wmr::ModelParser* model_parser = reinterpret_cast< wmr::ModelParser* >( client_data );
 		// Add the mesh
 		model_parser->MeshAdded(mesh);
+
+
+
 		if (model_parser->mesh_add_callback != nullptr)
 		{
 			model_parser->mesh_add_callback(mesh);
 		}
+
+
 
 		// Unregister the callback
 		auto findCallback = [ &object ]( std::pair<MObject, MCallbackId> pair ) -> bool
@@ -486,14 +491,6 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 
 	bool model_reloaded = false;
 	wr::Model* model = m_renderer.GetModelManager().AddModel( fnmesh.name(), { mesh_data }, model_reloaded );
-
-
-	auto default_material = m_renderer.GetMaterialManager().GetDefaultMaterial();
-
-	for( auto& m : model->m_meshes )
-	{
-		m.second = default_material;
-	}
 	m_renderer.GetD3D12Renderer().WaitForAllPreviousWork();
 	auto model_node = m_renderer.GetScenegraph().CreateChild<wr::MeshNode>( nullptr, model );
 	MStatus status;
@@ -517,8 +514,6 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 	}
 
 	updateTransform( transform, model_node );
-
-	model->m_meshes[0].second = m_renderer.GetMaterialManager().GetDefaultMaterial();
 
 	m_object_transform_vector.push_back( std::make_pair( fnmesh.object(), model_node ) );
 

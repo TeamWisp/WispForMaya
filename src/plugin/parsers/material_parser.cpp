@@ -80,6 +80,8 @@ namespace wmr
 				break;
 			}
 		}
+
+		material->UpdateConstantBuffer();
 	}
 } /* namespace wmr */
 
