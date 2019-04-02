@@ -1,17 +1,16 @@
-global proc optionMenuChanged()
+global proc switch_rendering_pipeline()
 {
-    int $selectedItem = `optionMenu -q -sl ChangeWispRenderingPipeline`;
-    
-    if (`exists "wisp_switch_rendering_pipeline"`)
+    if(`menu -exists Wisp`)
     {
-        wisp_switch_rendering_pipeline ($selectedItem - 1);
+        deleteUI Wisp;
     }
-}
 
-window;
-	columnLayout;
-	    optionMenu -label "Rendering Pipeline Type" -cc optionMenuChanged ChangeWispRenderingPipeline;
-            menuItem -label "Deferred";
-            menuItem -label "Hybrid Ray-Tracing";
-            menuItem -label "Full Ray-Tracing";
-showWindow;
+    global string $gMainWindow;
+    setParent($gMainWindow);
+    
+    menu -label "Wisp" -to true -aob true Wisp;
+        menuItem -label "Deferred Pipeline" -command "wisp_switch_rendering_pipeline(\"-deferred\")";
+        menuItem -label "Hybrid Ray-Tracing Pipeline" -command "wisp_switch_rendering_pipeline(\"-hybrid_ray_trace\")";
+        menuItem -label "Full Ray-Tracing Pipeline" -command "wisp_switch_rendering_pipeline(\"-full_ray_trace\")";
+        menuItem -label "Path-Tracing Pipeline" -command "wisp_switch_rendering_pipeline(\"-path_trace\")";
+}
