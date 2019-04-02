@@ -155,10 +155,14 @@ namespace wmr
 
 	void FrameGraphManager::CreateFullRTPipeline() noexcept
 	{
-		auto frame_graph = new wr::FrameGraph(5);
+		auto frame_graph = new wr::FrameGraph(7);
 
 		// Construct the acceleration structures needed for the ray tracing task
 		wr::AddBuildAccelerationStructuresTask(*frame_graph);
+
+		// Skybox
+		wr::AddEquirectToCubemapTask(*frame_graph);
+		wr::AddCubemapConvolutionTask(*frame_graph);
 
 		// Perform ray tracing
 		wr::AddRaytracingTask(*frame_graph);
