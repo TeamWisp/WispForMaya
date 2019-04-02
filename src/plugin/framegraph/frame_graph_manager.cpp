@@ -74,7 +74,11 @@ namespace wmr
 		// Resize the renderer viewport
 		render_system.Resize(new_width, new_height);
 
-		m_renderer_frame_graphs[static_cast<size_t>(m_current_rendering_pipeline_type)]->Resize(render_system, new_width, new_height);
+		// Resize all framegraphs
+		for (auto& frame_graph : m_renderer_frame_graphs)
+		{
+			frame_graph->Resize(render_system, new_width, new_height);
+		}
 	}
 
 	std::pair<std::uint32_t, std::uint32_t> FrameGraphManager::GetCurrentDimensions() const noexcept

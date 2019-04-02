@@ -32,9 +32,6 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 	bool full_rt_set = arg_data.isFlagSet("full_ray_trace");
 	bool path_trace_set = arg_data.isFlagSet("path_trace");
 
-	// Viewport dimensions are needed to force the resizing of the frame graph after switching rendering pipeline
-	auto viewport_dimensions = viewport_override->GetViewportSize();
-
 	if (deferred_set)
 	{
 		frame_graph.SetType(RendererFrameGraphType::DEFERRED);
@@ -56,9 +53,6 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 		// Invalid
 		return MStatus::kFailure;
 	}
-
-	// Force resize of the current frame graph
-	frame_graph.Resize(viewport_dimensions.first, viewport_dimensions.second, renderer.GetD3D12Renderer());
 
 	return MStatus::kSuccess;
 }
