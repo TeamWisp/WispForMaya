@@ -76,6 +76,12 @@ namespace wmr
 		/*! /return SceneGraphParser reference. */
 		wmr::ScenegraphParser& GetSceneGraphParser() const;
 
+		//! Get the viewport width and height
+		const std::pair<uint32_t, uint32_t> GetViewportSize() const noexcept;
+
+		//! Lets the caller know when the plug-in has completed at least a single setup loop
+		bool IsInitialized() const noexcept;
+
 	private:
 		//! Assign the correct render operations to the render operation container
 		/*! The names specified by the ConfigureRenderOperations() function indicate the order in which the render
@@ -142,5 +148,10 @@ namespace wmr
 
 		std::unique_ptr<Renderer> m_renderer; //!< Wisp framework render system
 		std::unique_ptr<wmr::ScenegraphParser> m_scenegraph_parser;
+
+		uint32_t m_viewport_width;
+		uint32_t m_viewport_height;
+
+		bool m_is_initialized;
 	};
 }

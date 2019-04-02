@@ -17,6 +17,8 @@
 #include "render_tasks/d3d12_post_processing.hpp"
 #include "render_tasks/d3d12_raytracing_task.hpp"
 #include "render_tasks/d3d12_rt_hybrid_task.hpp"
+#include "render_tasks/d3d12_path_tracer.hpp"
+#include "render_tasks/d3d12_accumulation.hpp"
 
 namespace wmr
 {
@@ -42,6 +44,7 @@ namespace wmr
 		CreateDeferredPipeline();
 		CreateHybridRTPipeline();
 		CreateFullRTPipeline();
+		CreatePathTracerPipeline();
 
 		// Set-up the rendering pipelines (frame graph configuration)
 		for (auto& frame_graph : m_renderer_frame_graphs)
@@ -65,7 +68,17 @@ namespace wmr
 		m_width = new_width;
 		m_height = new_height;
 
-		m_renderer_frame_graphs[static_cast<size_t>(m_current_rendering_pipeline_type)]->Resize(render_system, new_width, new_height);
+		// Wait until the GPU is done executing
+		render_system.WaitForAllPreviousWork();
+
+		// Resize the renderer viewport
+		render_system.Resize(new_width, new_height);
+
+		// Resize all framegraphs
+		for (auto& frame_graph : m_renderer_frame_graphs)
+		{
+			frame_graph->Resize(render_system, new_width, new_height);
+		}
 	}
 
 	std::pair<std::uint32_t, std::uint32_t> FrameGraphManager::GetCurrentDimensions() const noexcept
@@ -78,7 +91,9 @@ namespace wmr
 		auto frame_graph = new wr::FrameGraph(9);
 
 		// Precalculate BRDF Lut
-		wr::AddBrdfLutPrecalculationTask( *frame_graph );
+		wr::AddBrdfLutPrecalculationTask(*frame_graph);
+
+		// Skybox
 		wr::AddEquirectToCubemapTask(*frame_graph);
 		wr::AddCubemapConvolutionTask(*frame_graph);
 
@@ -106,14 +121,15 @@ namespace wmr
 
 	void FrameGraphManager::CreateHybridRTPipeline() noexcept
 	{
-		auto frame_graph = new wr::FrameGraph(7);
+		auto frame_graph = new wr::FrameGraph(11);
 
 		// Precalculate BRDF Lut
-		wr::AddBrdfLutPrecalculationTask(*frame_graph);
-
 		wr::AddBrdfLutPrecalculationTask( *frame_graph );
+		
+		// Skybox
 		wr::AddEquirectToCubemapTask( *frame_graph );
 		wr::AddCubemapConvolutionTask( *frame_graph );
+
 		// Construct the G-buffer
 		wr::AddDeferredMainTask(*frame_graph, std::nullopt, std::nullopt);
 
@@ -126,8 +142,10 @@ namespace wmr
 		// Ray tracing
 		wr::AddRTHybridTask(*frame_graph);
 
+		wr::AddDeferredCompositionTask(*frame_graph, std::nullopt, std::nullopt);
+
 		// Do some post processing
-		wr::AddPostProcessingTask<wr::RTHybridData>(*frame_graph);
+		wr::AddPostProcessingTask<wr::DeferredCompositionTaskData>(*frame_graph);
 
 		// Save the ray tracing pixel data CPU pointer
 		wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*frame_graph, std::nullopt, std::nullopt);
@@ -141,10 +159,14 @@ namespace wmr
 
 	void FrameGraphManager::CreateFullRTPipeline() noexcept
 	{
-		auto frame_graph = new wr::FrameGraph(4);
+		auto frame_graph = new wr::FrameGraph(7);
 
-		// Construct the acceleraion structures needed for the ray tracing task
+		// Construct the acceleration structures needed for the ray tracing task
 		wr::AddBuildAccelerationStructuresTask(*frame_graph);
+
+		// Skybox
+		wr::AddEquirectToCubemapTask(*frame_graph);
+		wr::AddCubemapConvolutionTask(*frame_graph);
 
 		// Perform ray tracing
 		wr::AddRaytracingTask(*frame_graph);
@@ -160,5 +182,43 @@ namespace wmr
 
 		// Store the frame graph for future use
 		m_renderer_frame_graphs[static_cast<size_t>(RendererFrameGraphType::FULL_RAY_TRACING)] = frame_graph;
+	}
+
+	void FrameGraphManager::CreatePathTracerPipeline() noexcept
+	{
+		auto frame_graph = new wr::FrameGraph(10);
+
+		// Precalculate BRDF Lut
+		wr::AddBrdfLutPrecalculationTask(*frame_graph);
+
+		// Skybox
+		wr::AddEquirectToCubemapTask(*frame_graph);
+		wr::AddCubemapConvolutionTask(*frame_graph);
+
+		// Construct the G-buffer
+		wr::AddDeferredMainTask(*frame_graph, std::nullopt, std::nullopt);
+
+		// Build Acceleration Structure
+		wr::AddBuildAccelerationStructuresTask(*frame_graph);
+
+		// Raytracing task
+		//wr::AddRTHybridTask(*fg);
+
+		// Global Illumination Path Tracing
+		wr::AddPathTracerTask(*frame_graph);
+		wr::AddAccumulationTask<wr::PathTracerData>(*frame_graph);
+
+		wr::AddDeferredCompositionTask(*frame_graph, std::nullopt, std::nullopt);
+
+		// Do some post processing
+		wr::AddPostProcessingTask<wr::DeferredCompositionTaskData>(*frame_graph);
+
+		// Save the path tracing pixel data CPU pointer
+		wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*frame_graph, std::nullopt, std::nullopt);
+
+		// Copy the raytracing pixel data to the final render target
+		wr::AddRenderTargetCopyTask<wr::PostProcessingData>(*frame_graph);
+
+		m_renderer_frame_graphs[static_cast<size_t>(RendererFrameGraphType::PATH_TRACER)] = frame_graph;
 	}
 }

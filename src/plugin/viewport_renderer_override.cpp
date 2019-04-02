@@ -60,6 +60,9 @@ namespace wmr
 		: MRenderOverride(name)
 		, m_ui_name(wmr::settings::PRODUCT_NAME)
 		, m_current_render_operation(-1)
+		, m_viewport_width(1)
+		, m_viewport_height(1)
+		, m_is_initialized(false)
 	{
 		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
 		if( maya_renderer )
@@ -137,6 +140,16 @@ namespace wmr
 		return *m_scenegraph_parser;
 	}
 
+	const std::pair<uint32_t, uint32_t> ViewportRendererOverride::GetViewportSize() const noexcept
+	{
+		return { m_viewport_width, m_viewport_height };
+	}
+
+	bool ViewportRendererOverride::IsInitialized() const noexcept
+	{
+		return m_is_initialized;
+	}
+
 	MStatus ViewportRendererOverride::setup(const MString& destination)
 	{
 		// Update the viewport camera(s)
@@ -172,6 +185,10 @@ namespace wmr
 		// this ensures that viewport selection behavior works as if shaded
 		EnsurePanelDisplayShading(destination);
 
+		// Ran the setup loop at least once
+		if (!m_is_initialized)
+			m_is_initialized = true;
+
 		return MStatus::kSuccess;
 	}
 
@@ -187,8 +204,8 @@ namespace wmr
 			return;
 
 		// Position and dimensions of the current Maya viewport
-		std::uint32_t x, y, current_viewport_width, current_viewport_height;
-		status = viewport.viewport(x, y, current_viewport_width, current_viewport_height);
+		std::uint32_t x, y;
+		status = viewport.viewport(x, y, m_viewport_width, m_viewport_height);
 
 		// Could not retrieve the viewport information
 		if (status == MStatus::kFailure)
@@ -198,17 +215,11 @@ namespace wmr
 		const auto current_frame_graph_size = m_renderer->GetFrameGraph().GetCurrentDimensions();
 
 		// Wisp <==> Maya viewport resolutions do not match
-		if ((current_frame_graph_size.first != current_viewport_width) ||
-			(current_frame_graph_size.second != current_viewport_height))
+		if ((current_frame_graph_size.first != m_viewport_width) ||
+			(current_frame_graph_size.second != m_viewport_height))
 		{
-			// Wait until the GPU is done executing
-			m_renderer->GetD3D12Renderer().WaitForAllPreviousWork();
-
-			// Resize the renderer viewport
-			m_renderer->GetD3D12Renderer().Resize(current_viewport_width, current_viewport_height);
-
 			// Resize the frame graph
-			m_renderer->GetFrameGraph().Resize(current_viewport_width, current_viewport_height, m_renderer->GetD3D12Renderer());
+			m_renderer->GetFrameGraph().Resize(m_viewport_width, m_viewport_height, m_renderer->GetD3D12Renderer());
 		}
 	}
 

@@ -71,7 +71,10 @@ namespace wmr
 			m_color_texture_desc.fBytesPerRow = aligned_buffer_size;
 			m_color_texture_desc.fTextureType = MHWRender::kImage2D;
 
-			m_color_texture.texture = MHWRender::MRenderer::theRenderer()->getTextureManager()->acquireTexture("", m_color_texture_desc, cpu_data.m_data);
+			m_color_texture.texture = MHWRender::MRenderer::theRenderer()->getTextureManager()->acquireTexture("", m_color_texture_desc, cpu_data.m_data, false);
+			assert( m_color_texture.texture != nullptr );
+
+
 			m_color_texture.texture->textureDescription(m_color_texture_desc);
 
 			created_new_texture = true;
