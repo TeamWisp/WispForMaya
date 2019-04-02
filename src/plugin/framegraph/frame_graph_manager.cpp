@@ -117,7 +117,7 @@ namespace wmr
 
 	void FrameGraphManager::CreateHybridRTPipeline() noexcept
 	{
-		auto frame_graph = new wr::FrameGraph(10);
+		auto frame_graph = new wr::FrameGraph(11);
 
 		// Precalculate BRDF Lut
 		wr::AddBrdfLutPrecalculationTask( *frame_graph );
@@ -138,8 +138,10 @@ namespace wmr
 		// Ray tracing
 		wr::AddRTHybridTask(*frame_graph);
 
+		wr::AddDeferredCompositionTask(*frame_graph, std::nullopt, std::nullopt);
+
 		// Do some post processing
-		wr::AddPostProcessingTask<wr::RTHybridData>(*frame_graph);
+		wr::AddPostProcessingTask<wr::DeferredCompositionTaskData>(*frame_graph);
 
 		// Save the ray tracing pixel data CPU pointer
 		wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*frame_graph, std::nullopt, std::nullopt);
