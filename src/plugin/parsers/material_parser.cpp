@@ -19,6 +19,7 @@
 #include <maya/MObjectArray.h>
 #include <maya/MPlug.h>
 #include <maya/MPlugArray.h>
+#include <maya/MSelectionList.h>
 
 // C++ standard
 #include <string>
@@ -39,54 +40,137 @@ namespace wmr
 {
 	void DirtyNodeCallback(MObject &node, MPlug &plug, void *clientData)
 	{
-		// Get material parser from client data
-		wmr::MaterialParser *material_parser = reinterpret_cast<wmr::MaterialParser*>(clientData);
-		
-		// Get Maya mesh object that is using the Maya material
-		std::optional<MObject> mesh_object = material_parser->GetMeshObjectFromMaterial(node);
-		if (!mesh_object.has_value())
+		// Get material parser, material manager, and material handle from client data
+		wmr::MaterialParser::ShaderDirtyData *shader_dirty_shader = reinterpret_cast<wmr::MaterialParser::ShaderDirtyData*>(clientData);
+		wmr::MaterialParser * material_parser = shader_dirty_shader->material_parser;
+		wmr::MaterialManager & material_manager = material_parser->GetRenderer().GetMaterialManager();
+
+		// Check if surface shader exists. Quit the callback if it doesn't exists
+		wmr::SurfaceShaderShadingEngineRelation * relation = material_manager.DoesSurfaceShaderExist(node);
+		if (relation == nullptr)
 		{
-			MGlobal::displayError("A connect to a material could not be found! (wmr::DirtyNodeCallback)");
 			return;
 		}
+		wr::MaterialHandle material_handle = relation->material_handle;
 
-		// Get Wisp material that is used by the found Maya mesh object
-		wr::Material *material = material_parser->GetRenderer().GetMaterialManager().GetMaterial(mesh_object.value());
+		// Get Wisp material
+		wr::Material* material = material_manager.GetWispMaterial(material_handle);
 
 		// Get plug name that has changed value
 		MString changedPlugName = plug.partialName(false, false, false, false, false, true);
 
-		MFnDependencyNode fn_material(node);
-		if (material != nullptr)
+		// Apply changes to material
+		MFnDependencyNode fn_dep_material(node);
+		auto shader_type = material_parser->GetShaderType(node);
+		switch (shader_type)
 		{
-			if (node.hasFn(MFn::kLambert))
+			case wmr::detail::SurfaceShaderType::LAMBERT:
 			{
-				material_parser->HandleLambertChange(fn_material, plug, changedPlugName, *material);
+				material_parser->HandleLambertChange(fn_dep_material, plug, changedPlugName, *material);
+				break;
 			}
-			else if (node.hasFn(MFn::kPhong))
+			case wmr::detail::SurfaceShaderType::PHONG:
 			{
-				material_parser->HandlePhongChange(fn_material, plug, changedPlugName, *material);
+				material_parser->HandlePhongChange(fn_dep_material, plug, changedPlugName, *material);
+				break;
+			}
+			case wmr::detail::SurfaceShaderType::ARNOLD_STANDARD_SURFACE_SHADER:
+			{
+				material_parser->HandleArnoldChange(fn_dep_material, plug, changedPlugName, *material);
+				break;
 			}
 		}
+
+		material->UpdateConstantBuffer();
 	}
 } /* namespace wmr */
 
-
-
-// https://nccastaff.bournemouth.ac.uk/jmacey/RobTheBloke/www/research/maya/mfnmesh.htm
-void wmr::MaterialParser::Parse(const MFnMesh& mesh)
+void wmr::MaterialParser::ParseShadingEngineToWispMaterial(MObject & shading_engine, MObject & fnmesh)
 {
 	auto& material_manager = m_renderer.GetMaterialManager();
 	auto& texture_manager = m_renderer.GetTextureManager();
 
+	// Get shader plug from shading engine
+	auto opt_surface_shader_plug = GetSurfaceShader(shading_engine);
+	if (!opt_surface_shader_plug.has_value())
+		return;
+	auto surface_shader_plug = opt_surface_shader_plug.value();
+
+	// Get the actual surface shader plug
+	auto opt_actual_surface_shader = GetActualSurfaceShaderPlug(surface_shader_plug);
+	if (!opt_surface_shader_plug.has_value())
+		return;
+	// Node
+	auto actual_surface_shader = opt_actual_surface_shader.value();
+	auto actual_surface_shader_object = opt_actual_surface_shader.value().node();
+
+	// Check if shader type not supported by this plug-in
+	auto shader_type = GetShaderType(actual_surface_shader_object);
+	if (shader_type == detail::SurfaceShaderType::UNSUPPORTED)
+		return;
+
+	// Wisp material
+	wr::MaterialHandle material_handle = material_manager.CreateMaterial(fnmesh, shading_engine, actual_surface_shader);
+	
+	InitialMaterialBuild(actual_surface_shader, shader_type, material_handle, material_manager, texture_manager);
+}
+
+void wmr::MaterialParser::InitialMaterialBuild(MPlug & surface_shader, detail::SurfaceShaderType shader_type, wr::MaterialHandle material_handle, MaterialManager & material_manager, TextureManager & texture_manager)
+{
+	// Get a Wisp material for this handle
+	auto material = material_manager.GetWispMaterial(material_handle);
+	MObject surface_shader_object = surface_shader.node();
+
+	// Subscribe the surface shader to listen for changes
+	SubscribeSurfaceShader(surface_shader_object);
+
+	// Arnold PBR standard surface shader
+	if (shader_type == detail::SurfaceShaderType::ARNOLD_STANDARD_SURFACE_SHADER)
+	{
+		auto data = ParseArnoldStandardSurfaceShaderData(surface_shader_object);
+
+		ConfigureWispMaterial(data, material, texture_manager);
+	}
+
+	// Found a Lambert shader
+	if (shader_type == detail::SurfaceShaderType::LAMBERT)
+	{
+
+		// Retrieve the texture associated with this plug
+		auto color_plug = GetPlugByName(surface_shader_object, MayaMaterialProps::plug_color);
+		auto albedo_texture_path = GetPlugTexture(color_plug);
+
+		// If there is no color available, use the RGBA values
+		if (!albedo_texture_path.has_value())
+		{
+
+			MFnDependencyNode dep_node_fn(surface_shader.node());
+			MString color_str(MayaMaterialProps::plug_color);
+			MColor albedo_color = GetColor(dep_node_fn, color_str);
+
+			material->SetConstantAlbedo({albedo_color.r, albedo_color.g, albedo_color.b});
+			material->SetUseConstantAlbedo(true);
+		}
+		else
+		{
+			// Request new Wisp textures
+			auto albedo_texture = texture_manager.CreateTexture(albedo_texture_path.value().asChar());
+
+			// Use this texture as the material albedo texture
+			material->SetAlbedo(*albedo_texture);
+			material->SetUseConstantAlbedo(false);
+		}
+	}
+}
+
+// https://nccastaff.bournemouth.ac.uk/jmacey/RobTheBloke/www/research/maya/mfnmesh.htm
+void wmr::MaterialParser::OnMeshAdded(MFnMesh& mesh)
+{
 	// Number of instances of this mesh
 	std::uint32_t instance_count = mesh.parentCount();
 
 	for (auto instance_index = 0; instance_index < instance_count; ++instance_index)
 	{
-		// Attach a function set to the instance
-		MFnDependencyNode mesh_fn(mesh.parent(instance_index));
-
 		// References to the shaders used on the meshes
 		MObjectArray shaders;
 
@@ -104,7 +188,12 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 
 				// All faces use the same material
 			case 1:
-				ParseSingleSurfaceShader(shaders[0], mesh, material_manager, texture_manager);
+				{
+					auto shading_engine = shaders[0];
+
+					MObject mesh_object = mesh.object();
+					ParseShadingEngineToWispMaterial(shading_engine, mesh_object);
+				}
 				break;
 
 				// Two or more materials are used (TODO)
@@ -114,111 +203,72 @@ void wmr::MaterialParser::Parse(const MFnMesh& mesh)
 	}
 }
 
-void wmr::MaterialParser::ParseSingleSurfaceShader(const MObject& node, const MFnMesh& mesh, MaterialManager& material_manager, TextureManager& texture_manager)
+void wmr::MaterialParser::OnCreateSurfaceShader(MPlug & surface_shader)
 {
-	auto surface_shader = GetSurfaceShader(node);
-
-	// Invalid surface shader
-	if (!surface_shader.has_value())
+	wmr::SurfaceShaderShadingEngineRelation * relation = m_renderer.GetMaterialManager().OnCreateSurfaceShader(surface_shader);
+	// When the surface shader already exists for some reason, don't do anything
+	if (relation != nullptr)
 	{
-		return;
-	}
-
-	// Find all plugs that are connected to this shader
-	MPlugArray connected_plugs;
-	surface_shader.value().connectedTo(connected_plugs, true, false);
-
-	// Could not find a valid connected plug
-	if (connected_plugs.length() != 1)
-	{
-		return;
-	}
-
-	MObject connected_plug = connected_plugs[0].node();
-
-	auto shader_type = GetShaderType(connected_plug);
-
-	// Shader type not supported by this plug-in
-	if (shader_type == detail::SurfaceShaderType::UNSUPPORTED)
-	{
-		return;
-	}
-
-	// Wisp material
-	MObject object = mesh.object();
-	wr::MaterialHandle material_handle = material_manager.DoesExist(object);
-
-	// Create a new material if none exists yet
-	if (!material_handle.m_pool)
-	{
-		material_handle = material_manager.CreateMaterial(object);
-	}
-
-	// Get a Wisp material for this handle
-	auto material = material_manager.GetMaterial(material_handle);
-
-	// Arnold PBR standard surface shader
-	if (shader_type == detail::SurfaceShaderType::ARNOLD_STANDARD_SURFACE_SHADER)
-	{
-		auto data = ParseArnoldStandardSurfaceShaderData(connected_plug);
-
-		mesh_material_relations.push_back(std::make_pair(connected_plug, object));
-
-		MStatus status;
-		MCallbackId attributeId = MNodeMessage::addNodeDirtyCallback(
-			connected_plug,
-			DirtyNodeCallback,
-			this,
-			&status
-		);
-
-		CallbackManager::GetInstance().RegisterCallback(attributeId);
-
-		ConfigureWispMaterial(data, material, texture_manager);
-	}
-
-	// Found a Lambert shader
-	if (shader_type == detail::SurfaceShaderType::LAMBERT)
-	{
-		auto color_plug = GetPlugByName(connected_plug, MayaMaterialProps::plug_color);
-
-		// Retrieve the texture associated with this plug
-		auto albedo_texture_path = GetPlugTexture(color_plug);
-
-		mesh_material_relations.push_back(std::make_pair(connected_plug, object));
-
 		// Add callback that filters on material changes
-		MStatus status;
-		MCallbackId attributeId = MNodeMessage::addNodeDirtyCallback(
-			connected_plug,
-			DirtyNodeCallback,
-			this,
-			&status
-		);
+		MObject object = surface_shader.node();
+		SubscribeSurfaceShader(object);
 
-		CallbackManager::GetInstance().RegisterCallback(attributeId);
+		// Check if shader type not supported by this plug-in
+		auto shader_type = GetShaderType(surface_shader.node());
+		if (shader_type == detail::SurfaceShaderType::UNSUPPORTED)
+			return;
 
-		// If there is no color available, use the RGBA values
-		if (!albedo_texture_path.has_value())
-		{
-
-			MFnDependencyNode dep_node_fn(connected_plug);
-			MString color_str(MayaMaterialProps::plug_color);
-			MColor albedo_color = GetColor(dep_node_fn, color_str);
-
-			material->SetConstantAlbedo({ albedo_color.r, albedo_color.g, albedo_color.b });
-			material->SetUseConstantAlbedo(true);
-		}
-		else
-		{
-			// Request new Wisp textures
-			auto albedo_texture = texture_manager.CreateTexture(albedo_texture_path.value().asChar());
-
-			// Use this texture as the material albedo texture
-			material->SetAlbedo(*albedo_texture);
-			material->SetUseConstantAlbedo(false);
-		}
+		auto& material_manager = m_renderer.GetMaterialManager();
+		auto& texture_manager = m_renderer.GetTextureManager();
+		InitialMaterialBuild(surface_shader, shader_type, relation->material_handle, material_manager, texture_manager);
 	}
+}
+
+void wmr::MaterialParser::OnRemoveSurfaceShader(MPlug & surface_shader)
+{
+	// Call material manager on remove
+	m_renderer.GetMaterialManager().OnRemoveSurfaceShader(surface_shader);
+
+	// Remove callback from material parser
+	MObject surface_shader_object = surface_shader.node();
+	auto it = std::find_if(shader_dirty_datas.begin(), shader_dirty_datas.end(), [&surface_shader_object] (const std::vector<ShaderDirtyData*>::value_type& vt)
+	{
+		return (vt->surface_shader == surface_shader_object);
+	});
+	if (it != shader_dirty_datas.end())
+	{
+		ShaderDirtyData* data = *it;
+
+		// Remove callback from callback manager
+		CallbackManager::GetInstance().UnregisterCallback(data->callback_id);
+		delete data;
+
+		shader_dirty_datas.erase(it);
+	}
+}
+
+void wmr::MaterialParser::ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine)
+{
+	m_renderer.GetMaterialManager().ConnectShaderToShadingEngine(surface_shader, shading_engine, true);
+
+	// Find if shader has callback
+	MObject surface_shader_object = surface_shader.node();
+	SubscribeSurfaceShader(surface_shader_object);
+}
+
+void wmr::MaterialParser::DisconnectShaderFromShadingEngine(MPlug & surface_shader, MObject & shading_engine)
+{
+	m_renderer.GetMaterialManager().DisconnectShaderFromShadingEngine(surface_shader, shading_engine);
+}
+
+void wmr::MaterialParser::ConnectMeshToShadingEngine(MObject & mesh, MObject & shading_engine)
+{
+	m_renderer.GetMaterialManager().ConnectMeshToShadingEngine(mesh, shading_engine);
+}
+
+void wmr::MaterialParser::DisconnectMeshFromShadingEngine(MObject & mesh, MObject & shading_engine)
+{
+	m_renderer.GetMaterialManager().DisconnectMeshFromShadingEngine(mesh, shading_engine);
 }
 
 const wmr::detail::SurfaceShaderType wmr::MaterialParser::GetShaderType(const MObject& node)
@@ -293,6 +343,55 @@ const std::optional<MPlug> wmr::MaterialParser::GetSurfaceShader(const MObject& 
 	else
 	{
 		return std::nullopt;
+	}
+}
+
+const std::optional<MPlug> wmr::MaterialParser::GetActualSurfaceShaderPlug(const MPlug & surface_shader_plug)
+{
+	MPlugArray connected_plugs;
+	surface_shader_plug.connectedTo(connected_plugs, true, false);
+
+	// Could not find a valid connected plug
+	if (connected_plugs.length() <= 0)
+		return std::nullopt;
+
+	return connected_plugs[0];
+}
+
+void wmr::MaterialParser::SubscribeSurfaceShader(MObject & surface_shader)
+{
+	// Find surface shader change callback
+	auto it = std::find_if(shader_dirty_datas.begin(), shader_dirty_datas.end(), [&surface_shader] (const std::vector<ShaderDirtyData*>::value_type& vt)
+	{
+		return (vt->surface_shader == surface_shader);
+	});
+	// Add new callback if the surface shader doesn't have a callback yet.
+	if (it == shader_dirty_datas.end())
+	{
+		MaterialParser::ShaderDirtyData * data = new MaterialParser::ShaderDirtyData();
+		data->material_parser = this;
+		// Surface data is in this callback data, so I can figure out later what callback to remove (when a material is removed)
+		data->surface_shader = surface_shader;
+
+		MStatus status;
+		MCallbackId addedId = MNodeMessage::addNodeDirtyCallback(
+			surface_shader,
+			DirtyNodeCallback,
+			data,
+			&status
+		);
+
+		if (status != MS::kSuccess)
+		{
+			delete data;
+		}
+		else
+		{
+			CallbackManager::GetInstance().RegisterCallback(addedId);
+			data->callback_id = addedId;
+
+			shader_dirty_datas.push_back(data);
+		}
 	}
 }
 
@@ -486,25 +585,16 @@ void wmr::MaterialParser::HandlePhongChange(MFnDependencyNode & fn, MPlug & plug
 	}
 }
 
-const std::optional<MObject> wmr::MaterialParser::GetMeshObjectFromMaterial(MObject & object)
+void wmr::MaterialParser::HandleArnoldChange(MFnDependencyNode & fn, MPlug & plug, MString & plug_name, wr::Material & material)
 {
-	auto it = std::find_if(mesh_material_relations.begin(), mesh_material_relations.end(), [&object] (std::pair<MObject, MObject> pair)
-	{
-		return (pair.first == object);
-	});
+	// CHANGE Arnold MATERIAL DATA
+	MObject plug_object = plug.node();
+	auto data = ParseArnoldStandardSurfaceShaderData(plug_object);
 
-	auto end_it = --mesh_material_relations.end();
-
-	if (it != end_it)
-	{
-		// Material does not exist!
-		return std::nullopt;
-	}
-
-	return it->second;
+	ConfigureWispMaterial(data, &material, m_renderer.GetTextureManager());
 }
 
-const wmr::Renderer& wmr::MaterialParser::GetRenderer()
+const wmr::Renderer & wmr::MaterialParser::GetRenderer()
 {
 	return m_renderer;
 }

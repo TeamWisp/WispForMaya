@@ -341,7 +341,16 @@ namespace wmr
 
 		wmr::ModelParser* model_parser = reinterpret_cast< wmr::ModelParser* >( client_data );
 		// Add the mesh
-		model_parser->MeshAdded( mesh );
+		model_parser->MeshAdded(mesh);
+
+
+
+		if (model_parser->mesh_add_callback != nullptr)
+		{
+			model_parser->mesh_add_callback(mesh);
+		}
+
+
 
 		// Unregister the callback
 		auto findCallback = [ &object ]( std::pair<MObject, MCallbackId> pair ) -> bool
@@ -371,7 +380,6 @@ namespace wmr
 			std::iter_swap( it, it_end );
 			MMessage::removeCallback( it_end->second );
 			model_parser->m_mesh_added_callback_vector.pop_back();
-
 		}
 
 	}
@@ -483,14 +491,6 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 
 	bool model_reloaded = false;
 	wr::Model* model = m_renderer.GetModelManager().AddModel( fnmesh.name(), { mesh_data }, model_reloaded );
-
-
-	auto default_material = m_renderer.GetMaterialManager().GetDefaultMaterial();
-
-	for( auto& m : model->m_meshes )
-	{
-		m.second = default_material;
-	}
 	m_renderer.GetD3D12Renderer().WaitForAllPreviousWork();
 	auto model_node = m_renderer.GetScenegraph().CreateChild<wr::MeshNode>( nullptr, model );
 	MStatus status;
@@ -514,8 +514,6 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 	}
 
 	updateTransform( transform, model_node );
-
-	model->m_meshes[0].second = m_renderer.GetMaterialManager().GetDefaultMaterial();
 
 	m_object_transform_vector.push_back( std::make_pair( fnmesh.object(), model_node ) );
 
@@ -566,6 +564,15 @@ void wmr::ModelParser::Update()
 	m_changed_mesh_vector.clear();
 }
 
+void wmr::ModelParser::SetMeshAddCallback(std::function<void(MFnMesh&)> callback)
+{
+	if (mesh_add_callback != nullptr)
+	{
+		assert(false);
+	}
+	mesh_add_callback = callback;
+}
+
 std::shared_ptr<wr::MeshNode> wmr::ModelParser::GetWRModel(MObject & maya_object)
 {
 	auto findCallback = [&maya_object] (std::pair<MObject, std::shared_ptr<wr::MeshNode>> pair) -> bool
@@ -577,10 +584,9 @@ std::shared_ptr<wr::MeshNode> wmr::ModelParser::GetWRModel(MObject & maya_object
 		return false;
 	};
 	auto it = std::find_if(m_object_transform_vector.begin(), m_object_transform_vector.end(), findCallback);
-	if (it->first != maya_object)
+	if (it != m_object_transform_vector.end())
 	{
-		assert(false);
-		// find_if returns last element even if it is not a positive result
+		return it->second;
 	}
-	return it->second;
+	return nullptr;//std::make_shared<wr::MeshNode>();
 }

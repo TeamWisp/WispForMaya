@@ -4,6 +4,8 @@
 
 // Maya API
 #include <maya/MApiNamespace.h>
+#include <maya/MObject.h>
+#include <maya/MMessage.h>
 
 // C++ standard
 #include <optional>
@@ -89,18 +91,40 @@ namespace wmr
 		MaterialParser();
 		~MaterialParser() = default;
 
-		void Parse(const MFnMesh& mesh);
-		const std::optional<MObject> GetMeshObjectFromMaterial(MObject & object);
+		void InitialMaterialBuild(MPlug & surface_shader, detail::SurfaceShaderType shader_type, wr::MaterialHandle material_handle, MaterialManager & material_manager, TextureManager & texture_manager);
+
+		void OnMeshAdded(MFnMesh& mesh);
+		void OnCreateSurfaceShader(MPlug & surface_shader);
+		void OnRemoveSurfaceShader(MPlug & surface_shader);
+
+		void ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine);
+		void DisconnectShaderFromShadingEngine(MPlug & surface_shader, MObject & shading_engine);
+		void ConnectMeshToShadingEngine(MObject & mesh, MObject & shading_engine);
+		void DisconnectMeshFromShadingEngine(MObject & mesh, MObject & shading_engine);
+
 		void HandleLambertChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 		void HandlePhongChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
+		void HandleArnoldChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
+
 		const Renderer & GetRenderer();
+		const detail::SurfaceShaderType GetShaderType(const MObject& node);
+
+		struct ShaderDirtyData
+		{
+			MCallbackId callback_id;				// When removing callbacks, use this id to find what callback must be deleted
+			wmr::MaterialParser * material_parser;	// Pointer to the material parser
+			MObject surface_shader;					// Surface shader
+		};
 
 	private:
-		void ParseSingleSurfaceShader(const MObject& node, const MFnMesh& mesh, MaterialManager& material_manager, TextureManager& texture_manager);
-		const detail::SurfaceShaderType GetShaderType(const MObject& node);
+		void SubscribeSurfaceShader(MObject & actual_surface_shader);
+		void ParseShadingEngineToWispMaterial(MObject & shading_engine, MObject & fnmesh);
+
+		const std::optional<MPlug> GetSurfaceShader(const MObject& node);
+		const std::optional<MPlug> GetActualSurfaceShaderPlug(const MPlug & surface_shader_plug);
+
 		const std::optional<MString> GetPlugTexture(MPlug& plug);
 		const MPlug GetPlugByName(const MObject& node, MString name);
-		const std::optional<MPlug> GetSurfaceShader(const MObject& node);
 
 		void ConfigureWispMaterial(const detail::ArnoldStandardSurfaceShaderData& data, wr::Material* material, TextureManager& texture_manager) const;
 
@@ -108,13 +132,9 @@ namespace wmr
 
 		// Material parsing
 		MColor GetColor(MFnDependencyNode & fn, MString & plug_name);
+		std::vector<ShaderDirtyData*> shader_dirty_datas;
 
 	private:
-		// std::pair
-		//    first: MObject, connected lambert plug
-		//    second: MObject, MFnMesh.object()
-		std::vector<std::pair<MObject, MObject>> mesh_material_relations;
-
 		Renderer& m_renderer;
 	};
 }

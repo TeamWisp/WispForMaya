@@ -80,25 +80,70 @@ void LightRemovedCallback( MObject& node, void* client_data )
 	scenegraph_parser->GetLightParser().UnSubscribeObject( node );
 }
 
-void MaterialAddedCallback(MObject& node, void* client_data)
+void ConnectionAddedCallback(MPlug& src_plug, MPlug& dest_plug, bool made, void* client_data)
 {
-	assert( node.apiType() == MFn::Type::kMesh );
 	auto* material_parser = reinterpret_cast<wmr::MaterialParser*>(client_data);
 
-	MStatus status = MStatus::kSuccess;
+	// Get plug types
+	auto src_type = src_plug.node().apiType();
+	auto dest_type = dest_plug.node().apiType();
 
-	// Get the DAG node
-	MFnDagNode dag_node(node, &status);
-
-	if (status == MStatus::kSuccess)
+	// Check if anything is bound to a shading engine
+	// In that case, a material is either added or moved
+	if (dest_type == MFn::kShadingEngine)
 	{
-		MFnMesh mesh(node);
-		MGlobal::displayInfo("A material on the mesh \"" + dag_node.name() + "\" has been added!");
-		material_parser->Parse(mesh);
+		// Get destination object from destination plug
+		MObject dest_object = dest_plug.node();
+		// Bind the mesh to the shading engine if the source plug is a mesh
+		if (src_type == MFn::kMesh)
+		{
+			MObject src_object(src_plug.node());
+			// Check if connection is made
+			if (made)
+			{
+				material_parser->ConnectMeshToShadingEngine(src_object, dest_object);
+			}
+			else
+			{
+				material_parser->DisconnectMeshFromShadingEngine(src_object, dest_object);
+			}
+		}
+		else
+		{
+			// Get shader type of source plug
+			auto shaderType = material_parser->GetShaderType(src_plug.node());
+			// The type is UNSUPPORTED if we don't support it or if it's not a surface shader
+			if (shaderType != wmr::detail::SurfaceShaderType::UNSUPPORTED)
+			{
+				// Check if connection is made
+				if (made)
+				{
+					material_parser->ConnectShaderToShadingEngine(src_plug, dest_object);
+				}
+				else
+				{
+					material_parser->DisconnectShaderFromShadingEngine(src_plug, dest_object);
+				}
+			}
+		}
 	}
-	else
+	// When the destination plug is a shader list, a material is either made or removed
+	else if (dest_type == MFn::kShaderList)
 	{
-		MGlobal::displayInfo(status.errorString());
+		// Get shader type of source plug
+		auto shaderType = material_parser->GetShaderType(src_plug.node());
+		// The type is UNSUPPORTED if we don't support it or if it's not a surface shader
+		if (shaderType != wmr::detail::SurfaceShaderType::UNSUPPORTED)
+		{
+			if (made)
+			{
+				material_parser->OnCreateSurfaceShader(src_plug);
+			}
+			else
+			{
+				material_parser->OnRemoveSurfaceShader(src_plug);
+			}
+		}
 	}
 }
 
@@ -121,46 +166,37 @@ void wmr::ScenegraphParser::Initialize()
 {
 	m_camera_parser->Initialize();
 
-	MStatus status;
+	m_model_parser->SetMeshAddCallback([this] (MFnMesh & mesh)
+	{
+		this->m_material_parser->OnMeshAdded(mesh);
+	});
 
+	MStatus status;
+	// Mesh added
 	MCallbackId addedId = MDGMessage::addNodeAddedCallback(
 		MeshAddedCallback,
 		"mesh",
 		this,
 		&status
 	);
+	AddCallbackValidation(status, addedId);
 
-	MCallbackId material_added_id = MDGMessage::addNodeAddedCallback(
-		MaterialAddedCallback,
-		"mesh",
-		m_material_parser.get(),
-		&status
-	);
-	
-	if( status == MS::kSuccess )
-	{
-		CallbackManager::GetInstance().RegisterCallback( addedId );
-	}
-	else
-	{
-		assert( false );
-	}
-
+	// Mesh removed 
 	addedId = MDGMessage::addNodeRemovedCallback(
 		MeshRemovedCallback,
 		"mesh",
 		this,
 		&status
 	);
+	AddCallbackValidation(status, addedId);
 
-	if( status == MS::kSuccess )
-	{
-		CallbackManager::GetInstance().RegisterCallback( addedId );
-	}
-	else
-	{
-		assert( false );
-	}
+	// Connection added (material)
+	addedId = MDGMessage::addConnectionCallback(
+		ConnectionAddedCallback,
+		m_material_parser.get(),
+		&status
+	);
+	AddCallbackValidation(status, addedId);
 
 	addedId = MDGMessage::addNodeAddedCallback(
 		LightAddedCallback,
@@ -168,15 +204,7 @@ void wmr::ScenegraphParser::Initialize()
 		this,
 		&status
 	);
-
-	if( status == MS::kSuccess )
-	{
-		CallbackManager::GetInstance().RegisterCallback( addedId );
-	}
-	else
-	{
-		assert( false );
-	}
+	AddCallbackValidation(status, addedId);
 
 	addedId = MDGMessage::addNodeRemovedCallback(
 		LightRemovedCallback,
@@ -184,23 +212,13 @@ void wmr::ScenegraphParser::Initialize()
 		this,
 		&status
 	);
-
-	if( status == MS::kSuccess )
-	{
-		CallbackManager::GetInstance().RegisterCallback( addedId );
-	}
-	else
-	{
-		assert( false );
-	}
+	AddCallbackValidation(status, addedId);
 	
 	// TODO: add other types of addedCallbacks
 
 	//load meshes
 	MStatus load_status = MS::kSuccess;
-
 	MItDag mesh_itt( MItDag::kDepthFirst, MFn::kMesh, &load_status );
-
 	if( load_status != MS::kSuccess )
 	{
 		MGlobal::displayError( "false to get iterator: " + load_status );
@@ -211,9 +229,8 @@ void wmr::ScenegraphParser::Initialize()
 		MFnMesh mesh( mesh_itt.currentItem() );
 		if( !mesh.isIntermediateObject() )
 		{
-			m_model_parser->MeshAdded( mesh );
-			m_material_parser->Parse(mesh);
-			//add callback here <--------!!
+			m_model_parser->MeshAdded(mesh);
+			m_material_parser->OnMeshAdded(mesh);
 		}
 		mesh_itt.next();
 	}
@@ -239,6 +256,18 @@ void wmr::ScenegraphParser::Initialize()
 void wmr::ScenegraphParser::Update()
 {
 	m_model_parser->Update();
+}
+
+void wmr::ScenegraphParser::AddCallbackValidation(MStatus status, MCallbackId id)
+{
+	if (status == MS::kSuccess)
+	{
+		CallbackManager::GetInstance().RegisterCallback(id);
+	}
+	else
+	{
+		assert(false);
+	}
 }
 
 wmr::ModelParser & wmr::ScenegraphParser::GetModelParser() const noexcept
