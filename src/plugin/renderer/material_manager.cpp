@@ -34,7 +34,7 @@ void wmr::MaterialManager::Initialize()
 
 	m_default_material_handle = m_material_pool->Create();
 
-	wr::Material* internal_material = m_material_pool->GetMaterial(m_default_material_handle.m_id);
+	wr::Material* internal_material = m_material_pool->GetMaterial(m_default_material_handle);
 	auto& texture_manager = renderer.GetTextureManager();
 
 	internal_material->UseNormalTexture( false );
@@ -240,7 +240,7 @@ void wmr::MaterialManager::DisconnectMeshFromShadingEngine(MObject & mesh, MObje
 
 wr::Material * wmr::MaterialManager::GetWispMaterial(wr::MaterialHandle & material_handle)
 {
-	return m_material_pool->GetMaterial(material_handle.m_id);
+	return m_material_pool->GetMaterial(material_handle);
 }
 
 wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::DoesMaterialHandleExist(wr::MaterialHandle & material_handle)
