@@ -100,20 +100,13 @@ static void updateTransform( MFnTransform& transform, std::shared_ptr<wr::MeshNo
 
 	double4 quatd = { 0,0,0,0 };
 	status = child_trans_matrix.getRotationQuaternion( quatd[0], quatd[1], quatd[2], quatd[3], MSpace::kObject );
-	MQuaternion rot_quat( quatd[0], quatd[1], quatd[2], quatd[3] );
-
-	auto rot = rot_quat.asEulerRotation();
-	rot = child_trans_matrix.eulerRotation();
-
-	rot = rot.bound();
-
 	
 	double3 scale;
 	status = child_trans_matrix.getScale( scale, MSpace::kWorld );
 	assert( status == MS::kSuccess );
 
 	mesh_node->SetPosition( { static_cast< float >( pos.x ), static_cast< float >( pos.y ), static_cast< float >( pos.z ) } );
-	mesh_node->SetRotation( { static_cast< float >( rot.x ), static_cast< float >( rot.y ), static_cast< float >( rot.z ) } );
+	mesh_node->SetQuaternionRotation( quatd[0], quatd[1], quatd[2], quatd[3] );
 	mesh_node->SetScale( { static_cast< float >( scale[0] ), static_cast< float >( scale[1] ),static_cast< float >( scale[2] ) } );
 
 }
