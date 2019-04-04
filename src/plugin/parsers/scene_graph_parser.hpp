@@ -1,5 +1,11 @@
 #pragma once
+
+// Maya API
+#include <maya/MApiNamespace.h>
+#include <maya/MMessage.h>
+
 #include <memory>
+
 namespace wr
 {
 	class SceneGraph;
@@ -26,6 +32,7 @@ namespace wmr
 		void Initialize();
 		void Update();
 
+		void AddCallbackValidation(MStatus status, MCallbackId id);
 
 		ModelParser& GetModelParser() const noexcept;
 		MaterialParser& GetMaterialParser() const noexcept;

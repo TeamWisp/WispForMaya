@@ -75,7 +75,10 @@ MStatus initializePlugin(MObject object)
 	MFnPlugin plugin(object, wmr::settings::COMPANY_NAME, wmr::settings::PRODUCT_VERSION, "Any");
 
 	// Register the command that enabled a MEL script to switch rendering pipelines
-	plugin.registerCommand(wmr::settings::RENDER_PIPELINE_SELECT_COMMAND_NAME, wmr::RenderPipelineSelectCommand::creator);
+	plugin.registerCommand(wmr::settings::RENDER_PIPELINE_SELECT_COMMAND_NAME, wmr::RenderPipelineSelectCommand::creator, wmr::RenderPipelineSelectCommand::create_syntax);
+
+	// Add the Wisp UI to the menu bar in Maya
+	MGlobal::executeCommand("switch_rendering_pipeline");
 
 	// Workaround for avoiding dirtying the scene when registering overrides
 	const auto is_scene_dirty = IsSceneDirty();

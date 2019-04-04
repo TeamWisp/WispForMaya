@@ -18,5 +18,6 @@ namespace wmr
 		MStatus undoIt() override { return MStatus::kSuccess; }
 		bool isUndoable() const override { return false; };
 		static void* creator() { return new RenderPipelineSelectCommand(); }
+		static MSyntax create_syntax();
 	};
 }

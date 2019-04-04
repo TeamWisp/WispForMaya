@@ -1,5 +1,7 @@
 #include "callback_manager.hpp"
 
+#include <algorithm>
+
 // Maya API
 #include <maya/MCallbackIdArray.h>
 
@@ -28,6 +30,19 @@ namespace wmr
 	{
 		// Save the callback ID for future use
 		m_callback_vector.push_back(mcid);
+	}
+
+	void CallbackManager::UnregisterCallback(MCallbackId mcid)
+	{
+		auto it = std::find_if(m_callback_vector.begin(), m_callback_vector.end(), [&mcid] (const std::vector<MCallbackId>::value_type& vt)
+		{
+			return vt == mcid;
+		});
+		if (it != m_callback_vector.end())
+		{
+			MMessage::removeCallback(mcid);
+			m_callback_vector.erase(it);
+		}
 	}
 
 	void CallbackManager::Reset()

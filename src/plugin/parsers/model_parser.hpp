@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 
+#include <functional>
 
 namespace wr
 {
@@ -29,6 +30,8 @@ namespace wmr
 
 		void Update();
 
+		void SetMeshAddCallback(std::function<void(MFnMesh&)> callback);
+
 	private:
 		//callbacks that require private access and are part of the ModelParser.
 		friend void AttributeMeshTransformCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData );
@@ -41,5 +44,7 @@ namespace wmr
 		std::vector<MObject> m_changed_mesh_vector;
 
 		Renderer& m_renderer;
+
+		std::function<void(MFnMesh&)> mesh_add_callback;
 	};
 }
