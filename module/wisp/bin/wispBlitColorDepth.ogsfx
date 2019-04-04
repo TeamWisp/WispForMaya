@@ -57,8 +57,9 @@ GLSLShader PS_BlitColorDepth
 
 		// Output depth
 		//
-		vec4 depth = texture2D(gDepthSampler, uv); 
-		gl_FragDepth = depth.r;
+		vec4 depth = texture2D(gDepthSampler, uv);
+		float depthScalar = 1.0 - (depth.r * ((1.0 - depth.r) * 0.5));
+		gl_FragDepth = depthScalar;
 	}
 }
 
