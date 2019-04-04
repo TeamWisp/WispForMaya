@@ -65,26 +65,57 @@ static MIntArray GetLocalIndex( MIntArray & getVertices, MIntArray & getTriangle
 	return localIndex;
 }
 
+static MMatrix getParentWorldMatrix(MFnTransform& trans)
+{
+	auto count = trans.parentCount();
+	if( count > 0 )
+	{
+		MFnDagNode dagnode = trans.parent( 0 );
+		MDagPath path;
+		dagnode.getPath( path );
+		auto parent = MFnTransform( path );
+		return parent.transformation().asMatrix() * getParentWorldMatrix( parent );
+	}
+	else
+	{
+		return MMatrix::identity;
+	}
+}
+
 static void updateTransform( MFnTransform& transform, std::shared_ptr<wr::MeshNode> mesh_node )
 {
 	MStatus status = MS::kSuccess;
+	MDagPath path;
+	MDagPath::getAPathTo( transform.object(), path );
+	MFnTransform good_trans( path, &status);
+	assert( status == MS::kSuccess );
 
-	MVector pos = transform.getTranslation( MSpace::kTransform, &status );
+	auto parent_matrix = getParentWorldMatrix( good_trans );
+	auto child_matrix = good_trans.transformationMatrix();
+	auto child_world_matrix = child_matrix * parent_matrix;
+	
+	MTransformationMatrix child_trans_matrix( child_world_matrix);
 
-	MQuaternion qrot;
-	status = transform.getRotation( qrot, MSpace::kTransform );
-	qrot.normalizeIt();
-	MEulerRotation rot = qrot.asEulerRotation();
-	rot.reorderIt( MEulerRotation::kZXY );
+	MVector pos = child_trans_matrix.translation(MSpace::kWorld);
 
+	double4 quatd = { 0,0,0,0 };
+	status = child_trans_matrix.getRotationQuaternion( quatd[0], quatd[1], quatd[2], quatd[3], MSpace::kObject );
+	MQuaternion rot_quat( quatd[0], quatd[1], quatd[2], quatd[3] );
+
+	auto rot = rot_quat.asEulerRotation();
+	rot = child_trans_matrix.eulerRotation();
+
+	rot = rot.bound();
+
+	
 	double3 scale;
-	status = transform.getScale( scale );
-
+	status = child_trans_matrix.getScale( scale, MSpace::kWorld );
 	assert( status == MS::kSuccess );
 
 	mesh_node->SetPosition( { static_cast< float >( pos.x ), static_cast< float >( pos.y ), static_cast< float >( pos.z ) } );
 	mesh_node->SetRotation( { static_cast< float >( rot.x ), static_cast< float >( rot.y ), static_cast< float >( rot.z ) } );
 	mesh_node->SetScale( { static_cast< float >( scale[0] ), static_cast< float >( scale[1] ),static_cast< float >( scale[2] ) } );
+
 }
 
 auto getTransformFindAlgorithm( MFnTransform& transform )
