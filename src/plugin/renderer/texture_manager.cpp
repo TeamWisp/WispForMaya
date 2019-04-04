@@ -21,7 +21,7 @@ namespace wmr
 		m_texture_pool = dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer().GetD3D12Renderer().CreateTexturePool();
 
 		// The default texture needs to be loaded at all times
-		m_default_texture = m_texture_pool->Load("./resources/textures/Circus_Backstage_3k.hdr", false, false);
+		m_default_texture = m_texture_pool->LoadFromFile("./resources/textures/Circus_Backstage_3k.hdr", false, false);
 	}
 
 	const std::shared_ptr<wr::TextureHandle> TextureManager::CreateTexture(const char* path) noexcept
@@ -36,7 +36,7 @@ namespace wmr
 		if (it == m_texture_container.end())
 		{
 			// Texture does not exist yet
-			auto texture_handle = m_texture_pool->Load(path, false, false);
+			auto texture_handle = m_texture_pool->LoadFromFile(path, false, false);
 			m_texture_container[hash] = std::make_shared<wr::TextureHandle>(texture_handle);
 		}
 
@@ -89,7 +89,7 @@ namespace wmr
 		{
 			// Only reference left to this texture is the one that's in the unordered_map,
 			// so the texture can be deleted.
-			m_texture_pool->Unload(m_texture_container[hash]->m_id);
+			m_texture_pool->Unload(*m_texture_container[hash]);
 			m_texture_container.erase(hash);
 			
 			// Removed the texture from the texture pool
