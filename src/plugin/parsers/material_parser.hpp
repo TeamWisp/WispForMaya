@@ -55,7 +55,7 @@ namespace wmr
 		static const constexpr char * plug_color_a = "A";
 
 		static const constexpr float default_metallicness = 0.0f;
-		static const constexpr float default_roughness = 1.0f;
+		static const constexpr float default_roughness = 0.5f;
 	};
 
 	class MaterialParser
