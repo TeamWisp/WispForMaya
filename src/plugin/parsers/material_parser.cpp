@@ -69,6 +69,11 @@ namespace wmr
 				material_parser->HandleLambertChange(fn_dep_material, plug, changedPlugName, *material);
 				break;
 			}
+			case wmr::detail::SurfaceShaderType::PHONG:
+			{
+				material_parser->HandlePhongChange(fn_dep_material, plug, changedPlugName, *material);
+				break;
+			}
 			case wmr::detail::SurfaceShaderType::ARNOLD_STANDARD_SURFACE_SHADER:
 			{
 				material_parser->HandleArnoldChange(fn_dep_material, plug, changedPlugName, *material);
@@ -119,42 +124,26 @@ void wmr::MaterialParser::InitialMaterialBuild(MPlug & surface_shader, detail::S
 	// Subscribe the surface shader to listen for changes
 	SubscribeSurfaceShader(surface_shader_object);
 
+	// Found a Lambert shader
+	if (shader_type == detail::SurfaceShaderType::LAMBERT)
+	{
+	auto data = ParseLambertShaderData(surface_shader_object);
+
+	ConfigureWispMaterial(data, material, m_renderer.GetTextureManager());
+	}
+	// Found a Phong shader
+	else if (shader_type == detail::SurfaceShaderType::PHONG)
+	{
+	auto data = ParsePhongShaderData(surface_shader_object);
+
+	ConfigureWispMaterial(data, material, m_renderer.GetTextureManager());
+	}
 	// Arnold PBR standard surface shader
-	if (shader_type == detail::SurfaceShaderType::ARNOLD_STANDARD_SURFACE_SHADER)
+	else if (shader_type == detail::SurfaceShaderType::ARNOLD_STANDARD_SURFACE_SHADER)
 	{
 		auto data = ParseArnoldStandardSurfaceShaderData(surface_shader_object);
 
 		ConfigureWispMaterial(data, material, texture_manager);
-	}
-
-	// Found a Lambert shader
-	if (shader_type == detail::SurfaceShaderType::LAMBERT)
-	{
-
-		// Retrieve the texture associated with this plug
-		auto color_plug = GetPlugByName(surface_shader_object, MayaMaterialProps::plug_color);
-		auto albedo_texture_path = GetPlugTexture(color_plug);
-
-		// If there is no color available, use the RGBA values
-		if (!albedo_texture_path.has_value())
-		{
-
-			MFnDependencyNode dep_node_fn(surface_shader.node());
-			MString color_str(MayaMaterialProps::plug_color);
-			MColor albedo_color = GetColor(dep_node_fn, color_str);
-
-			material->SetConstantAlbedo({albedo_color.r, albedo_color.g, albedo_color.b});
-			material->SetUseConstantAlbedo(true);
-		}
-		else
-		{
-			// Request new Wisp textures
-			auto albedo_texture = texture_manager.CreateTexture(albedo_texture_path.value().asChar());
-
-			// Use this texture as the material albedo texture
-			material->SetAlbedo(*albedo_texture);
-			material->SetUseConstantAlbedo(false);
-		}
 	}
 }
 
@@ -274,6 +263,10 @@ const wmr::detail::SurfaceShaderType wmr::MaterialParser::GetShaderType(const MO
 	if (shader_type_name == MayaMaterialProps::maya_lambert_shader_name)
 	{
 		return detail::SurfaceShaderType::LAMBERT;
+	}
+	else if (shader_type_name == MayaMaterialProps::maya_phong_shader_name)
+	{
+		return detail::SurfaceShaderType::PHONG;
 	}
 	else if (shader_type_name == MayaMaterialProps::arnold_standard_shader_name)
 	{
@@ -427,6 +420,47 @@ wmr::LambertShaderData wmr::MaterialParser::ParseLambertShaderData(const MObject
 	return data;
 }
 
+wmr::PhongShaderData wmr::MaterialParser::ParsePhongShaderData(const MObject & plug)
+{
+	PhongShaderData data = {};
+
+	// Need this to get access to functions that allow us to retrieve the data from the plug
+	MFnDependencyNode dep_node_fn(plug);
+
+	// Get all PBR variables
+	auto diffuse_color_plug = GetPlugByName(plug, PhongShaderData::diffuse_color_plug_name);
+	auto bump_map_plug = GetPlugByName(plug, PhongShaderData::bump_map_plug_name);
+
+	// Attempt to retrieve a texture for each PBR variable
+	auto diffuse_color_texture_path = GetPlugTexture(diffuse_color_plug);
+	auto bump_map_texture_path = GetPlugTexture(bump_map_plug);
+
+	// Diffuse color
+	if (diffuse_color_texture_path.has_value())
+	{
+		data.using_diffuse_color_value = false;
+		data.diffuse_color_texture_path = diffuse_color_texture_path.value().asChar();
+	}
+	else
+	{
+		MString plug_name = PhongShaderData::diffuse_color_plug_name;
+
+		auto color = GetColor(dep_node_fn, plug_name);
+
+		data.diffuse_color[0] = color.r;
+		data.diffuse_color[1] = color.g;
+		data.diffuse_color[2] = color.b;
+	}
+
+	// Bump map
+	if (bump_map_texture_path.has_value())
+	{
+		data.bump_map_texture_path = bump_map_texture_path.value().asChar();
+	}
+
+	return data;
+}
+
 wmr::ArnoldStandardSurfaceShaderData wmr::MaterialParser::ParseArnoldStandardSurfaceShaderData(const MObject& plug)
 {
 	ArnoldStandardSurfaceShaderData data = {};
@@ -510,7 +544,7 @@ wmr::ArnoldStandardSurfaceShaderData wmr::MaterialParser::ParseArnoldStandardSur
 	if (specular_roughness_texture_path.has_value())
 	{
 		data.using_specular_roughness_value = false;
-		data.specular_roughness_texture_path = diffuse_color_texture_path.value().asChar();
+		data.specular_roughness_texture_path = specular_roughness_texture_path.value().asChar();
 	}
 	else
 	{
@@ -529,6 +563,8 @@ wmr::ArnoldStandardSurfaceShaderData wmr::MaterialParser::ParseArnoldStandardSur
 void wmr::MaterialParser::ConfigureWispMaterial(const wmr::LambertShaderData & data, wr::Material * material, TextureManager & texture_manager) const
 {
 	material->SetUseConstantAlbedo(data.using_diffuse_color_value);
+	material->SetUseConstantMetallic(true);
+	material->SetUseConstantRoughness(true);
 
 	if (data.using_diffuse_color_value)
 	{
@@ -548,6 +584,38 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::LambertShaderData & d
 		auto bump = texture_manager.CreateTexture(data.bump_map_texture_path);
 		material->SetNormal(*bump);
 	}
+
+	material->SetConstantMetallic({MayaMaterialProps::default_metallicness, MayaMaterialProps::default_metallicness, MayaMaterialProps::default_metallicness});
+	material->SetConstantRoughness(MayaMaterialProps::default_roughness);
+}
+
+void wmr::MaterialParser::ConfigureWispMaterial(const wmr::PhongShaderData & data, wr::Material * material, TextureManager & texture_manager) const
+{
+	material->SetUseConstantAlbedo(data.using_diffuse_color_value);
+	material->SetUseConstantMetallic(true);
+	material->SetUseConstantRoughness(true);
+
+	if (data.using_diffuse_color_value)
+	{
+		material->SetConstantAlbedo({data.diffuse_color[0], data.diffuse_color[1], data.diffuse_color[2]});
+	}
+	else
+	{
+		// Request new Wisp textures
+		auto albedo_texture = texture_manager.CreateTexture(data.diffuse_color_texture_path);
+
+		// Use this texture as the material albedo texture
+		material->SetAlbedo(*albedo_texture);
+	}
+
+	if (strcmp(data.bump_map_texture_path, "") != 0)
+	{
+		auto bump = texture_manager.CreateTexture(data.bump_map_texture_path);
+		material->SetNormal(*bump);
+	}
+
+	material->SetConstantMetallic({MayaMaterialProps::default_metallicness, MayaMaterialProps::default_metallicness, MayaMaterialProps::default_metallicness});
+	material->SetConstantRoughness(MayaMaterialProps::default_roughness);
 }
 
 void wmr::MaterialParser::ConfigureWispMaterial(const wmr::ArnoldStandardSurfaceShaderData& data, wr::Material* material, TextureManager& texture_manager) const
@@ -618,6 +686,14 @@ void wmr::MaterialParser::HandleLambertChange(MFnDependencyNode & fn, MPlug & pl
 {
 	MObject plug_object = plug.node();
 	auto data = ParseLambertShaderData(plug_object);
+
+	ConfigureWispMaterial(data, &material, m_renderer.GetTextureManager());
+}
+
+void wmr::MaterialParser::HandlePhongChange(MFnDependencyNode & fn, MPlug & plug, MString & plug_name, wr::Material & material)
+{
+	MObject plug_object = plug.node();
+	auto data = ParsePhongShaderData(plug_object);
 
 	ConfigureWispMaterial(data, &material, m_renderer.GetTextureManager());
 }

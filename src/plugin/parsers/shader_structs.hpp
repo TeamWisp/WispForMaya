@@ -20,6 +20,24 @@ namespace wmr
 		const char* bump_map_texture_path = "";
 	};
 
+	struct PhongShaderData
+	{
+		// Plug names to retrieve values
+		static const constexpr char* diffuse_color_plug_name = "color";
+		static const constexpr char* bump_map_plug_name = "normalCamera";
+
+		// Flags
+		bool using_diffuse_color_value = true;
+		bool using_bump_map_value = true;
+
+		// Values
+		float diffuse_color[3] = {0.0f, 0.0f, 0.0f};
+
+		// Files
+		const char* diffuse_color_texture_path = "";
+		const char* bump_map_texture_path = "";
+	};
+
 	struct ArnoldStandardSurfaceShaderData
 	{
 		// Plug names to retrieve values

@@ -32,14 +32,16 @@ namespace wmr
 			UNSUPPORTED = -1,
 
 			LAMBERT,
+			PHONG,
 			ARNOLD_STANDARD_SURFACE_SHADER
 		};
 	}
 
 	namespace MayaMaterialProps
 	{
-		static const constexpr char* arnold_standard_shader_name = "aiStandardSurface";
 		static const constexpr char* maya_lambert_shader_name = "lambert";
+		static const constexpr char* maya_phong_shader_name = "phong";
+		static const constexpr char* arnold_standard_shader_name = "aiStandardSurface";
 
 		static const constexpr char * surface_shader = "surfaceShader";
 					 
@@ -51,6 +53,9 @@ namespace wmr
 		static const constexpr char * plug_color_g = "G";
 		static const constexpr char * plug_color_b = "B";
 		static const constexpr char * plug_color_a = "A";
+
+		static const constexpr float default_metallicness = 0.0f;
+		static const constexpr float default_roughness = 1.0f;
 	};
 
 	class MaterialParser
@@ -71,6 +76,7 @@ namespace wmr
 		void DisconnectMeshFromShadingEngine(MObject & mesh, MObject & shading_engine);
 
 		void HandleLambertChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
+		void HandlePhongChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 		void HandleArnoldChange(MFnDependencyNode &fn, MPlug & plug, MString & plug_name, wr::Material & material);
 
 		const Renderer & GetRenderer();
@@ -93,11 +99,13 @@ namespace wmr
 		const std::optional<MString> GetPlugTexture(MPlug& plug);
 		const MPlug GetPlugByName(const MObject& node, MString name);
 
-		void ConfigureWispMaterial(const wmr::ArnoldStandardSurfaceShaderData& data, wr::Material* material, TextureManager& texture_manager) const;
 		void ConfigureWispMaterial(const wmr::LambertShaderData& data, wr::Material* material, TextureManager& texture_manager) const;
+		void ConfigureWispMaterial(const wmr::PhongShaderData & data, wr::Material* material, TextureManager& texture_manager) const;
+		void ConfigureWispMaterial(const wmr::ArnoldStandardSurfaceShaderData& data, wr::Material* material, TextureManager& texture_manager) const;
 
-		wmr::ArnoldStandardSurfaceShaderData ParseArnoldStandardSurfaceShaderData(const MObject& plug);
 		wmr::LambertShaderData ParseLambertShaderData(const MObject& plug);
+		wmr::PhongShaderData ParsePhongShaderData(const MObject& plug);
+		wmr::ArnoldStandardSurfaceShaderData ParseArnoldStandardSurfaceShaderData(const MObject& plug);
 
 		// Material parsing
 		MColor GetColor(MFnDependencyNode & fn, MString & plug_name);
