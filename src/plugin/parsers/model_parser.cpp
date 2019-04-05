@@ -108,7 +108,6 @@ static void updateTransform( MFnTransform& transform, std::shared_ptr<wr::MeshNo
 	mesh_node->SetPosition( { static_cast< float >( pos.x ), static_cast< float >( pos.y ), static_cast< float >( pos.z ) } );
 	mesh_node->SetQuaternionRotation( quatd[0], quatd[1], quatd[2], quatd[3] );
 	mesh_node->SetScale( { static_cast< float >( scale[0] ), static_cast< float >( scale[1] ),static_cast< float >( scale[2] ) } );
-
 }
 
 auto getTransformFindAlgorithm( MFnTransform& transform )
@@ -333,8 +332,6 @@ namespace wmr
 		wmr::ModelParser* model_parser = reinterpret_cast< wmr::ModelParser* >( client_data );
 
 		// specialized find_if algorithm
-
-
 		auto it = std::find_if( model_parser->m_object_transform_vector.begin(), model_parser->m_object_transform_vector.end(), getTransformFindAlgorithm( transform ) );
 
 		MFnMesh fn_mesh( it->first );
@@ -349,6 +346,21 @@ namespace wmr
 
 		updateTransform( transform, it->second );
 
+		auto child_count = transform.childCount();
+		if( child_count < 2 )
+		{
+			return;
+		}
+		for( unsigned int i = 0; i < child_count; ++i )
+		{
+			status = MS::kSuccess;
+			MFnTransform child_transform(transform.child( i ), &status);
+			if( status == MS::kSuccess )
+			{
+				MPlug child_plug( child_transform.object(), plug.attribute() );
+				AttributeMeshTransformCallback( msg, child_plug , other_plug, client_data );
+			}
+		}
 	}
 
 	void AttributeMeshAddedCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &other_plug, void *client_data )
