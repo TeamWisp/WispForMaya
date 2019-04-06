@@ -333,7 +333,10 @@ namespace wmr
 
 		// specialized find_if algorithm
 		auto it = std::find_if( model_parser->m_object_transform_vector.begin(), model_parser->m_object_transform_vector.end(), getTransformFindAlgorithm( transform ) );
-
+		if( it == model_parser->m_object_transform_vector.end() )
+		{
+			return;
+		}
 		MFnMesh fn_mesh( it->first );
 		MFnDagNode dagnode = fn_mesh.parent( 0, &status );
 		MObject object = dagnode.object();
@@ -342,7 +345,6 @@ namespace wmr
 		{
 			return; // find_if returns last element even if it is not a positive result
 		}
-
 
 		updateTransform( transform, it->second );
 
