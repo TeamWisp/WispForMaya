@@ -229,43 +229,7 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 				v3.m_pos[1] = ( float )meshPoints[firstTriangleVertices[2]].y;
 				v3.m_pos[2] = ( float )meshPoints[firstTriangleVertices[2]].z;
 
-				localIndex = GetLocalIndex( polygonVertices, firstTriangleVertices );
-
-				v1.m_normal[0] = meshNormals[itt.normalIndex( localIndex[0] )].x;
-				v1.m_normal[1] = meshNormals[itt.normalIndex( localIndex[0] )].y;
-				v1.m_normal[2] = meshNormals[itt.normalIndex( localIndex[0] )].z;
-
-				v2.m_normal[0] = meshNormals[itt.normalIndex( localIndex[1] )].x;
-				v2.m_normal[1] = meshNormals[itt.normalIndex( localIndex[1] )].y;
-				v2.m_normal[2] = meshNormals[itt.normalIndex( localIndex[1] )].z;
-
-				v3.m_normal[0] = meshNormals[itt.normalIndex( localIndex[2] )].x;
-				v3.m_normal[1] = meshNormals[itt.normalIndex( localIndex[2] )].y;
-				v3.m_normal[2] = meshNormals[itt.normalIndex( localIndex[2] )].z;
-
-				v1.m_tangent[0] = meshTangents[itt.tangentIndex( localIndex[0] )].x;
-				v1.m_tangent[1] = meshTangents[itt.tangentIndex( localIndex[0] )].y;
-				v1.m_tangent[2] = meshTangents[itt.tangentIndex( localIndex[0] )].z;
-
-				v2.m_tangent[0] = meshTangents[itt.tangentIndex( localIndex[1] )].x;
-				v2.m_tangent[1] = meshTangents[itt.tangentIndex( localIndex[1] )].y;
-				v2.m_tangent[2] = meshTangents[itt.tangentIndex( localIndex[1] )].z;
-
-				v3.m_tangent[0] = meshTangents[itt.tangentIndex( localIndex[2] )].x;
-				v3.m_tangent[1] = meshTangents[itt.tangentIndex( localIndex[2] )].y;
-				v3.m_tangent[2] = meshTangents[itt.tangentIndex( localIndex[2] )].z;
-
-				v1.m_bitangent[0] = meshBinormals[itt.normalIndex( localIndex[0] )].x;
-				v1.m_bitangent[1] = meshBinormals[itt.normalIndex( localIndex[0] )].y;
-				v1.m_bitangent[2] = meshBinormals[itt.normalIndex( localIndex[0] )].z;
-
-				v2.m_bitangent[0] = meshBinormals[itt.normalIndex( localIndex[1] )].x;
-				v2.m_bitangent[1] = meshBinormals[itt.normalIndex( localIndex[1] )].y;
-				v2.m_bitangent[2] = meshBinormals[itt.normalIndex( localIndex[1] )].z;
-
-				v3.m_bitangent[0] = meshBinormals[itt.normalIndex( localIndex[2] )].x;
-				v3.m_bitangent[1] = meshBinormals[itt.normalIndex( localIndex[2] )].y;
-				v3.m_bitangent[2] = meshBinormals[itt.normalIndex( localIndex[2] )].z;
+        localIndex = GetLocalIndex(polygonVertices, firstTriangleVertices);
 
 				int firstUVID[3];
 
@@ -277,14 +241,151 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 						&UVSets[0] );
 				}
 
-				v1.m_uv[0] = u[firstUVID[0]];
-				v1.m_uv[1] = v[firstUVID[0]];
+        if (u.length() > 0) {
+          v1.m_uv[0] = u[firstUVID[0]];
+          v2.m_uv[0] = u[firstUVID[1]];
+          v3.m_uv[0] = u[firstUVID[2]];
+        }
+        else {
+          v1.m_uv[0] = 0;
+          v2.m_uv[0] = 0;
+          v3.m_uv[0] = 0;
+        }
 
-				v2.m_uv[0] = u[firstUVID[1]];
-				v2.m_uv[1] = v[firstUVID[1]];
 
-				v3.m_uv[0] = u[firstUVID[2]];
-				v3.m_uv[1] = v[firstUVID[2]];
+        if (v.length() > 0) {
+          v1.m_uv[1] = v[firstUVID[0]];
+          v2.m_uv[1] = v[firstUVID[1]];
+          v3.m_uv[1] = v[firstUVID[2]];
+        }
+        else {
+          v1.m_uv[1] = 0;
+          v2.m_uv[1] = 0;
+          v3.m_uv[1] = 0;
+        }
+
+        // Normal, tangent and binormal
+        
+        memcpy(&v1.m_normal[0], &(meshNormals[itt.normalIndex(localIndex[0])].x), 12);
+        memcpy(&v2.m_normal[0], &(meshNormals[itt.normalIndex(localIndex[1])].x), 12);
+        memcpy(&v3.m_normal[0], &(meshNormals[itt.normalIndex(localIndex[2])].x), 12);
+
+        if (meshTangents.length() > 0 && meshBinormals.length() > 0)
+        {
+          memcpy(&v1.m_tangent[0], &meshTangents[itt.tangentIndex(localIndex[0])].x, 12);
+          memcpy(&v2.m_tangent[0], &meshTangents[itt.tangentIndex(localIndex[1])].x, 12);
+          memcpy(&v3.m_tangent[0], &meshTangents[itt.tangentIndex(localIndex[2])].x, 12);
+
+          memcpy(&v1.m_bitangent[0], &meshBinormals[itt.normalIndex(localIndex[0])].x, 12);
+          memcpy(&v2.m_bitangent[0], &meshBinormals[itt.normalIndex(localIndex[1])].x, 12);
+          memcpy(&v3.m_bitangent[0], &meshBinormals[itt.normalIndex(localIndex[2])].x, 12);
+        } 
+        else if (meshTangents.length() <= 0 && meshBinormals.length() <= 0)
+        {
+          DirectX::XMVECTOR v2v1 = {
+            v2.m_pos[0] - v1.m_pos[0],
+            v2.m_pos[1] - v1.m_pos[1],
+            v2.m_pos[2] - v1.m_pos[2]
+          };
+          DirectX::XMVECTOR v3v1 = {
+            v3.m_pos[0] - v1.m_pos[0],
+            v3.m_pos[1] - v1.m_pos[1],
+            v3.m_pos[2] - v1.m_pos[2]
+            };
+
+          float c2c1t = v2.m_uv[0] - v1.m_uv[0];
+          float c2c1b = v2.m_uv[1] - v1.m_uv[1];
+
+          float c3c1t = v3.m_uv[0] - v1.m_uv[0];
+          float c3c1b = v3.m_uv[1] - v1.m_uv[1];
+
+          DirectX::XMVECTOR vecTangent = {
+              c3c1b * v2v1.m128_f32[0] - c2c1b * v3v1.m128_f32[0],
+              c3c1b * v2v1.m128_f32[1] - c2c1b * v3v1.m128_f32[1],
+              c3c1b * v2v1.m128_f32[2] - c2c1b * v3v1.m128_f32[2]
+          };
+
+          DirectX::XMVECTOR normal = {v1.m_normal[0], v1.m_normal[1] , v1.m_normal[2] };
+
+          DirectX::XMVECTOR vecSmoothBitangent = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(normal, vecTangent));
+          DirectX::XMVECTOR vecSmoothTangent = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(vecSmoothBitangent, normal));
+
+          // Set tangents
+          v1.m_tangent[0] = vecSmoothTangent.m128_f32[0];
+          v1.m_tangent[1] = vecSmoothTangent.m128_f32[1];
+          v1.m_tangent[2] = vecSmoothTangent.m128_f32[2];
+
+          v2.m_tangent[0] = vecSmoothTangent.m128_f32[0];
+          v2.m_tangent[1] = vecSmoothTangent.m128_f32[1];
+          v2.m_tangent[2] = vecSmoothTangent.m128_f32[2];
+
+          v3.m_tangent[0] = vecSmoothTangent.m128_f32[0];
+          v3.m_tangent[1] = vecSmoothTangent.m128_f32[1];
+          v3.m_tangent[2] = vecSmoothTangent.m128_f32[2];
+
+          // Set bitangetns
+          v1.m_bitangent[0] = vecSmoothBitangent.m128_f32[0];
+          v1.m_bitangent[1] = vecSmoothBitangent.m128_f32[1];
+          v1.m_bitangent[2] = vecSmoothBitangent.m128_f32[2];
+
+          v2.m_bitangent[0] = vecSmoothBitangent.m128_f32[0];
+          v2.m_bitangent[1] = vecSmoothBitangent.m128_f32[1];
+          v2.m_bitangent[2] = vecSmoothBitangent.m128_f32[2];
+
+          v3.m_bitangent[0] = vecSmoothBitangent.m128_f32[0];
+          v3.m_bitangent[1] = vecSmoothBitangent.m128_f32[1];
+          v3.m_bitangent[2] = vecSmoothBitangent.m128_f32[2];
+        }
+        else if (meshTangents.length() <= 0) {
+          memcpy(&v1.m_bitangent[0], &meshBinormals[itt.normalIndex(localIndex[0])].x, 12);
+          memcpy(&v2.m_bitangent[0], &meshBinormals[itt.normalIndex(localIndex[1])].x, 12);
+          memcpy(&v3.m_bitangent[0], &meshBinormals[itt.normalIndex(localIndex[2])].x, 12);
+
+          DirectX::XMVECTOR normal = { v1.m_normal[0], v1.m_normal[1] , v1.m_normal[2] };
+          DirectX::XMVECTOR bitangent = { v1.m_bitangent[0], v1.m_bitangent[1] , v1.m_bitangent[2] };
+
+          // Calculate tangents
+          DirectX::XMVECTOR vecTangent = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(bitangent, normal));
+
+          // Set tangents
+          v1.m_tangent[0] = vecTangent.m128_f32[0];
+          v1.m_tangent[1] = vecTangent.m128_f32[1];
+          v1.m_tangent[2] = vecTangent.m128_f32[2];
+
+          v2.m_tangent[0] = vecTangent.m128_f32[0];
+          v2.m_tangent[1] = vecTangent.m128_f32[1];
+          v2.m_tangent[2] = vecTangent.m128_f32[2];
+
+          v3.m_tangent[0] = vecTangent.m128_f32[0];
+          v3.m_tangent[1] = vecTangent.m128_f32[1];
+          v3.m_tangent[2] = vecTangent.m128_f32[2];
+
+        }
+        else {
+          memcpy(&v1.m_tangent[0], &meshTangents[itt.tangentIndex(localIndex[0])].x, 12);
+          memcpy(&v2.m_tangent[0], &meshTangents[itt.tangentIndex(localIndex[1])].x, 12);
+          memcpy(&v3.m_tangent[0], &meshTangents[itt.tangentIndex(localIndex[2])].x, 12);
+
+
+          DirectX::XMVECTOR normal = { v1.m_normal[0], v1.m_normal[1] , v1.m_normal[2] };
+          DirectX::XMVECTOR tangent = { v1.m_tangent[0], v1.m_tangent[1] , v1.m_tangent[2] };
+
+          // Calculate bitangets
+          DirectX::XMVECTOR vecBitangent = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(tangent, normal));
+
+          // Set bitangetns
+          v1.m_bitangent[0] = vecBitangent.m128_f32[0];
+          v1.m_bitangent[1] = vecBitangent.m128_f32[1];
+          v1.m_bitangent[2] = vecBitangent.m128_f32[2];
+
+          v2.m_bitangent[0] = vecBitangent.m128_f32[0];
+          v2.m_bitangent[1] = vecBitangent.m128_f32[1];
+          v2.m_bitangent[2] = vecBitangent.m128_f32[2];
+
+          v3.m_bitangent[0] = vecBitangent.m128_f32[0];
+          v3.m_bitangent[1] = vecBitangent.m128_f32[1];
+          v3.m_bitangent[2] = vecBitangent.m128_f32[2];
+        }
 
 				mesh_data.m_vertices.push_back( v3 );
 				mesh_data.m_vertices.push_back( v2 );
