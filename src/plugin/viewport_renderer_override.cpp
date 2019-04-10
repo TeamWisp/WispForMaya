@@ -156,6 +156,7 @@ namespace wmr
 		m_scenegraph_parser->Update();
 		m_scenegraph_parser->GetCameraParser().UpdateViewportCamera(destination);
 
+		m_renderer->Update();
 		// Check if the viewport has been resized
 		HandleViewportResize(destination);
 

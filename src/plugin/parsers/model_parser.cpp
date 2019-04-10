@@ -231,41 +231,17 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 
 				localIndex = GetLocalIndex( polygonVertices, firstTriangleVertices );
 
-				v1.m_normal[0] = meshNormals[itt.normalIndex( localIndex[0] )].x;
-				v1.m_normal[1] = meshNormals[itt.normalIndex( localIndex[0] )].y;
-				v1.m_normal[2] = meshNormals[itt.normalIndex( localIndex[0] )].z;
+				memcpy(&v1.m_normal[0], &(meshNormals[itt.normalIndex( localIndex[0] )].x), 12 );
+				memcpy(&v2.m_normal[0], &(meshNormals[itt.normalIndex( localIndex[1] )].x), 12 );
+				memcpy(&v3.m_normal[0], &(meshNormals[itt.normalIndex( localIndex[2] )].x), 12 );
 
-				v2.m_normal[0] = meshNormals[itt.normalIndex( localIndex[1] )].x;
-				v2.m_normal[1] = meshNormals[itt.normalIndex( localIndex[1] )].y;
-				v2.m_normal[2] = meshNormals[itt.normalIndex( localIndex[1] )].z;
+				memcpy( &v1.m_tangent[0], &meshTangents[itt.tangentIndex( localIndex[0] )].x, 12 );
+				memcpy( &v2.m_tangent[0], &meshTangents[itt.tangentIndex( localIndex[1] )].x, 12 );
+				memcpy( &v3.m_tangent[0], &meshTangents[itt.tangentIndex( localIndex[2] )].x, 12 );
 
-				v3.m_normal[0] = meshNormals[itt.normalIndex( localIndex[2] )].x;
-				v3.m_normal[1] = meshNormals[itt.normalIndex( localIndex[2] )].y;
-				v3.m_normal[2] = meshNormals[itt.normalIndex( localIndex[2] )].z;
-
-				v1.m_tangent[0] = meshTangents[itt.tangentIndex( localIndex[0] )].x;
-				v1.m_tangent[1] = meshTangents[itt.tangentIndex( localIndex[0] )].y;
-				v1.m_tangent[2] = meshTangents[itt.tangentIndex( localIndex[0] )].z;
-
-				v2.m_tangent[0] = meshTangents[itt.tangentIndex( localIndex[1] )].x;
-				v2.m_tangent[1] = meshTangents[itt.tangentIndex( localIndex[1] )].y;
-				v2.m_tangent[2] = meshTangents[itt.tangentIndex( localIndex[1] )].z;
-
-				v3.m_tangent[0] = meshTangents[itt.tangentIndex( localIndex[2] )].x;
-				v3.m_tangent[1] = meshTangents[itt.tangentIndex( localIndex[2] )].y;
-				v3.m_tangent[2] = meshTangents[itt.tangentIndex( localIndex[2] )].z;
-
-				v1.m_bitangent[0] = meshBinormals[itt.normalIndex( localIndex[0] )].x;
-				v1.m_bitangent[1] = meshBinormals[itt.normalIndex( localIndex[0] )].y;
-				v1.m_bitangent[2] = meshBinormals[itt.normalIndex( localIndex[0] )].z;
-
-				v2.m_bitangent[0] = meshBinormals[itt.normalIndex( localIndex[1] )].x;
-				v2.m_bitangent[1] = meshBinormals[itt.normalIndex( localIndex[1] )].y;
-				v2.m_bitangent[2] = meshBinormals[itt.normalIndex( localIndex[1] )].z;
-
-				v3.m_bitangent[0] = meshBinormals[itt.normalIndex( localIndex[2] )].x;
-				v3.m_bitangent[1] = meshBinormals[itt.normalIndex( localIndex[2] )].y;
-				v3.m_bitangent[2] = meshBinormals[itt.normalIndex( localIndex[2] )].z;
+				memcpy( &v1.m_bitangent[0], &meshBinormals[itt.normalIndex( localIndex[0] )].x, 12 );
+				memcpy( &v2.m_bitangent[0], &meshBinormals[itt.normalIndex( localIndex[1] )].x, 12 );
+				memcpy( &v3.m_bitangent[0], &meshBinormals[itt.normalIndex( localIndex[2] )].x, 12 );
 
 				int firstUVID[3];
 
@@ -502,8 +478,10 @@ void wmr::ModelParser::UnSubscribeObject( MObject & maya_object )
 		assert( false );
 		return; // find_if returns last element even if it is not a positive result
 	}
+	m_renderer.GetD3D12Renderer().WaitForAllPreviousWork();
 	m_renderer.GetScenegraph().DestroyNode( it->second );
-
+	m_renderer.GetModelManager().RemoveModel( *it->second->m_model );
+	m_renderer.GetD3D12Renderer().WaitForAllPreviousWork();
 	assert( m_object_transform_vector.size() > 0 );
 
 	auto it_end = --m_object_transform_vector.end();

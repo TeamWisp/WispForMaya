@@ -52,6 +52,8 @@ void wmr::Renderer::Initialize() noexcept
 
 void wmr::Renderer::Update()
 {
+	m_scenegraph->Update();
+	m_scenegraph->Optimize();
 }
 
 void wmr::Renderer::Render()

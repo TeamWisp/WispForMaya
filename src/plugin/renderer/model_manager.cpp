@@ -32,23 +32,23 @@ wr::Model* wmr::ModelManager::AddModel(const MString& name, const wr::MeshData<w
 	// Assume there was no existing model that could be replaced
 	replaced_existing_model = false;
 
-	// Convert the MString to a hash to make it faster to look it up
-	auto hash = func::HashCString(name.asChar());
+	//// Convert the MString to a hash to make it faster to look it up
+	//auto hash = func::HashCString(name.asChar());
 
 	// Load a model using the new model data
 	auto model = m_model_pool->LoadCustom<wr::Vertex>({ data });
 
-	// If the model exists already, delete the old model
-	if (m_models.find(hash) != m_models.end())
-	{
-		m_model_pool->Destroy(m_models[hash]);
+	//// If the model exists already, delete the old model
+	//if (m_models.find(hash) != m_models.end())
+	//{
+	//	m_model_pool->Destroy(m_models[hash]);
 
-		// Make the caller aware that a model has been destroyed and replaced again
-		replaced_existing_model = true;
-	}
+	//	// Make the caller aware that a model has been destroyed and replaced again
+	//	replaced_existing_model = true;
+	//}
 
-	// Save the most recent model
-	m_models[hash] = model;
+	//// Save the most recent model
+	//m_models[hash] = model;
 
 	// Just to avoid yet another call to "GetModelByName", the pointer is returned here already
 	return model;
@@ -57,6 +57,11 @@ wr::Model* wmr::ModelManager::AddModel(const MString& name, const wr::MeshData<w
 void wmr::ModelManager::UpdateModel(wr::Model& model, const wr::MeshData<wr::Vertex>& data )
 {
 	m_model_pool->EditMesh( model.m_meshes[0].first, data.m_vertices, data.m_indices.value() );
+}
+
+void wmr::ModelManager::RemoveModel(wr::Model& model)
+{
+	m_model_pool->Destroy( &model );
 }
 
 wr::Model* wmr::ModelManager::GetModelByName(const char* name) noexcept
