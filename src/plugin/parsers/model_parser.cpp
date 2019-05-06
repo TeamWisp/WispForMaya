@@ -511,9 +511,6 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 	auto model_node = m_renderer.GetScenegraph().CreateChild<wr::MeshNode>( nullptr, model );
 	MStatus status;
 
-
-	//CallbackManager::GetInstance().RegisterCallback()
-
 	MFnDagNode dagnode = fnmesh.parent( 0, &status );
 	if( status != MS::kSuccess )
 	{
