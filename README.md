@@ -23,7 +23,7 @@ Bringing real-time ray-tracing to the Maya viewport using the [Wisp real-time ra
     - Expect a installer soon. For now follow developer instructions.
 - **Developers**
    1. download or clone repository.
-   2. make sure you have CMake 3.13 or higher and Windows SDK 10.0.17763.0 or newer installed
+   2. make sure you have CMake 3.14 or higher, Visual Studio 2019, and Windows SDK 10.0.17763.0 or newer installed
    3. create an environment variable called `MAYA_SDK_DIR`. This environment variable should point to your `<installation/path>/Autodesk/<version>` folder.
 ![MAYA_SDK_DIR environment variable](./readme_media/environment_variable.png)
    4. Run install.bat , when asked to update submodules choose yes.
