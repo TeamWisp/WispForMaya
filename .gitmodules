@@ -1,7 +1,3 @@
-[submodule "deps/Procedural-Ray-Tracing"]
-	path = deps/Procedural-Ray-Tracing
-	url = https://github.com/TeamWisp/Procedural-Ray-Tracing.git
-	ignore = untracked
 [submodule "deps/fmt"]
 	path = deps/fmt
 	url = https://github.com/fmtlib/fmt.git
@@ -23,3 +19,6 @@
 	path = deps/fallback
 	url = https://github.com/TeamWisp/DXR-Fallback-Layer.git
 	ignore = untracked
+[submodule "deps/WispRenderer"]
+	path = deps/WispRenderer
+	url = https://github.com/teamwisp/WispRenderer

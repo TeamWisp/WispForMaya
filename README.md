@@ -1,5 +1,5 @@
 # Maya-Ray-Traced-Viewport-Plugin
-Bringing real-time ray-tracing to the Maya viewport using the [Wisp real-time ray-tracing library](https://github.com/TeamWisp/Procedural-Ray-Tracing).
+Bringing real-time ray-tracing to the Maya viewport using the [Wisp real-time ray-tracing library](https://github.com/TeamWisp/WispRenderer).
 
 # Table of contents
 
@@ -24,10 +24,10 @@ Bringing real-time ray-tracing to the Maya viewport using the [Wisp real-time ra
 - **Developers**
    1. download or clone repository.
    2. make sure you have CMake 3.13 or higher and Windows SDK 10.0.17763.0 or newer installed
-   3. create an environment variable called `MAYA_2018_DIR`. This environment variable should point to your `<installation/path>/Autodesk/Maya2018` folder.
-![MAYA_2018_DIR environment variable](./readme_media/environment_variable.png)
+   3. create an environment variable called `MAYA_SDK_DIR`. This environment variable should point to your `<installation/path>/Autodesk/<version>` folder.
+![MAYA_SDK_DIR environment variable](./readme_media/environment_variable.png)
    4. Run install.bat , when asked to update submodules choose yes.
-   5. Build generated solution, preferably with visual studio. ```cmake --build``` also works 
+   5. Build generated solution, preferably with visual studio. ```cmake --build``` also works
 
 ### 2. setup
 - **Users**
@@ -35,11 +35,11 @@ Bringing real-time ray-tracing to the Maya viewport using the [Wisp real-time ra
 - **Developers**
     1. copy wisp-template.mod to:
         1. if ```MAYA_MODULE_PATH``` **is not** set, any of the following directories
-            -   ```<user’s directory>/My Documents/maya/2015/modules```
+            -   ```<user’s directory>/My Documents/maya/<version>/modules```
 
             -   ```<user’s directory>/My Documents/maya/modules```
 
-            -   ```C:/Program Files/Common Files/Autodesk Shared/Modules/maya/2015```
+            -   ```C:/Program Files/Common Files/Autodesk Shared/Modules/maya/<version>```
 
             -   ```C:/Program Files/Common Files/Autodesk Shared/Modules/maya```
 
@@ -81,7 +81,7 @@ After selecting the *Remote Windows Debugger*, new settings will appear. There a
 
 1. **Remote command**
    The remote command is the command that run once the *Remote Windows Debugger* is launched.
-   Set this to the location of `maya.exe`. The location of the executable depends on your installation settings, but by default it is located here: `C:\Program Files\Autodesk\Maya2018\bin\maya.exe`.
+   Set this to the location of `maya.exe`. The location of the executable depends on your installation settings, but by default it is located here: `C:\Program Files\Autodesk\<version>\bin\maya.exe`.
 
    <u>Please note that the backslashes (`\`) are required. Using forward slashes (`/`) will cause the Windows Remote Debugger to fail to attach to the Maya process.</u>
 
@@ -96,4 +96,4 @@ To make it easy to launch the *Windows Remote Debugger*, click the arrow next to
 
 ![Launching the Remote Windows Debugger](readme_media/select_correct_way_to_run.png)
 
-Thanks a lot, [Nick Cullen](https://nickcullen.net/blog/misc-tutorials/how-to-debug-a-maya-2016-c-plugin-using-visual-studio-2015/), for the step-by-step instructions on how to get the Remote Windows Debugger to work with Autodesk Maya 2018.
+Thanks a lot, [Nick Cullen](https://nickcullen.net/blog/misc-tutorials/how-to-debug-a-maya-2016-c-plugin-using-visual-studio-<version>/), for the step-by-step instructions on how to get the Remote Windows Debugger to work with Autodesk Maya 2018.

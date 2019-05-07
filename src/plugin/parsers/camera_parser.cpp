@@ -69,7 +69,7 @@ void wmr::CameraParser::UpdateViewportCamera(const MString & panel_name)
 	m_viewport_camera->m_frustum_far = camera_functions.farClippingPlane();
 	m_viewport_camera->m_frustum_near = camera_functions.nearClippingPlane();
 
-	m_viewport_camera->SetFov(AI_RAD_TO_DEG(camera_functions.horizontalFieldOfView()));
+	m_viewport_camera->SetFov(DirectX::XMConvertToDegrees(camera_functions.horizontalFieldOfView()));
 	m_viewport_camera->SetAspectRatio((float)current_viewport_width / (float)current_viewport_height);
 
 	MMatrix proj;
