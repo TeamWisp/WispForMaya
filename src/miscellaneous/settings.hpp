@@ -30,6 +30,9 @@ namespace wmr
 		//! Name of the viewport override
 		static const constexpr char* VIEWPORT_OVERRIDE_NAME = "wisp_viewport_override";
 
+		//! Meshes with this prefix will be ignored by the parsers (some kind of internal Autodesk Maya name prefix for intermediate objects when duplicating)
+		static const constexpr char* INTERMEDIATE_MESH_IGNORE_PREFIX = "__PrenotatoPerDuplicare_";
+
 		static const constexpr std::uint32_t RENDER_OPERATION_COUNT = 7;
 
 		//! Names and order of the render operations in this plug-in
