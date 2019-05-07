@@ -34,9 +34,9 @@ call :colorEcho %title_color% "==         Wisp Installer        =="
 call :colorEcho %title_color% "==================================="
 
 rem ##### argument handeling ######
-if "%1" == "-remote" ( 
+if "%1" == "-remote" (
   set is_remote=1
-) 
+)
 if "%1" == "-help" (
   echo This install.bat is use to complete the setup of the ray tracing git repository.
   echo It will donwload all dependencies and use CMake to generate a MS Visual Studio project.
@@ -49,8 +49,8 @@ if "%1" == "-help" (
 )
 
 rem ##### pre install settings #####
-if "%is_remote%" == "1" ( 
-  set workspace_path="%~df2"  
+if "%is_remote%" == "1" (
+  set workspace_path="%~df2"
   set enable_unit_test=1
   set enable_submodule_update=1
 ) else (
@@ -85,10 +85,10 @@ rem ##### install #####
 if "%enable_submodule_update%" == "1" (
   call :downloadDeps
 )
-call :genVS15Win64 
+call :genVS15Win64
 
 call :colorEcho %light_green% "Installation Finished!"
-if "%is_remote%" == "1" ( 
+if "%is_remote%" == "1" (
   goto :eof
 ) else (
   pause
@@ -107,20 +107,20 @@ REM ##### DOWNLOAD DEPS #####
 
 REM ##### GEN PROJECTS #####
 :genVS15Win64
-call :colorEcho %header_color% "#### Generating Visual Studio 15 2017 Win64 Project. ####"
+call :colorEcho %header_color% "#### Generating Visual Studio 16 2019 Win64 Project. ####"
 cd "%workspace_path%"
 echo current path: "%cd%"
-if exist "./build_vs2017_win64/" (
-  del ".\build_vs2017_win64\CMakeCache.txt"
+if exist "./build_vs2019_win64/" (
+  del ".\build_vs2019_win64\CMakeCache.txt"
 )
-mkdir build_vs2017_win64
-cd build_vs2017_win64
+mkdir build_vs2019_win64
+cd build_vs2019_win64
 if "%ENABLE_UNIT_TEST%" == "1" (
-  echo cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 15 2017" -DENABLE_UNIT_TEST:BOOL=ON -A x64 ..
-  cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 15 2017" -DENABLE_UNIT_TEST:BOOL=ON -A x64 ..
+  echo cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 16 2019" -DENABLE_UNIT_TEST:BOOL=ON -A x64 ..
+  cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 16 2019" -DENABLE_UNIT_TEST:BOOL=ON -A x64 ..
 ) else (
-  echo cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 15 2017" -A x64 ..
-  cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 15 2017" -A x64 ..
+  echo cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 16 2019" -A x64 ..
+  cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 16 2019" -A x64 ..
 )
 if errorlevel 1 call :colorecho %red% "CMake finished with errors"
 cd ..

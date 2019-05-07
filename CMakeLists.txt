@@ -5,8 +5,8 @@ add_compile_definitions(_ENABLE_EXTENDED_ALIGNED_STORAGE)
 option(ENABLE_UNIT_TEST "enables unit tests." OFF)
 
 # The Maya installation directory location is required for this project to work
-if (NOT EXISTS "$ENV{MAYA_2018_DIR}")
-    message(FATAL_ERROR "\"MAYA_2018_DIR\" environment variable could not be found!")
+if (NOT EXISTS "$ENV{MAYA_SDK_DIR}")
+    message(FATAL_ERROR "\"MAYA_SDK_DIR\" environment variable could not be found!")
 endif()
 
 # === Output directories === #
@@ -15,9 +15,9 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # === Configuration === #
-set(PROJECT_NAME "MayaRayTracedViewport")
+set(PROJECT_NAME "WispForMaya")
 set(PLUGIN_EXTENSION ".mll")
-set(MAYA_INSTALLATION_DIR $ENV{MAYA_2018_DIR})
+set(MAYA_INSTALLATION_DIR $ENV{MAYA_SDK_DIR})
 
 # Windows uses backslashes in its paths, to keep things working properly, the backslashes are converted into slashes
 STRING(REGEX REPLACE "\\\\" "/" MAYA_INSTALLATION_DIR ${MAYA_INSTALLATION_DIR})
@@ -64,7 +64,7 @@ set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 
 # === Dependencies === $
-add_subdirectory(deps/Procedural-Ray-Tracing ${CMAKE_BINARY_DIR}/proceduralraytracer)
+add_subdirectory(deps/WispRenderer ${CMAKE_BINARY_DIR}/wisprenderer)
 
 # === Maya API === #
 include_directories(${MAYA_INCLUDE_DIR})
@@ -84,7 +84,7 @@ add_library(${PROJECT_NAME} SHARED
             ${PLUGIN_FRAMEGRAPH_HEADERS} ${PLUGIN_FRAMEGRAPH_SOURCES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC src)
-target_include_directories(${PROJECT_NAME} PUBLIC deps/Procedural-Ray-Tracing/src)
+target_include_directories(${PROJECT_NAME} PUBLIC deps/WispRenderer/src)
 
 target_link_libraries(${PROJECT_NAME} WispRenderer)
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
@@ -124,7 +124,7 @@ if(ENABLE_UNIT_TEST)
                     ${MISC_HEADERS} ${MISC_SOURCES}
                     ${PLUGIN_HEADERS} ${PLUGIN_SOURCES}
                     ${PLUGIN_RENDER_OPERATIONS_HEADERS} ${PLUGIN_RENDER_OPERATIONS_SOURCES}
-                    ${TEST_HEADERS} ${TEST_SOURCES} 
+                    ${TEST_HEADERS} ${TEST_SOURCES}
                     ${PLUGIN_PARSERS_HEADERS} ${PLUGIN_PARSERS_SOURCES}
                     ${PLUGIN_RENDERER_HEADERS} ${PLUGIN_RENDERER_SOURCES}
                     ${PLUGIN_FRAMEGRAPH_HEADERS} ${PLUGIN_FRAMEGRAPH_SOURCES})

@@ -16,7 +16,7 @@
 wmr::Renderer::Renderer()
 {
 	m_render_system			= std::make_unique<wr::D3D12RenderSystem>();
-	m_window				= std::make_unique<wr::Window>(GetModuleHandleA(nullptr), "Wisp hidden window", 1280, 720);
+	m_window				= std::make_unique<wr::Window>(GetModuleHandleA(nullptr), "Wisp hidden window", 1280, 720, false);
 	m_model_manager			= std::make_unique<ModelManager>();
 	m_texture_manager		= std::make_unique<TextureManager>();
 	m_material_manager		= std::make_unique<MaterialManager>();
@@ -39,7 +39,7 @@ void wmr::Renderer::Initialize() noexcept
 	m_texture_manager->Initialize();
 	m_material_manager->Initialize();
 
-	m_wisp_camera = m_scenegraph->CreateChild<wr::CameraNode>(nullptr, 90.f, (float)m_window->GetWidth() / (float)m_window->GetHeight());
+	m_wisp_camera = m_scenegraph->CreateChild<wr::CameraNode>(nullptr, (float)m_window->GetWidth() / (float)m_window->GetHeight());
 	m_wisp_camera->SetPosition({ 0, 0, -1 });
 	m_wisp_camera->m_override_projection = true;
 
