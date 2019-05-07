@@ -46,7 +46,7 @@
 void MeshAddedCallback( MObject &node, void *client_data )
 {
 	assert( node.apiType() == MFn::Type::kMesh );
-	wmr::ScenegraphParser* scenegraph_parser = reinterpret_cast< wmr::ScenegraphParser* >( client_data );
+  	wmr::ScenegraphParser* scenegraph_parser = reinterpret_cast< wmr::ScenegraphParser* >( client_data );
 
 	// Create an attribute changed callback to use in order to wait for the mesh to be ready
 	scenegraph_parser->GetModelParser().SubscribeObject( node );
@@ -82,7 +82,7 @@ void LightRemovedCallback( MObject& node, void* client_data )
 
 void ConnectionAddedCallback(MPlug& src_plug, MPlug& dest_plug, bool made, void* client_data)
 {
-	auto* material_parser = reinterpret_cast<wmr::MaterialParser*>(client_data);
+ 	auto* material_parser = reinterpret_cast<wmr::MaterialParser*>(client_data);
 
 	// Get plug types
 	auto src_type = src_plug.node().apiType();

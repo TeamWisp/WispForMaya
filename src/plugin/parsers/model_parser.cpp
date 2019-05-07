@@ -36,6 +36,7 @@
 #include <maya/MUuid.h>
 #include <maya/MDGMessage.h>
 
+#include <string>
 
 // region for internally used functions, these functions cannot be use outside this cpp file
 #pragma region INTERNAL_FUNCTIONS
@@ -369,6 +370,21 @@ namespace wmr
 	{
 		// Make an MObject from the plug node
 		MObject object( plug.node() );
+
+		// Maya adds "__PrenotatoPerDuplicare_" in front of a temporary mesh duplicate, those objects can be ignored
+		// We only care about the final object
+		auto dep_node_fn = MFnDependencyNode(object);
+
+		std::string node_name = dep_node_fn.name().asChar();
+		auto result = node_name.find(settings::INTERMEDIATE_MESH_IGNORE_PREFIX);
+
+		// Ignore temporary objects
+		if (result != std::string::npos &&
+			result == 0)
+		{
+			return;
+		}
+
 		MStatus status = MS::kSuccess;
 		// Create mesh
 		MFnMesh mesh( object, &status );
@@ -381,14 +397,10 @@ namespace wmr
 		// Add the mesh
 		model_parser->MeshAdded(mesh);
 
-
-
 		if (model_parser->mesh_add_callback != nullptr)
 		{
 			model_parser->mesh_add_callback(mesh);
 		}
-
-
 
 		// Unregister the callback
 		auto findCallback = [ &object ]( std::pair<MObject, MCallbackId> pair ) -> bool
@@ -399,6 +411,7 @@ namespace wmr
 			}
 			return false;
 		};
+
 		std::vector<std::pair<MObject, MCallbackId>>::iterator it =
 			std::find_if( model_parser->m_mesh_added_callback_vector.begin(), model_parser->m_mesh_added_callback_vector.end(), findCallback );
 
