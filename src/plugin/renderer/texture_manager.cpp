@@ -67,6 +67,11 @@ namespace wmr
 		return m_texture_container[hash];
 	}
 
+	const std::shared_ptr<wr::TexturePool> TextureManager::GetTexturePool() noexcept
+	{
+		return m_texture_pool;
+	}
+
 	bool TextureManager::MarkTextureUnused(const char* identifier) noexcept
 	{
 		auto hash = func::HashCString(identifier);
