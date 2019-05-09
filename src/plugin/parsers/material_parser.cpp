@@ -562,13 +562,9 @@ wmr::ArnoldStandardSurfaceShaderData wmr::MaterialParser::ParseArnoldStandardSur
 
 void wmr::MaterialParser::ConfigureWispMaterial(const wmr::LambertShaderData & data, wr::Material * material, TextureManager & texture_manager) const
 {
-	material->SetUseConstantAlbedo(data.using_diffuse_color_value);
-	material->SetUseConstantMetallic(true);
-	material->SetUseConstantRoughness(true);
-
 	if (data.using_diffuse_color_value)
 	{
-		material->SetConstantAlbedo({data.diffuse_color[0], data.diffuse_color[1], data.diffuse_color[2]});
+		material->SetConstant<wr::MaterialConstant::COLOR>({ data.diffuse_color[0], data.diffuse_color[1], data.diffuse_color[2] });
 	}
 	else
 	{
@@ -576,28 +572,24 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::LambertShaderData & d
 		auto albedo_texture = texture_manager.CreateTexture(data.diffuse_color_texture_path);
 
 		// Use this texture as the material albedo texture
-		material->SetAlbedo(*albedo_texture);
+		material->SetTexture(wr::TextureType::ALBEDO, *albedo_texture);
 	}
 
 	if (strcmp(data.bump_map_texture_path, "") != 0)
 	{
 		auto bump = texture_manager.CreateTexture(data.bump_map_texture_path);
-		material->SetNormal(*bump);
+		material->SetTexture(wr::TextureType::NORMAL, *bump);
 	}
 
-	material->SetConstantMetallic({MayaMaterialProps::default_metallicness, MayaMaterialProps::default_metallicness, MayaMaterialProps::default_metallicness});
-	material->SetConstantRoughness(MayaMaterialProps::default_roughness);
+	material->SetConstant<wr::MaterialConstant::METALLIC>(MayaMaterialProps::default_metallicness);
+	material->SetConstant<wr::MaterialConstant::ROUGHNESS>(MayaMaterialProps::default_roughness);
 }
 
 void wmr::MaterialParser::ConfigureWispMaterial(const wmr::PhongShaderData & data, wr::Material * material, TextureManager & texture_manager) const
 {
-	material->SetUseConstantAlbedo(data.using_diffuse_color_value);
-	material->SetUseConstantMetallic(true);
-	material->SetUseConstantRoughness(true);
-
 	if (data.using_diffuse_color_value)
 	{
-		material->SetConstantAlbedo({data.diffuse_color[0], data.diffuse_color[1], data.diffuse_color[2]});
+		material->SetConstant<wr::MaterialConstant::COLOR>({ data.diffuse_color[0], data.diffuse_color[1], data.diffuse_color[2] });
 	}
 	else
 	{
@@ -605,28 +597,24 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::PhongShaderData & dat
 		auto albedo_texture = texture_manager.CreateTexture(data.diffuse_color_texture_path);
 
 		// Use this texture as the material albedo texture
-		material->SetAlbedo(*albedo_texture);
+		material->SetTexture(wr::TextureType::ALBEDO, *albedo_texture);
 	}
 
 	if (strcmp(data.bump_map_texture_path, "") != 0)
 	{
 		auto bump = texture_manager.CreateTexture(data.bump_map_texture_path);
-		material->SetNormal(*bump);
+		material->SetTexture(wr::TextureType::NORMAL, *bump);
 	}
 
-	material->SetConstantMetallic({MayaMaterialProps::default_metallicness, MayaMaterialProps::default_metallicness, MayaMaterialProps::default_metallicness});
-	material->SetConstantRoughness(MayaMaterialProps::default_roughness);
+	material->SetConstant<wr::MaterialConstant::METALLIC>(MayaMaterialProps::default_metallicness);
+	material->SetConstant<wr::MaterialConstant::ROUGHNESS>(MayaMaterialProps::default_roughness);
 }
 
 void wmr::MaterialParser::ConfigureWispMaterial(const wmr::ArnoldStandardSurfaceShaderData& data, wr::Material* material, TextureManager& texture_manager) const
 {
-	material->SetUseConstantAlbedo(data.using_diffuse_color_value);
-	material->SetUseConstantMetallic(data.using_metalness_value);
-	material->SetUseConstantRoughness(data.using_diffuse_roughness_value);
-
 	if (data.using_diffuse_color_value)
 	{
-		material->SetConstantAlbedo({data.diffuse_color[0], data.diffuse_color[1], data.diffuse_color[2]});
+		material->SetConstant<wr::MaterialConstant::COLOR>({ data.diffuse_color[0], data.diffuse_color[1], data.diffuse_color[2] });
 	}
 	else
 	{
@@ -634,25 +622,25 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::ArnoldStandardSurface
 		auto albedo_texture = texture_manager.CreateTexture(data.diffuse_color_texture_path);
 
 		// Use this texture as the material albedo texture
-		material->SetAlbedo(*albedo_texture);
+		material->SetTexture(wr::TextureType::ALBEDO, *albedo_texture);
 	}
 
 	if (data.using_specular_roughness_value)
 	{
-		material->SetConstantRoughness(data.diffuse_roughness);
+		material->SetConstant<wr::MaterialConstant::ROUGHNESS>(data.diffuse_roughness);
 	}
 	else
 	{
 		// Request new Wisp textures
 		auto roughness_texture = texture_manager.CreateTexture(data.specular_roughness_texture_path);
 
-		// Use this texture as the material albedo texture
-		material->SetRoughness(*roughness_texture);
+		// Use this texture as the material roughness texture
+		material->SetTexture(wr::TextureType::ROUGHNESS, *roughness_texture);
 	}
 
 	if (data.using_metalness_value)
 	{
-		material->SetConstantMetallic({data.metalness, 0.0f, 0.0f});
+		material->SetConstant<wr::MaterialConstant::METALLIC>(data.metalness);
 	}
 	else
 	{
@@ -660,13 +648,13 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::ArnoldStandardSurface
 		auto metalness_texture = texture_manager.CreateTexture(data.metalness_texture_path);
 
 		// Use this texture as the material albedo texture
-		material->SetMetallic(*metalness_texture);
+		material->SetTexture(wr::TextureType::METALLIC, *metalness_texture);
 	}
 
 	if (strcmp(data.bump_map_texture_path, "") != 0)
 	{
 		auto bump = texture_manager.CreateTexture(data.bump_map_texture_path);
-		material->SetNormal(*bump);
+		material->SetTexture(wr::TextureType::NORMAL, *bump);
 	}
 }
 

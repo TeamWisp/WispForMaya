@@ -35,6 +35,8 @@ namespace wmr
 		//! Get a texture handle by name
 		const std::shared_ptr<wr::TextureHandle> GetTexture(const char* identifier) noexcept;
 
+		const std::shared_ptr<wr::TexturePool> GetTexturePool() noexcept;
+
 		//! Indicate that a texture is no longer in use by a mesh
 		/*! Internally, this will check the reference counter and once
 		 *  no other objects are using the texture handle anymore, this

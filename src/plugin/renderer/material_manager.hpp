@@ -89,6 +89,7 @@ namespace wmr
 		
 		wr::MaterialHandle m_default_material_handle;
 		std::shared_ptr<wr::MaterialPool> m_material_pool;
+		std::shared_ptr<wr::TexturePool> m_texture_pool;
 
 		// Relationship array of meshes and shading engines (shader groups)
 		// Don't need a struct if mesh can be extracted from a shading engine
