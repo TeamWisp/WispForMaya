@@ -22,17 +22,6 @@
 
 namespace wmr
 {
-	FrameGraphManager::~FrameGraphManager()
-	{
-		// Clean up the allocated frame graphs
-		for (auto& frame_graph : m_renderer_frame_graphs)
-		{
-			frame_graph->Destroy();
-			delete frame_graph;
-			frame_graph = nullptr;
-		}
-	}
-
 	void FrameGraphManager::Create(wr::RenderSystem& render_system, RendererFrameGraphType initial_type, std::uint32_t initial_width, std::uint32_t initial_height) noexcept
 	{
 		m_width = initial_width;
@@ -50,6 +39,21 @@ namespace wmr
 		for (auto& frame_graph : m_renderer_frame_graphs)
 		{
 			frame_graph->Setup(render_system);
+		}
+	}
+
+	void FrameGraphManager::Destroy() noexcept
+	{
+		// Clean up the allocated frame graphs
+		for (auto* frame_graph : m_renderer_frame_graphs)
+		{
+			// Not allocated
+			if (!frame_graph)
+				continue;
+
+			frame_graph->Destroy();
+			delete frame_graph;
+			frame_graph = nullptr;
 		}
 	}
 

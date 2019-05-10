@@ -24,6 +24,11 @@ namespace wmr
 		m_default_texture = m_texture_pool->LoadFromFile("./resources/textures/Circus_Backstage_3k.hdr", false, false);
 	}
 
+	void TextureManager::Destroy() noexcept
+	{
+		m_texture_pool.reset();
+	}
+
 	const std::shared_ptr<wr::TextureHandle> TextureManager::CreateTexture(const char* path) noexcept
 	{
 		auto hash = func::HashCString(path);

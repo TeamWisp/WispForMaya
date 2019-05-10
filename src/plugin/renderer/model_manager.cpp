@@ -12,15 +12,6 @@
 // Maya API
 #include <maya/MViewport2Renderer.h>
 
-wmr::ModelManager::ModelManager()
-{
-	// Create a model pool using the D3D12 Wisp renderer
-}
-
-wmr::ModelManager::~ModelManager()
-{
-}
-
 void wmr::ModelManager::Initialize()
 {
 	auto* maya_override = dynamic_cast< const ViewportRendererOverride* >( MHWRender::MRenderer::theRenderer()->findRenderOverride( settings::VIEWPORT_OVERRIDE_NAME ) );
@@ -57,6 +48,11 @@ wr::Model* wmr::ModelManager::AddModel(const MString& name, const wr::MeshData<w
 void wmr::ModelManager::UpdateModel(wr::Model& model, const wr::MeshData<wr::Vertex>& data )
 {
 	m_model_pool->EditMesh( model.m_meshes[0].first, data.m_vertices, data.m_indices.value() );
+}
+
+void wmr::ModelManager::Destroy() noexcept
+{
+	m_model_pool.reset();
 }
 
 wr::Model* wmr::ModelManager::GetModelByName(const char* name) noexcept

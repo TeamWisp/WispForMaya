@@ -95,6 +95,15 @@ namespace wmr
 		}
 	}
 
+	void ViewportRendererOverride::Destroy() noexcept
+	{
+		// Before actually starting destruction, let the GPU finish its current commandlist
+		m_renderer->GetD3D12Renderer().WaitForAllPreviousWork();
+
+		// Deallocate all Wisp renderer resources
+		m_renderer->Destroy();
+	}
+
 	void ViewportRendererOverride::CreateRenderOperations()
 	{
 		if (!m_render_operations[0])

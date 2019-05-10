@@ -21,9 +21,10 @@ namespace wmr
 	class ModelManager
 	{
 	public:
-		ModelManager();
-		~ModelManager();
+		ModelManager() = default;
+		~ModelManager() = default;
 
+		//! Create all required structures
 		void Initialize();
 
 		//! Request to load a model, if the model already exists
@@ -32,7 +33,11 @@ namespace wmr
 		 *  /return Pointer to the loaded model. */
 		wr::Model* AddModel(const MString& name, const wr::MeshData<wr::Vertex>& data, bool& replaced_existing_model) noexcept;
 
+		//! Update existing mode data
 		void UpdateModel( wr::Model& model, const wr::MeshData<wr::Vertex>& data );
+
+		//! Deallocate used resources
+		void Destroy() noexcept;
 
 		//! Get a pointer to a registered model, nullptr if the model does not exist
 		/*! Please keep in mind that this is a relatively slow operation due to a "find()" call.
