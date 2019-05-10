@@ -1,9 +1,9 @@
-# Maya-Ray-Traced-Viewport-Plugin
+﻿# Wisp For Maya
 Bringing real-time ray-tracing to the Maya viewport using the [Wisp real-time ray-tracing library](https://github.com/TeamWisp/WispRenderer).
 
 # Table of contents
 
-- [Maya-Ray-Traced-Viewport-Plugin](#maya-ray-traced-viewport-plugin)
+- [Wisp For Maya](#wisp-for-maya)
 - [Table of contents](#table-of-contents)
 - [Installation](#installation)
     - [1. Download](#1-download)
@@ -97,3 +97,12 @@ To make it easy to launch the *Windows Remote Debugger*, click the arrow next to
 ![Launching the Remote Windows Debugger](readme_media/select_correct_way_to_run.png)
 
 Thanks a lot, [Nick Cullen](https://nickcullen.net/blog/misc-tutorials/how-to-debug-a-maya-2016-c-plugin-using-visual-studio-<version>/), for the step-by-step instructions on how to get the Remote Windows Debugger to work with Autodesk Maya 2018.
+
+# Known issues
+ - Hardcoded skybox.
+ - Crash when using big models. Size unknown. Memory is limited.
+ - Combining models leaves ghost models.
+ - Using extrude and some other mesh editing tools work but require forced synchronization. (Force a model update by pressing 1/2/3/1, switching viewport 2.0 rendering mode).
+ - Mesh outlines are not rendered properly in some cases.
+ - The plug-in crashes Maya when the plug-in gets unloaded.
+ - [NVIDIA RTX-series] Meshes might show black or wrong material. Add one more unique material and mesh.
