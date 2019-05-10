@@ -22,10 +22,10 @@ namespace wmr
 		static const constexpr char* COMPANY_NAME = "Team Wisp";
 
 		//! Name of the product itself
-		static const constexpr char* PRODUCT_NAME = "Realtime ray-traced viewport by Team Wisp";
+		static const constexpr char* PRODUCT_NAME = "Wisp";
 		
 		//! Current release version of the product
-		static const constexpr char* PRODUCT_VERSION = "0.0.1";
+		static const constexpr char* PRODUCT_VERSION = "0.2.0";
 		
 		//! Name of the viewport override
 		static const constexpr char* VIEWPORT_OVERRIDE_NAME = "wisp_viewport_override";
