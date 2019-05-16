@@ -86,6 +86,8 @@ add_library(${PROJECT_NAME} SHARED
 target_include_directories(${PROJECT_NAME} PUBLIC src)
 target_include_directories(${PROJECT_NAME} PUBLIC deps/WispRenderer/src)
 
+link_directories(${CMAKE_SOURCE_DIR}/deps/crashpad/out/$(ConfigurationName)/obj/ ${CMAKE_SOURCE_DIR}/deps/crashpad/out/$(ConfigurationName)/obj/client/ ${CMAKE_SOURCE_DIR}/deps/crashpad/out/$(ConfigurationName)/obj/util/ ${CMAKE_SOURCE_DIR}/deps/crashpad/out/$(ConfigurationName)/obj/third_party/mini_chromium/mini_chromium/base/)
+
 target_link_libraries(${PROJECT_NAME} WispRenderer)
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
 
