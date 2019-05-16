@@ -14,6 +14,7 @@
 #include "scene_graph/mesh_node.hpp"
 #include "d3d12/d3d12_renderer.hpp"
 #include "d3d12/d3d12_model_pool.hpp" 
+#include "util/log.hpp"
 
 #include <maya/MDagPath.h>
 #include <maya/MEulerRotation.h>
@@ -89,7 +90,11 @@ static void updateTransform( MFnTransform& transform, std::shared_ptr<wr::MeshNo
 	MDagPath path;
 	MDagPath::getAPathTo( transform.object(), path );
 	MFnTransform good_trans( path, &status);
-	assert( status == MS::kSuccess );
+
+	if (status != MS::kSuccess)
+	{
+		LOGC("Could not get a good transform when trying to update the transform.");
+	}
 
 	auto parent_matrix = getParentWorldMatrix( good_trans );
 	auto child_matrix = good_trans.transformationMatrix();
@@ -104,7 +109,11 @@ static void updateTransform( MFnTransform& transform, std::shared_ptr<wr::MeshNo
 	
 	double3 scale;
 	status = child_trans_matrix.getScale( scale, MSpace::kWorld );
-	assert( status == MS::kSuccess );
+
+	if (status != MS::kSuccess)
+	{
+		LOGC("Could not get transform data.");
+	}
 
 	mesh_node->SetPosition( { static_cast< float >( pos.x ), static_cast< float >( pos.y ), static_cast< float >( pos.z ) } );
 	mesh_node->SetQuaternionRotation( quatd[0], quatd[1], quatd[2], quatd[3] );
@@ -302,7 +311,7 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 			}
 			else
 			{
-				assert( false ); //could not get triangles
+				LOGC("Could not get the triangles.");
 				MGlobal::displayInfo( status.errorString() );
 			}
 
@@ -415,13 +424,20 @@ namespace wmr
 		std::vector<std::pair<MObject, MCallbackId>>::iterator it =
 			std::find_if( model_parser->m_mesh_added_callback_vector.begin(), model_parser->m_mesh_added_callback_vector.end(), findCallback );
 
-		assert( model_parser->m_mesh_added_callback_vector.size() > 0 );
+		if (model_parser->m_mesh_added_callback_vector.size() <= 0)
+		{
+			LOGC("Mesh added callback vector size is zero.");
+		}
 
 		auto it_end = --model_parser->m_mesh_added_callback_vector.end();
 
 		if( it == it_end )
 		{
-			assert( findCallback( *it ) == true ); // callback was never added to the vector;
+			if (findCallback(*it))
+			{
+				LOGC("Callback was never added to the mesh added callback vector.");
+			}
+
 			MMessage::removeCallback( it_end->second );
 			model_parser->m_mesh_added_callback_vector.pop_back();
 
@@ -497,7 +513,11 @@ void wmr::ModelParser::SubscribeObject( MObject & maya_object )
 		&status
 	);
 
-	assert( status == MS::kSuccess );
+	if (status != MS::kSuccess)
+	{
+		LOGC("Could not subscribe object to attribute changed callback.");
+	}
+
 	m_mesh_added_callback_vector.push_back( std::make_pair( maya_object, meshCreatedID ) );
 
 }
@@ -512,12 +532,15 @@ void wmr::ModelParser::UnSubscribeObject( MObject & maya_object )
 	auto it = std::find_if( m_object_transform_vector.begin(), m_object_transform_vector.end(), getMeshObjectAlgorithm(maya_object) );
 	if( it == m_object_transform_vector.end() )
 	{
-		assert( false );
+		LOGC("Iterator past end of object transform vector.");
 		return; // find_if returns last element even if it is not a positive result
 	}
 	m_renderer.GetScenegraph().DestroyNode( it->second );
 
-	assert( m_object_transform_vector.size() > 0 );
+	if (m_object_transform_vector.empty())
+	{
+		LOGC("Object transform vector is empty.");
+	}
 
 	auto it_end = --m_object_transform_vector.end();
 
@@ -552,6 +575,7 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 	MFnDagNode dagnode = fnmesh.parent( 0, &status );
 	if( status != MS::kSuccess )
 	{
+		LOGE("Could not get the mesh dagnode.");
 		MGlobal::displayError( "Error: " + status.errorString() );
 	}
 
@@ -561,6 +585,7 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 	MFnTransform transform( dagnode.object(), &status );
 	if( status != MS::kSuccess )
 	{
+		LOGE("Could not get transform node function set.");
 		MGlobal::displayError( "Error: " + status.errorString() );
 	}
 
@@ -619,7 +644,7 @@ void wmr::ModelParser::SetMeshAddCallback(std::function<void(MFnMesh&)> callback
 {
 	if (mesh_add_callback != nullptr)
 	{
-		assert(false);
+		LOGC("Mesh added callback already set.");
 	}
 	mesh_add_callback = callback;
 }
