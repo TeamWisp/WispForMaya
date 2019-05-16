@@ -1,15 +1,18 @@
 #include "functions.hpp"
 
+// Wisp
+#include <util/log.hpp>
+
 // Windows
 #include <Windows.h>
 
 namespace wmr::func
 {
-	void ThrowIfFailedMaya(const MStatus& status)
+	void ThrowIfFailedMaya(const MStatus& status, const char* msg)
 	{
 		if (status != MStatus::kSuccess)
 		{
-			throw std::exception();
+			LOGC(msg);
 		}
 	}
 
