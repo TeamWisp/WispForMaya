@@ -70,6 +70,11 @@ add_subdirectory(deps/WispRenderer ${CMAKE_BINARY_DIR}/wisprenderer)
 include_directories(${MAYA_INCLUDE_DIR})
 link_directories(${MAYA_LIBRARY_DIR})
 
+link_directories(${CMAKE_SOURCE_DIR}/deps/crashpad/out/$(ConfigurationName)/obj/)
+link_directories(${CMAKE_SOURCE_DIR}/deps/crashpad/out/$(ConfigurationName)/obj/client/)
+link_directories(${CMAKE_SOURCE_DIR}/deps/crashpad/out/$(ConfigurationName)/obj/util/)
+link_directories(${CMAKE_SOURCE_DIR}/deps/crashpad/out/$(ConfigurationName)/obj/third_party/mini_chromium/mini_chromium/base/)
+
 # === Maya libraries === #
 set(LIBRARIES "OpenMaya.lib" "OpenMayaUI.lib" "OpenMayaRender.lib" "Foundation.lib")
 
@@ -85,11 +90,12 @@ add_library(${PROJECT_NAME} SHARED
 
 target_include_directories(${PROJECT_NAME} PUBLIC src)
 target_include_directories(${PROJECT_NAME} PUBLIC deps/WispRenderer/src)
-
-link_directories(${CMAKE_SOURCE_DIR}/deps/crashpad/out/$(ConfigurationName)/obj/ ${CMAKE_SOURCE_DIR}/deps/crashpad/out/$(ConfigurationName)/obj/client/ ${CMAKE_SOURCE_DIR}/deps/crashpad/out/$(ConfigurationName)/obj/util/ ${CMAKE_SOURCE_DIR}/deps/crashpad/out/$(ConfigurationName)/obj/third_party/mini_chromium/mini_chromium/base/)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/deps/crashpad)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/deps/crashpad/third_party/mini_chromium/mini_chromium)
 
 target_link_libraries(${PROJECT_NAME} WispRenderer)
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
+target_link_libraries(${PROJECT_NAME} crashpad_client crashpad_util base)
 
 # Additional properties
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ${PLUGIN_EXTENSION}) # A Maya plug-in needs its own custom (.mll) extension
