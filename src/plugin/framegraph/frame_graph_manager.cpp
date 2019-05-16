@@ -20,6 +20,20 @@
 #include "render_tasks/d3d12_path_tracer.hpp"
 #include "render_tasks/d3d12_accumulation.hpp"
 
+#include "render_tasks/d3d12_dof_bokeh.hpp"
+#include "render_tasks/d3d12_dof_bokeh_postfilter.hpp"
+#include "render_tasks/d3d12_dof_coc.hpp"
+#include "render_tasks/d3d12_down_scale.hpp"
+#include "render_tasks/d3d12_dof_composition.hpp"
+#include "render_tasks/d3d12_dof_dilate_near.hpp"
+#include "render_tasks/d3d12_dof_dilate_flatten.hpp"
+#include "render_tasks/d3d12_dof_dilate_flatten_second_pass.hpp"
+#include "render_tasks/d3d12_hbao.hpp"
+#include "render_tasks/d3d12_ansel.hpp"
+#include "render_tasks/d3d12_bloom_composition.hpp"
+#include "render_tasks/d3d12_bloom_horizontal.hpp"
+#include "render_tasks/d3d12_bloom_vertical.hpp"
+
 namespace wmr
 {
 	FrameGraphManager::~FrameGraphManager()
@@ -43,8 +57,6 @@ namespace wmr
 		// Add required tasks to each frame graph
 		CreateDeferredPipeline();
 		CreateHybridRTPipeline();
-		CreateFullRTPipeline();
-		CreatePathTracerPipeline();
 
 		// Set-up the rendering pipelines (frame graph configuration)
 		for (auto& frame_graph : m_renderer_frame_graphs)
@@ -88,137 +100,110 @@ namespace wmr
 
 	void FrameGraphManager::CreateDeferredPipeline() noexcept
 	{
-		auto frame_graph = new wr::FrameGraph(9);
+		auto fg = new wr::FrameGraph(17);
 
 		// Precalculate BRDF Lut
-		wr::AddBrdfLutPrecalculationTask(*frame_graph);
+		wr::AddBrdfLutPrecalculationTask(*fg);
 
 		// Skybox
-		wr::AddEquirectToCubemapTask(*frame_graph);
-		wr::AddCubemapConvolutionTask(*frame_graph);
+		wr::AddEquirectToCubemapTask(*fg);
+		wr::AddCubemapConvolutionTask(*fg);
 
 		// Construct the G-buffer
-		wr::AddDeferredMainTask(*frame_graph, std::nullopt, std::nullopt);
+		wr::AddDeferredMainTask(*fg, std::nullopt, std::nullopt);
 
 		// Save the depth buffer CPU pointer
-		wr::AddDepthDataReadBackTask<wr::DeferredMainTaskData>(*frame_graph, std::nullopt, std::nullopt);
+		wr::AddDepthDataReadBackTask<wr::DeferredMainTaskData>(*fg, std::nullopt, std::nullopt);
+
+		// Do HBAO
+		wr::AddHBAOTask(*fg);
 
 		// Merge the G-buffer into one final texture
-		wr::AddDeferredCompositionTask(*frame_graph, std::nullopt, std::nullopt);
+		wr::AddDeferredCompositionTask(*fg, std::nullopt, std::nullopt);
 
-		// Do some post processing
-		wr::AddPostProcessingTask<wr::DeferredCompositionTaskData>(*frame_graph);
+		// Do Depth of field task
+		wr::AddDoFCoCTask<wr::DeferredMainTaskData>(*fg);
+		wr::AddDownScaleTask<wr::DeferredCompositionTaskData, wr::DoFCoCData>(*fg);
+		wr::AddDoFDilateTask<wr::DownScaleData>(*fg);
+		wr::AddDoFDilateFlattenTask<wr::DoFDilateData>(*fg);
+		wr::AddDoFDilateFlattenHTask<wr::DoFDilateFlattenData>(*fg);
+		wr::AddDoFBokehTask<wr::DownScaleData, wr::DoFDilateFlattenHData>(*fg);
+		wr::AddDoFBokehPostFilterTask<wr::DoFBokehData>(*fg);
+		wr::AddDoFCompositionTask<wr::DeferredCompositionTaskData, wr::DoFBokehPostFilterData, wr::DoFCoCData>(*fg);
+		wr::AddBloomHorizontalTask<wr::DownScaleData>(*fg);
+		wr::AddBloomVerticalTask<wr::BloomHData>(*fg);
+
+		// Do some post processing//initialize default settings
+		wr::BloomSettings defaultSettings;
+		fg->UpdateSettings<wr::BloomSettings>(defaultSettings);
+
+		wr::AddBloomCompositionTask<wr::DoFCompositionData, wr::BloomVData>(*fg);
+
+		wr::AddPostProcessingTask<wr::BloomCompostionData>(*fg);
 
 		// Save the final texture CPU pointer
-		wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*frame_graph, std::nullopt, std::nullopt);
+		wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*fg, std::nullopt, std::nullopt);
 
 		// Copy the composition pixel data to the final render target
-		wr::AddRenderTargetCopyTask<wr::PostProcessingData>(*frame_graph);
+		wr::AddRenderTargetCopyTask<wr::PostProcessingData>(*fg);
 
 		// Store the frame graph for future use
-		m_renderer_frame_graphs[static_cast<size_t>(RendererFrameGraphType::DEFERRED)] = frame_graph;
+		m_renderer_frame_graphs[static_cast<size_t>(RendererFrameGraphType::DEFERRED)] = fg;
 	}
 
 	void FrameGraphManager::CreateHybridRTPipeline() noexcept
 	{
-		auto frame_graph = new wr::FrameGraph(11);
+		auto fg = new wr::FrameGraph(18);
 
 		// Precalculate BRDF Lut
-		wr::AddBrdfLutPrecalculationTask( *frame_graph );
+		wr::AddBrdfLutPrecalculationTask( *fg);
 		
 		// Skybox
-		wr::AddEquirectToCubemapTask( *frame_graph );
-		wr::AddCubemapConvolutionTask( *frame_graph );
+		wr::AddEquirectToCubemapTask( *fg);
+		wr::AddCubemapConvolutionTask( *fg);
 
 		// Construct the G-buffer
-		wr::AddDeferredMainTask(*frame_graph, std::nullopt, std::nullopt);
+		wr::AddDeferredMainTask(*fg, std::nullopt, std::nullopt);
 
 		// Save the depth buffer CPU pointer
-		wr::AddDepthDataReadBackTask<wr::DeferredMainTaskData>(*frame_graph, std::nullopt, std::nullopt);
+		wr::AddDepthDataReadBackTask<wr::DeferredMainTaskData>(*fg, std::nullopt, std::nullopt);
 
 		// Build acceleration structure
-		wr::AddBuildAccelerationStructuresTask(*frame_graph);
+		wr::AddBuildAccelerationStructuresTask(*fg);
 
 		// Ray tracing
-		wr::AddRTHybridTask(*frame_graph);
+		wr::AddRTHybridTask(*fg);
 
-		wr::AddDeferredCompositionTask(*frame_graph, std::nullopt, std::nullopt);
+		wr::AddDeferredCompositionTask(*fg, std::nullopt, std::nullopt);
+
+		// Do Depth of field task
+		wr::AddDoFCoCTask<wr::DeferredMainTaskData>(*fg);
+		wr::AddDownScaleTask<wr::DeferredCompositionTaskData, wr::DoFCoCData>(*fg);
+		wr::AddDoFDilateTask<wr::DownScaleData>(*fg);
+		wr::AddDoFDilateFlattenTask<wr::DoFDilateData>(*fg);
+		wr::AddDoFDilateFlattenHTask<wr::DoFDilateFlattenData>(*fg);
+		wr::AddDoFBokehTask<wr::DownScaleData, wr::DoFDilateFlattenHData>(*fg);
+		wr::AddDoFBokehPostFilterTask<wr::DoFBokehData>(*fg);
+		wr::AddDoFCompositionTask<wr::DeferredCompositionTaskData, wr::DoFBokehPostFilterData, wr::DoFCoCData>(*fg);
+		wr::AddBloomHorizontalTask<wr::DownScaleData>(*fg);
+		wr::AddBloomVerticalTask<wr::BloomHData>(*fg);
+
+		//initialize default settings
+		wr::BloomSettings defaultSettings;
+		fg->UpdateSettings<wr::BloomSettings>(defaultSettings);
+
+		wr::AddBloomCompositionTask<wr::DoFCompositionData, wr::BloomVData>(*fg);
 
 		// Do some post processing
-		wr::AddPostProcessingTask<wr::DeferredCompositionTaskData>(*frame_graph);
+		wr::AddPostProcessingTask<wr::DeferredCompositionTaskData>(*fg);
 
 		// Save the ray tracing pixel data CPU pointer
-		wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*frame_graph, std::nullopt, std::nullopt);
+		wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*fg, std::nullopt, std::nullopt);
 
 		// Copy the ray tracing pixel data to the final render target
-		wr::AddRenderTargetCopyTask<wr::PostProcessingData>(*frame_graph);
+		wr::AddRenderTargetCopyTask<wr::PostProcessingData>(*fg);
 
 		// Store the frame graph for future use
-		m_renderer_frame_graphs[static_cast<size_t>(RendererFrameGraphType::HYBRID_RAY_TRACING)] = frame_graph;
-	}
-
-	void FrameGraphManager::CreateFullRTPipeline() noexcept
-	{
-		auto frame_graph = new wr::FrameGraph(7);
-
-		// Construct the acceleration structures needed for the ray tracing task
-		wr::AddBuildAccelerationStructuresTask(*frame_graph);
-
-		// Skybox
-		wr::AddEquirectToCubemapTask(*frame_graph);
-		wr::AddCubemapConvolutionTask(*frame_graph);
-
-		// Perform ray tracing
-		wr::AddRaytracingTask(*frame_graph);
-
-		// Do some post processing
-		wr::AddPostProcessingTask<wr::RaytracingData>(*frame_graph);
-
-		// Save the ray tracing pixel data CPU pointer
-		wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*frame_graph, std::nullopt, std::nullopt);
-
-		// Copy the scene render pixel data to the final render target
-		wr::AddRenderTargetCopyTask<wr::PostProcessingData>(*frame_graph);
-
-		// Store the frame graph for future use
-		m_renderer_frame_graphs[static_cast<size_t>(RendererFrameGraphType::FULL_RAY_TRACING)] = frame_graph;
-	}
-
-	void FrameGraphManager::CreatePathTracerPipeline() noexcept
-	{
-		auto frame_graph = new wr::FrameGraph(10);
-
-		// Precalculate BRDF Lut
-		wr::AddBrdfLutPrecalculationTask(*frame_graph);
-
-		// Skybox
-		wr::AddEquirectToCubemapTask(*frame_graph);
-		wr::AddCubemapConvolutionTask(*frame_graph);
-
-		// Construct the G-buffer
-		wr::AddDeferredMainTask(*frame_graph, std::nullopt, std::nullopt);
-
-		// Build Acceleration Structure
-		wr::AddBuildAccelerationStructuresTask(*frame_graph);
-
-		// Raytracing task
-		//wr::AddRTHybridTask(*fg);
-
-		// Global Illumination Path Tracing
-		wr::AddPathTracerTask(*frame_graph);
-		wr::AddAccumulationTask<wr::PathTracerData>(*frame_graph);
-
-		wr::AddDeferredCompositionTask(*frame_graph, std::nullopt, std::nullopt);
-
-		// Do some post processing
-		wr::AddPostProcessingTask<wr::DeferredCompositionTaskData>(*frame_graph);
-
-		// Save the path tracing pixel data CPU pointer
-		wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*frame_graph, std::nullopt, std::nullopt);
-
-		// Copy the raytracing pixel data to the final render target
-		wr::AddRenderTargetCopyTask<wr::PostProcessingData>(*frame_graph);
-
-		m_renderer_frame_graphs[static_cast<size_t>(RendererFrameGraphType::PATH_TRACER)] = frame_graph;
+		m_renderer_frame_graphs[static_cast<size_t>(RendererFrameGraphType::HYBRID_RAY_TRACING)] = fg;
 	}
 }

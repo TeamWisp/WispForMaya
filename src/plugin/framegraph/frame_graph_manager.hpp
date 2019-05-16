@@ -20,8 +20,6 @@ namespace wmr
 	{
 		DEFERRED = 0,					/*!< Only use the basic deferred rendering pipeline. */
 		HYBRID_RAY_TRACING,				/*!< Combine deferred rendering and ray tracing to render the scene. */
-		FULL_RAY_TRACING,				/*!< Only use ray tracing to render the scene. */
-		PATH_TRACER,					/*!< Generate a 100% path traced. */
 
 		RENDERING_PIPELINE_TYPE_COUNT	/*!< Total number of rendering frame graph types available. */
 	};
@@ -75,12 +73,6 @@ namespace wmr
 
 		//! Configure a frame graph for a hybrid rendering pipeline
 		void CreateHybridRTPipeline() noexcept;
-
-		//! Configure a frame graph for a full ray traced rendering pipeline
-		void CreateFullRTPipeline() noexcept;
-
-		//! Configure a frame graph for a full path traced rendering pipeline
-		void CreatePathTracerPipeline() noexcept;
 
 	private:
 		std::uint32_t m_width;										//! Width of the render texture
