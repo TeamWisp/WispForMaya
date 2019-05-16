@@ -9,6 +9,7 @@
 
 #include "d3d12/d3d12_renderer.hpp"
 #include "scene_graph/mesh_node.hpp"
+#include "util/log.hpp"
 
 #include <maya/MFnMesh.h>
 #include <maya/MFnTransform.h>
@@ -30,6 +31,9 @@ wmr::MaterialManager::~MaterialManager()
 void wmr::MaterialManager::Initialize()
 {
 	auto& renderer = dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer();
+
+	LOG("Attempting to get a reference to the renderer.");
+
 	m_material_pool = renderer.GetD3D12Renderer().CreateMaterialPool(0);
 	m_texture_pool = renderer.GetTextureManager().GetTexturePool();
 
@@ -63,6 +67,7 @@ wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::OnCreateSurfaceS
 	auto relation = DoesSurfaceShaderExist(surface_shader_obj);
 	if (relation != nullptr)
 	{
+		LOGE("Surface shader shading engine relation was not nullptr.");
 		return nullptr;
 	}
 	// Surface shader doesn't have a material assigned to it yet
@@ -80,6 +85,8 @@ wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::OnCreateSurfaceS
 
 void wmr::MaterialManager::OnRemoveSurfaceShader(MPlug & surface_shader)
 {
+	LOG("Starting surface shader removal.");
+
 	// Find surface shader
 	auto it = std::find_if(m_surface_shader_shading_relations.begin(), m_surface_shader_shading_relations.end(), [&surface_shader] (const std::vector<SurfaceShaderShadingEngineRelation>::value_type& vt)
 	{
@@ -110,10 +117,14 @@ void wmr::MaterialManager::OnRemoveSurfaceShader(MPlug & surface_shader)
 		// Remove surface shader from vector
 		m_surface_shader_shading_relations.erase(it);
 	}
+
+	LOG("Finished surface shader removal.");
 }
 
 wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine, bool apply_material)
 {
+	LOG("Starting shader connection to shading engine.");
+
 	// Find surface shader relationships
 	MObject surface_shader_obj = surface_shader.node();
 	auto relation = DoesSurfaceShaderExist(surface_shader_obj);
@@ -168,6 +179,8 @@ wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & su
 			return false;
 		});
 	}
+
+	LOG("Finished connecting shader connection to shading engine.");
 
 	return material_handle;
 }
@@ -292,6 +305,8 @@ wmr::ScenegraphParser * wmr::MaterialManager::GetSceneParser()
 		m_scenegraph_parser = &dynamic_cast<const ViewportRendererOverride*>(
 			MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME)
 			)->GetSceneGraphParser();
+
+		LOG("Attempting to get a reference to the scenegraph parser via the renderer.");
 	}
 	return m_scenegraph_parser;
 }
