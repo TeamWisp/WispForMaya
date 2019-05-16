@@ -91,7 +91,7 @@ target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
 
 # Additional properties
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ${PLUGIN_EXTENSION}) # A Maya plug-in needs its own custom (.mll) extension
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
 set_target_properties(${PROJECT_NAME} PROPERTIES CMAKE_CXX_STANDARD_REQUIRED ON)
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/../")
@@ -129,7 +129,7 @@ if(ENABLE_UNIT_TEST)
                     ${PLUGIN_RENDERER_HEADERS} ${PLUGIN_RENDERER_SOURCES}
                     ${PLUGIN_FRAMEGRAPH_HEADERS} ${PLUGIN_FRAMEGRAPH_SOURCES})
 
-    set_target_properties(MayaUnitTest PROPERTIES CXX_STANDARD 17)
+    set_target_properties(MayaUnitTest PROPERTIES CXX_STANDARD 20)
     set_target_properties(MayaUnitTest PROPERTIES CXX_EXTENSIONS OFF)
     set_target_properties(MayaUnitTest PROPERTIES CMAKE_CXX_STANDARD_REQUIRED ON)
 
