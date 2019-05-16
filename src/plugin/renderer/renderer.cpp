@@ -13,10 +13,17 @@
 #include "d3d12/d3d12_renderer.hpp"
 #include "wisp.hpp"
 
+// Maya API
+#include <maya/M3dView.h>
+
 wmr::Renderer::Renderer()
 {
+	// Get the Maya window handle
+	M3dView view = M3dView::active3dView();
+	HWND hwnd = view.applicationShell();
+
 	m_render_system			= std::make_unique<wr::D3D12RenderSystem>();
-	m_window				= std::make_unique<wr::Window>(GetModuleHandleA(nullptr), "Wisp hidden window", 1280, 720, false);
+	m_window				= std::make_unique<wr::Window>(GetModuleHandleA(nullptr), "WispHiddenChildWindow", hwnd);
 	m_model_manager			= std::make_unique<ModelManager>();
 	m_texture_manager		= std::make_unique<TextureManager>();
 	m_material_manager		= std::make_unique<MaterialManager>();
