@@ -22,3 +22,6 @@
 [submodule "deps/WispRenderer"]
 	path = deps/WispRenderer
 	url = https://github.com/teamwisp/WispRenderer
+[submodule "deps/crashpad"]
+	path = deps/crashpad
+	url = https://github.com/TeamWisp/Crashpad.git

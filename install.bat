@@ -54,14 +54,6 @@ if "%is_remote%" == "1" (
   set enable_unit_test=1
   set enable_submodule_update=1
 ) else (
-  :: echo Do you want unit tests enabled? [Y/N]
-  choice /c yn /m "Do you want unit tests enabled?"
-  if errorlevel 2 (
-    echo no unit tests will be generated
-  ) else (
-    set enable_unit_test=1
-        echo unit tests will be generated
-  )
   choice /c yn /m "Do you want to update submodules?"
    if errorlevel 2 (
     echo submodules will not be updated
@@ -115,13 +107,9 @@ if exist "./build_vs2019_win64/" (
 )
 mkdir build_vs2019_win64
 cd build_vs2019_win64
-if "%ENABLE_UNIT_TEST%" == "1" (
-  echo cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 16 2019" -DENABLE_UNIT_TEST:BOOL=ON -A x64 ..
-  cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 16 2019" -DENABLE_UNIT_TEST:BOOL=ON -A x64 ..
-) else (
-  echo cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 16 2019" -A x64 ..
-  cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 16 2019" -A x64 ..
-)
+echo cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 16 2019" -A x64 ..
+cmake -DCMAKE_SYSTEM_VERSION=%windows_sdk_version% -G "Visual Studio 16 2019" -A x64 ..
+
 if errorlevel 1 call :colorecho %red% "CMake finished with errors"
 cd ..
 EXIT /B 0
