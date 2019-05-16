@@ -19,9 +19,8 @@
 
 void wmr::CameraParser::Initialize()
 {
-	LOG("Initializing camera parser.");
+	LOG("Attempting to get a reference to the renderer.");
 	m_viewport_camera = dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer().GetCamera();
-	LOG("Finished initializing camera parser.");
 }
 
 void wmr::CameraParser::UpdateViewportCamera(const MString & panel_name)
