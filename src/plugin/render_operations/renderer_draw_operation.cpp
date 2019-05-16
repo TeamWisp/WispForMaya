@@ -14,6 +14,7 @@ namespace wmr
 		: MHWRender::MUserRenderOperation(name)
 		, m_renderer(dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer())
 	{
+		LOG("Attempting to get a reference to the renderer.");
 	}
 
 	RendererDrawOperation::~RendererDrawOperation()
