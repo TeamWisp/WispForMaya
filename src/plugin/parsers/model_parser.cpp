@@ -312,7 +312,6 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 			else
 			{
 				LOGC("Could not get the triangles.");
-				MGlobal::displayInfo( status.errorString() );
 			}
 
 		}
