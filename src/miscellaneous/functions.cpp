@@ -12,7 +12,8 @@ namespace wmr::func
 	{
 		if (status != MStatus::kSuccess)
 		{
-			LOGC(msg);
+			LOGE(msg);
+			throw std::exception();
 		}
 	}
 

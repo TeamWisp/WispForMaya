@@ -54,8 +54,6 @@ namespace wmr
 				view.setDisplayStyle( M3dView::kGouraudShaded );
 			}
 		}
-
-		LOG("Ensured proper display panel shading.");
 	}
 
 	ViewportRendererOverride::ViewportRendererOverride(const MString& name)

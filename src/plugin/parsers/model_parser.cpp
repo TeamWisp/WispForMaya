@@ -433,7 +433,7 @@ namespace wmr
 
 		if( it == it_end )
 		{
-			if (findCallback(*it))
+			if (!findCallback(*it))
 			{
 				LOGC("Callback was never added to the mesh added callback vector.");
 			}
@@ -612,6 +612,7 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 	);
 	CallbackManager::GetInstance().RegisterCallback( attributeId );
 
+	LOG("Mesh \"{}\" added.", fnmesh.fullPathName().asChar());
 }
 
 void wmr::ModelParser::Update()
