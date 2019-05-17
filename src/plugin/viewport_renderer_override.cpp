@@ -32,7 +32,9 @@
 // C++ standard
 #include <algorithm>
 #include <memory>
+#include <fstream>
 #include <sstream>
+#include <string>
 
 static std::shared_ptr<wr::TexturePool> texture_pool;
 static std::shared_ptr<wr::MaterialPool> material_pool;
@@ -82,24 +84,10 @@ namespace wmr
 		m_scenegraph_parser = std::make_unique<ScenegraphParser>();
 		m_scenegraph_parser->Initialize();
 
+
+
 		// Let the user know that the plugin is in development
-		MGlobal::executeCommand(
-			"window -title \"Wisp\" -sizeable off -maximizeButton off -minimizeButton off WispInfoWindow;\
-			rowColumnLayout - columnOffset 1 \"both\" 10 - rowOffset 1 \"both\" 15 - nc 1 - cal 1 \"left\";\
-			text - ww on - align \"left\" - rs on - w 400 \"Hey there!\";\
-			text - ww on - align \"left\" - rs on - w 400 \"Wisp is heavily under development which means that you might encounter weird, annoying and sometimes work-losing bugs/crashes. Don't worry we are working on them!\";\
-			text - ww on - align \"left\" - rs on - w 400 \" \";\
-			text - ww on - align \"left\" - rs on - w 400 \"Bug and feature updates will be released frequenty. If you encounter bugs or want to provide us with feedback, contact us on discord:\";\
-			text - ww on - align \"left\" - rs on - w 400 \- hl on - label \"https://discordapp.com/invite/KthSUvs\" \"https://discordapp.com/invite/KthSUvs\";\
-			text - ww on - align \"left\" - rs on - w 400 \" \";\
-			text - ww on - align \"left\" - rs on - w 400 \"Either way, enjoy Wisp!\";\
-			text - ww on - align \"left\" - rs on - w 400 \" \";\
-			text - ww on - align \"left\" - rs on - w 400 \"Team Wisp\";\
-			text - ww on - align \"left\" - rs on - w 400 \" \";\
-			button - enable on - command \"deleteUI WispInfoWindow\" \"Ok\";\
-			text - ww on - align \"left\" - rs on - w 400 \" \";\
-			showWindow WispInfoWindow;"
-		);
+		InitialNotifyUser();
 	}
 
 	ViewportRendererOverride::~ViewportRendererOverride()
@@ -284,5 +272,83 @@ namespace wmr
 		}
 
 		return false;
+	}
+	void ViewportRendererOverride::InitialNotifyUser()
+	{
+		const char const* text_prefix = "text - ww on - align \"left\" - rs on - w 400 \"";
+		const char const* text_postfix = "\";";
+
+		// Create window
+		MString notify_command("window -title \"Wisp\" -sizeable off -maximizeButton off -minimizeButton off WispInfoWindow;\n");
+
+		// Set layout
+		notify_command += "rowColumnLayout -columnOffset 1 \"both\" 10 -rowOffset 1 \"both\" 15 -nc 1 -cal 1 \"left\";\n";
+
+		// Get file
+		std::ifstream infile("resources/notify.txt");
+		// Show hardcoded popup if the contents couldn't be found
+		if (!infile.is_open()) {
+			LOGE("Couldn't find notify.txt! Notifying the user with a default message.");
+			// Show old (may be outdated) popup. Also warn the user that the popup may be outdated.
+			MGlobal::executeCommand(
+				"window -title \"Wisp\" -sizeable off -maximizeButton off -minimizeButton off WispInfoWindow;\
+				rowColumnLayout - columnOffset 1 \"both\" 10 - rowOffset 1 \"both\" 15 - nc 1 - cal 1 \"left\";\
+				text - ww on - align \"left\" - rs on - w 400 \"Hey there!\";\
+				text - ww on - align \"left\" - rs on - w 400 \"Something went wrong with loading the contents of this window. Please keep in mind that the following could be outdated.\";\
+				text - ww on - align \"left\" - rs on - w 400 \"Wisp is heavily under development which means that you might encounter weird, annoying and sometimes work-losing bugs/crashes. Don't worry we are working on them!\";\
+				text - ww on - align \"left\" - rs on - w 400 \" \";\
+				text - ww on - align \"left\" - rs on - w 400 \"Bug and feature updates will be released frequenty. If you encounter bugs or want to provide us with feedback, contact us on discord:\";\
+				text - ww on - align \"left\" - rs on - w 400 \- hl on - label \"https://discordapp.com/invite/KthSUvs\" \"https://discordapp.com/invite/KthSUvs\";\
+				text - ww on - align \"left\" - rs on - w 400 \" \";\
+				text - ww on - align \"left\" - rs on - w 400 \"Either way, enjoy Wisp!\";\
+				text - ww on - align \"left\" - rs on - w 400 \" \";\
+				text - ww on - align \"left\" - rs on - w 400 \"/ Team Wisp\";\
+				text - ww on - align \"left\" - rs on - w 400 \" \";\
+				button - enable on - command \"deleteUI WispInfoWindow\" \"Ok\";\
+				text - ww on - align \"left\" - rs on - w 400 \" \";\
+				showWindow WispInfoWindow;"
+			);
+
+			return;
+		}
+		else {
+			// Print text
+			std::string line;
+			while (std::getline(infile, line)) {
+				// Add a space if an empty line was found
+				if (line.length() <= 0) {
+					line += " ";
+				}
+
+				// Text settings
+				notify_command += text_prefix;
+				// Add text
+				notify_command += line.c_str();
+				// Add end quote
+				notify_command += text_postfix;
+			}
+			infile.close();
+		}
+
+		// Add empty line for proper spacing
+		notify_command += text_prefix;
+		notify_command += " ";
+		notify_command += text_postfix;
+
+		// Add button to close
+		notify_command += "button - enable on - command \"deleteUI WispInfoWindow\" \"Ok\";\n";
+		
+		// Add spacing below the button
+		notify_command += text_prefix;
+		notify_command += " ";
+		notify_command += text_postfix;
+
+		// Display window
+		notify_command += "showWindow WispInfoWindow;";
+
+		MGlobal::displayInfo(notify_command);
+
+		// Execute display window command
+		MGlobal::executeCommand(notify_command);
 	}
 }

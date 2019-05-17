@@ -139,6 +139,7 @@ namespace wmr
 		bool nextRenderOperation() override;
 
 	private:
+		void InitialNotifyUser();
 		
 		MString m_ui_name; //!< Name of the ui panel that will be overridden
 
