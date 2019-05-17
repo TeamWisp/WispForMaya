@@ -64,6 +64,32 @@ void ActOnCurrentDirtyState( const bool& state )
 	}
 }
 
+void LogCallback(std::string const& msg) {
+	// CHANGE THIS ENTRY NUMBER IF THE LOCATION OF THE TYPE CHANGES
+	// Current format:
+	//   [hh:mm] [I] <msg>
+	//            ^
+	const int LOG_TYPE_LOC = 9;
+	// Get character that defines the log type
+	const char LOG_TYPE = msg[LOG_TYPE_LOC];
+	// Print info on I
+	if (LOG_TYPE == 'I') {
+		MGlobal::displayInfo(msg.c_str());
+	}
+	// Print warning on W
+	else if (LOG_TYPE == 'W') {
+		MGlobal::displayWarning(msg.c_str());
+	}
+	// Print Error on E and C
+	else if (LOG_TYPE == 'E' || LOG_TYPE == 'C') {
+		MGlobal::displayError(msg.c_str());
+	}
+	// Display info if the type is unknown/invalid
+	else {
+		MGlobal::displayInfo(msg.c_str());
+	}
+}
+
 //! Plug-in entry point
 /*! Initializes the application. A plug-in object is created and stored. This object will hold the information Maya
  *  needs to make it all work. Once the plug-in object exists, the instance of the plug-in will be initialized, upon
@@ -74,6 +100,9 @@ void ActOnCurrentDirtyState( const bool& state )
 MStatus initializePlugin(MObject object)
 {
 	LOG("Plugin initialization started.");
+
+	util::log_callback::impl = std::function<void(std::string const&)>(LogCallback);
+	LOG("Logging callback has been set.");
 
 	// Register the plug-in to Maya, using the name and version data from the settings header file
 	MFnPlugin plugin(object, wmr::settings::COMPANY_NAME, wmr::settings::PRODUCT_VERSION, "Any");
