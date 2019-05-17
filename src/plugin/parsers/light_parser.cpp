@@ -16,6 +16,7 @@
 #include "scene_graph/light_node.hpp"
 #include "scene_graph/scene_graph.hpp"
 #include "wisp.hpp"
+#include "util/log.hpp"
 
 #include <maya/MEulerRotation.h>
 #include <maya/MFnDirectionalLight.h>
@@ -48,7 +49,10 @@ static void updateTransform( MFnTransform& transform, std::shared_ptr<wr::LightN
 	double3 scale;
 	status = transform.getScale( scale );
 
-	assert( status == MS::kSuccess );
+	if (status != MS::kSuccess)
+	{
+		LOGC("Could not get transform information.");
+	}
 
 	mesh_node->SetPosition( { static_cast< float >( pos.x ), static_cast< float >( pos.y ), static_cast< float >( pos.z ) } );
 	mesh_node->SetRotation( { static_cast< float >( rot.x ), static_cast< float >( rot.y ), static_cast< float >( rot.z ) } );
@@ -65,7 +69,10 @@ auto getTransformFindAlgorithm( MFnTransform& transform)
 		MObject object = dagnode.object();
 		MFnTransform transform_rhs( dagnode.object(), &status );
 		
-		assert( status == MS::kSuccess );
+		if (status != MS::kSuccess)
+		{
+			LOGC("Could not get the transform functionset.");
+		}
 
 		if( transform.object() == transform_rhs.object() )
 		{
@@ -92,6 +99,7 @@ namespace wmr
 		MFnTransform transform( plug.node(), &status );
 		if( status != MS::kSuccess )
 		{
+			LOGE("Could not get a transform node.");
 			MGlobal::displayInfo( status.errorString() );
 			return;
 		}
@@ -157,7 +165,7 @@ void wmr::LightParser::UnSubscribeObject( MObject & maya_object )
 	auto it = std::find_if( m_object_transform_vector.begin(), m_object_transform_vector.end(), findCallback );
 	if( it->first != maya_object )
 	{
-		assert( false );
+		LOGC("Could not find the callback in the transform vector.");
 		return; // find_if returns last element even if it is not a positive result
 	}
 	m_renderer.GetScenegraph().DestroyNode( it->second );
@@ -185,10 +193,12 @@ void wmr::LightParser::LightAdded( MFnLight & fn_light )
 	switch( api_type )
 	{
 	case MFn::Type::kAmbientLight:
+		LOGE("Wisp does not support ambient light, user tried to add ambient light.");
 		//cry, crash, burn!!
 		break;
 	case MFn::Type::kPointLight:
 	{
+		LOG("Added point light.");
 		MFnPointLight fn_point_light( fn_light.object() );
 		auto light_color = fn_point_light.color();
 		DirectX::XMVECTOR wisp_color{ light_color.r ,light_color.g ,light_color.b };
@@ -199,6 +209,7 @@ void wmr::LightParser::LightAdded( MFnLight & fn_light )
 	break;
 	case MFn::Type::kSpotLight:
 	{
+		LOG("Added spot light.");
 		MFnSpotLight fn_spot_light( fn_light.object() );
 		auto light_color = fn_spot_light.color();
 		DirectX::XMVECTOR wisp_color{ light_color.r ,light_color.g ,light_color.b };
@@ -209,6 +220,7 @@ void wmr::LightParser::LightAdded( MFnLight & fn_light )
 		break;
 	case MFn::Type::kDirectionalLight:
 	{
+			LOG("Added directional light.");
 		MFnDirectionalLight fn_dir_light( fn_light.object() );
 		auto light_color = fn_dir_light.color();
 		DirectX::XMVECTOR wisp_color{ light_color.r ,light_color.g ,light_color.b };
@@ -216,6 +228,7 @@ void wmr::LightParser::LightAdded( MFnLight & fn_light )
 		light_node = m_renderer.GetScenegraph().CreateChild<wr::LightNode>( nullptr, wr::LightType::DIRECTIONAL, wisp_color );
 	}
 		break;
+
 	default:
 		break;
 	}
@@ -225,6 +238,7 @@ void wmr::LightParser::LightAdded( MFnLight & fn_light )
 	MFnDagNode dagnode = fn_light.parent( 0, &status );
 	if( status != MS::kSuccess )
 	{
+		LOGE("Could not get the dag node.");
 		MGlobal::displayError( "Error: " + status.errorString() );
 	}
 
@@ -234,6 +248,7 @@ void wmr::LightParser::LightAdded( MFnLight & fn_light )
 	MFnTransform transform( dagnode.object(), &status );
 	if( status != MS::kSuccess )
 	{
+		LOGE("Could not get the transform functionset.");
 		MGlobal::displayError( "Error: " + status.errorString() );
 	}
 
