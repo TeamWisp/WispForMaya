@@ -72,8 +72,6 @@ namespace wmr
 
 	void FrameGraphManager::SetType(RendererFrameGraphType new_renderer_frame_graph_type) noexcept
 	{
-		m_current_rendering_pipeline_type = new_renderer_frame_graph_type;
-		
 		switch (new_renderer_frame_graph_type)
 		{
 			case wmr::RendererFrameGraphType::DEFERRED:
@@ -84,21 +82,15 @@ namespace wmr
 				LOG("Current rendering pipeline switched to hybrid.");
 				break;
 			
-			case wmr::RendererFrameGraphType::FULL_RAY_TRACING:
-				LOG("Current rendering pipeline switched to full ray-tracing.");
-				break;
-			
-			case wmr::RendererFrameGraphType::PATH_TRACER:
-				LOG("Current rendering pipeline switched to path tracing.");
-				break;
-			
 			case wmr::RendererFrameGraphType::RENDERING_PIPELINE_TYPE_COUNT:
 				LOG("Current rendering pipeline switched to an invalid pipeline.");
-				break;
+				return;	// Invalid type
 
 			default:
 				break;
 		}
+		
+		m_current_rendering_pipeline_type = new_renderer_frame_graph_type;
 	}
 
 	wr::FrameGraph* FrameGraphManager::Get() const noexcept
