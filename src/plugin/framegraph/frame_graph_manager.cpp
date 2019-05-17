@@ -113,6 +113,8 @@ namespace wmr
 		m_width = new_width;
 		m_height = new_height;
 
+		LOG("New framegraph size: {}x{} pixels.", new_width, new_height);
+
 		// Wait until the GPU is done executing
 		render_system.WaitForAllPreviousWork();
 
