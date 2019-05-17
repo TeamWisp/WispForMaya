@@ -30,9 +30,8 @@ wmr::MaterialManager::~MaterialManager()
 
 void wmr::MaterialManager::Initialize()
 {
-	auto& renderer = dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer();
-
 	LOG("Attempting to get a reference to the renderer.");
+	auto& renderer = dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer();
 
 	m_material_pool = renderer.GetD3D12Renderer().CreateMaterialPool(0);
 	m_texture_pool = renderer.GetTextureManager().GetTexturePool();
