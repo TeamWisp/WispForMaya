@@ -67,7 +67,7 @@ wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::OnCreateSurfaceS
 	auto relation = DoesSurfaceShaderExist(surface_shader_obj);
 	if (relation != nullptr)
 	{
-		LOGE("Surface shader shading engine relation was not nullptr.");
+		LOGE("Surface shader shading engine relation was not nullptr in plug \"{}\".", surface_shader.name().asChar());
 		return nullptr;
 	}
 	// Surface shader doesn't have a material assigned to it yet
@@ -85,7 +85,7 @@ wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::OnCreateSurfaceS
 
 void wmr::MaterialManager::OnRemoveSurfaceShader(MPlug & surface_shader)
 {
-	LOG("Starting surface shader removal.");
+	LOG("Starting surface shader removal of \"{}\".", surface_shader.name().asChar());
 
 	// Find surface shader
 	auto it = std::find_if(m_surface_shader_shading_relations.begin(), m_surface_shader_shading_relations.end(), [&surface_shader] (const std::vector<SurfaceShaderShadingEngineRelation>::value_type& vt)
@@ -123,7 +123,7 @@ void wmr::MaterialManager::OnRemoveSurfaceShader(MPlug & surface_shader)
 
 wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & surface_shader, MObject & shading_engine, bool apply_material)
 {
-	LOG("Starting shader connection to shading engine.");
+	LOG("Starting shader \"{}\" connection to shading engine of type \"{}\".", surface_shader.name().asChar(), shading_engine.apiTypeStr());
 
 	// Find surface shader relationships
 	MObject surface_shader_obj = surface_shader.node();
