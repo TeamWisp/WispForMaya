@@ -55,7 +55,7 @@ void MeshAddedCallback( MObject &node, void *client_data )
 	// Create an attribute changed callback to use in order to wait for the mesh to be ready
 	scenegraph_parser->GetModelParser().SubscribeObject( node );
 
-	LOG("New mesh added: \"{}\".", MFnMesh(node).fullPathName().asChar());
+	LOG("New mesh added via MeshAddedCallback: \"{}\".", MFnMesh(node).fullPathName().asChar());
 }
 
 void MeshRemovedCallback( MObject& node, void* client_data )
