@@ -53,7 +53,6 @@ namespace wmr
 
 			if (maya_shader_manager)
 			{
-				// TODO: Write a custom shader that does not flip the texture and performs a color correction
 				m_shader_instance = maya_shader_manager->getEffectsFileShader("wispBlitColorDepth", "");
 			}
 		}

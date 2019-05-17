@@ -16,6 +16,7 @@
 // Wisp rendering framework
 #include "d3d12/d3d12_renderer.hpp"
 #include "window.hpp"
+#include "util/log.hpp"
 
 // Maya API
 #include <maya/M3dView.h>
@@ -41,7 +42,6 @@ static std::shared_ptr<wr::MaterialPool> material_pool;
 static wr::TextureHandle loaded_skybox;
 static wr::TextureHandle loaded_skybox2;
 
-#define SCENE viknell_scene
 namespace wmr
 {
 	static void EnsurePanelDisplayShading( const MString& destination )
@@ -66,6 +66,8 @@ namespace wmr
 		, m_viewport_height(1)
 		, m_is_initialized(false)
 	{
+		LOG("Starting viewport renderer override initialization.");
+
 		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
 		if( maya_renderer )
 		{
@@ -73,7 +75,7 @@ namespace wmr
 		}
 		else
 		{
-			assert( false );
+			LOGC("Failed to get the Maya renderer when attemping to register the viewport override.");
 		}
 
 		m_renderer = std::make_unique<Renderer>();
@@ -84,14 +86,15 @@ namespace wmr
 		m_scenegraph_parser = std::make_unique<ScenegraphParser>();
 		m_scenegraph_parser->Initialize();
 
-
-
 		// Let the user know that the plugin is in development
 		InitialNotifyUser();
+
+		LOG("Finished viewport renderer override initialization.");
 	}
 
 	ViewportRendererOverride::~ViewportRendererOverride()
 	{
+		LOG("Starting viewport renderer override destructor.");
 		// Not the Wisp renderer, but the internal Maya renderer
 		const auto maya_renderer = MHWRender::MRenderer::theRenderer();
 
@@ -99,6 +102,7 @@ namespace wmr
 		{
 			// De-register the actual plug-in
 			maya_renderer->deregisterOverride( this );
+			LOG("Renderer override deregistered.");
 		}
 	}
 
@@ -170,7 +174,7 @@ namespace wmr
 
 		if (!maya_renderer)
 		{
-			assert( false ); 
+			LOGC("Could not retrieve the Maya renderer in setup().");
 			return MStatus::kFailure;
 		}
 
@@ -178,13 +182,13 @@ namespace wmr
 
 		if (!maya_texture_manager)
 		{
-			assert( false );
+			LOGC("Could not retrieve the Maya texture manager in setup().");
 			return MStatus::kFailure;
 		}
 
 		if ( !AreAllRenderOperationsSetCorrectly() )
 		{
-			assert( false );
+			LOGC("Not every render operation has been set correctly.");
 			return MStatus::kFailure;
 		}
 

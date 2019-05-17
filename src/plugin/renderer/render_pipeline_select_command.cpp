@@ -1,5 +1,8 @@
 #include "render_pipeline_select_command.hpp"
 
+// Wisp
+#include <util/log.hpp>
+
 // Wisp plug-in
 #include "plugin/framegraph/frame_graph_manager.hpp"
 #include "plugin/viewport_renderer_override.hpp"
@@ -22,7 +25,10 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 
 	// The viewport override has not been initialized properly yet
 	if (!viewport_override->IsInitialized())
+	{
+		LOGE("Viewport override has not been initialized properly yet.");
 		return MStatus::kFailure;
+	}
 
 	auto& renderer = viewport_override->GetRenderer();
 	auto& frame_graph = renderer.GetFrameGraph();
@@ -68,6 +74,8 @@ MSyntax wmr::RenderPipelineSelectCommand::create_syntax()
 
 	syntax.enableQuery(false);
 	syntax.enableEdit(false);
+
+	LOG("Finished creating custom MEL command syntax.");
 
 	return syntax;
 }

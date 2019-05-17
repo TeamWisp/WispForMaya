@@ -21,6 +21,9 @@
 #include <maya/MPlugArray.h>
 #include <maya/MSelectionList.h>
 
+// Wisp
+#include <util/log.hpp>
+
 // C++ standard
 #include <string>
 #include <vector>
@@ -33,7 +36,7 @@ wmr::MaterialParser::MaterialParser() :
 	MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME)
 	)->GetRenderer())
 {
-
+	LOG("Attempting to get a reference to the renderer.");
 }
 
 namespace wmr
@@ -107,7 +110,10 @@ void wmr::MaterialParser::ParseShadingEngineToWispMaterial(MObject & shading_eng
 	// Check if shader type not supported by this plug-in
 	auto shader_type = GetShaderType(actual_surface_shader_object);
 	if (shader_type == detail::SurfaceShaderType::UNSUPPORTED)
+	{
+		LOGW("Tried to use an unsupported shader type.");
 		return;
+	}
 
 	// Wisp material
 	wr::MaterialHandle material_handle = material_manager.CreateMaterial(fnmesh, shading_engine, actual_surface_shader);
@@ -182,6 +188,7 @@ void wmr::MaterialParser::OnMeshAdded(MFnMesh& mesh)
 
 				// Two or more materials are used (TODO)
 			default:
+				LOGW("User tried to use two or more materials on a single mesh.");
 				break;
 		}
 	}
@@ -200,7 +207,10 @@ void wmr::MaterialParser::OnCreateSurfaceShader(MPlug & surface_shader)
 		// Check if shader type not supported by this plug-in
 		auto shader_type = GetShaderType(surface_shader.node());
 		if (shader_type == detail::SurfaceShaderType::UNSUPPORTED)
+		{
+			LOGW("User tried to create a surface shader that is not supported.");
 			return;
+		}
 
 		auto& material_manager = m_renderer.GetMaterialManager();
 		auto& texture_manager = m_renderer.GetTextureManager();
