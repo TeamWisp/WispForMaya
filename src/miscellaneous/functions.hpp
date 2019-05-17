@@ -23,8 +23,9 @@ namespace wmr
 		 *  a standard "generic" check.
 		 * 
 		 *  /param status The status to be evaluated.
+		 *	/param msg Message to display when the status equals MStatus::kFailure
 		 *  /return No return value, but an exception will be thrown when status == MStatus::kSuccess. */
-		void ThrowIfFailedMaya(const MStatus& status);
+		void ThrowIfFailedMaya(const MStatus& status, const char* msg);
 
 		//! Output a debug message to the console
 		/*! Utility function that logs to the Visual Studio console window on Windows. On other systems, "printf" is used instead.

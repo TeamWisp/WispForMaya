@@ -6,6 +6,7 @@
 
 // Wisp rendering framework
 #include "scene_graph/camera_node.hpp"
+#include "util/log.hpp"
 
 // Maya API
 #include <maya/M3dView.h>
@@ -18,6 +19,7 @@
 
 void wmr::CameraParser::Initialize()
 {
+	LOG("Attempting to get a reference to the renderer.");
 	m_viewport_camera = dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer().GetCamera();
 }
 
@@ -30,7 +32,10 @@ void wmr::CameraParser::UpdateViewportCamera(const MString & panel_name)
 
 	// Could not retrieve the viewport panel
 	if (status == MStatus::kFailure)
+	{
+		LOGE("Could not retrieve the viewport panel.");
 		return;
+	}
 
 	// Model view matrix
 	MMatrix model_view_matrix;
@@ -42,7 +47,10 @@ void wmr::CameraParser::UpdateViewportCamera(const MString & panel_name)
 
 	// Ignore orthographic cameras
 	if (camera_functions.isOrtho())
+	{
+		LOGE("User tried using an orthogonal camera, Wisp does not support this.");
 		return;
+	}
 
 	MFnTransform camera_transform(camera_dag_path.transform());
 
@@ -50,10 +58,6 @@ void wmr::CameraParser::UpdateViewportCamera(const MString & panel_name)
 	camera_transform.getRotation(view_rotation);
 
 	m_viewport_camera->SetRotation({ (float)view_rotation.x,(float)view_rotation.y, (float)view_rotation.z });
-
-	// Ignore orthographic cameras
-	if (camera_functions.isOrtho())
-		return;
 
 	MVector cameraPos = camera_functions.eyePoint(MSpace::kWorld);
 	m_viewport_camera->SetPosition({ (float)cameraPos.x, (float)cameraPos.y, (float)cameraPos.z });
@@ -64,7 +68,10 @@ void wmr::CameraParser::UpdateViewportCamera(const MString & panel_name)
 
 	// Could not retrieve the viewport information
 	if (status == MStatus::kFailure)
+	{
+		LOGE("Could not retrieve viewport dimensions.");
 		return;
+	}
 
 	m_viewport_camera->m_frustum_far = camera_functions.farClippingPlane();
 	m_viewport_camera->m_frustum_near = camera_functions.nearClippingPlane();

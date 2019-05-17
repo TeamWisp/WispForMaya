@@ -17,9 +17,13 @@ namespace wmr
 {
 	void TextureManager::Initialize() noexcept
 	{
+		LOG("Attempting to get a reference to the texture pool via the renderer.");
+		
 		// Create a texture pool using the D3D12 Wisp renderer
 		m_texture_pool = dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer().GetD3D12Renderer().CreateTexturePool();
 
+		LOG("Attempting to load the hard-coded skybox.");
+		
 		// The default texture needs to be loaded at all times
 		m_default_texture = m_texture_pool->LoadFromFile("./resources/textures/Circus_Backstage_3k.hdr", false, false);
 	}

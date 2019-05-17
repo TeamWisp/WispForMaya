@@ -16,7 +16,7 @@
 #include "scene_graph/mesh_node.hpp"
 #include "d3d12/d3d12_renderer.hpp"
 #include "d3d12/d3d12_model_pool.hpp" 
-
+#include "util/log.hpp"
 
 #include <maya/MDagPath.h>
 #include <maya/MEulerRotation.h>
@@ -45,16 +45,26 @@
 
 void MeshAddedCallback( MObject &node, void *client_data )
 {
-	assert( node.apiType() == MFn::Type::kMesh );
+	if (node.apiType() != MFn::Type::kMesh)
+	{
+		LOGC("Trying to add mesh callback, but node type is not of \"kMesh\".");
+	}
+
   	wmr::ScenegraphParser* scenegraph_parser = reinterpret_cast< wmr::ScenegraphParser* >( client_data );
 
 	// Create an attribute changed callback to use in order to wait for the mesh to be ready
 	scenegraph_parser->GetModelParser().SubscribeObject( node );
+
+	LOG("New mesh added via MeshAddedCallback: \"{}\".", MFnMesh(node).fullPathName().asChar());
 }
 
 void MeshRemovedCallback( MObject& node, void* client_data )
 {
-	assert( node.apiType() == MFn::Type::kMesh );
+	if (node.apiType() != MFn::Type::kMesh)
+	{
+		LOGC("Trying to remove mesh callback, but node type is not of \"kMesh\", it is of type \"{}\".", node.apiTypeStr());
+	}
+
 	wmr::ScenegraphParser* scenegraph_parser = reinterpret_cast< wmr::ScenegraphParser* >( client_data );
 
 	// Create an attribute changed callback to use in order to wait for the mesh to be ready
@@ -63,8 +73,11 @@ void MeshRemovedCallback( MObject& node, void* client_data )
 
 void LightAddedCallback( MObject &node, void *client_data )
 {
-	
-	assert( node.hasFn( MFn::Type::kLight ));
+	if (!node.hasFn(MFn::Type::kLight))
+	{
+		LOGC("Trying to add light callback to {}, but node type is not of \"kLight\".", MFnLight(node).fullPathName().asChar());
+	}
+
 	wmr::ScenegraphParser* scenegraph_parser = reinterpret_cast< wmr::ScenegraphParser* >( client_data );
 
 	// Create an attribute changed callback to use in order to wait for the mesh to be ready
@@ -73,7 +86,11 @@ void LightAddedCallback( MObject &node, void *client_data )
 
 void LightRemovedCallback( MObject& node, void* client_data )
 {
-	assert( node.hasFn( MFn::Type::kLight ));
+	if (!node.hasFn(MFn::Type::kLight))
+	{
+		LOGC("Trying to remove light callback from \"{}\", but node type is not of \"kLight\".", MFnLight(node).fullPathName().asChar());
+	}
+
 	wmr::ScenegraphParser* scenegraph_parser = reinterpret_cast< wmr::ScenegraphParser* >( client_data );
 
 	// Create an attribute changed callback to use in order to wait for the mesh to be ready
@@ -152,6 +169,8 @@ wmr::ScenegraphParser::ScenegraphParser( ) :
 		MHWRender::MRenderer::theRenderer()->findRenderOverride( settings::VIEWPORT_OVERRIDE_NAME )
 		)->GetRenderer() )
 {
+	LOG("Attempting to get a reference to the renderer.");
+
 	m_camera_parser = std::make_unique<CameraParser>();
 	m_model_parser = std::make_unique<ModelParser>();
 	m_light_parser = std::make_unique<LightParser>();
@@ -221,6 +240,7 @@ void wmr::ScenegraphParser::Initialize()
 	MItDag mesh_itt( MItDag::kDepthFirst, MFn::kMesh, &load_status );
 	if( load_status != MS::kSuccess )
 	{
+		LOGE("Could not get a mesh iterator when loading meshes.");
 		MGlobal::displayError( "false to get iterator: " + load_status );
 	}
 
@@ -242,7 +262,8 @@ void wmr::ScenegraphParser::Initialize()
 
 	if( load_status != MS::kSuccess )
 	{
-		MGlobal::displayError( "false to get itterator: " + load_status );
+		LOGE("Could not get a light iterator when loading lights.");
+		MGlobal::displayError( "false to get iterator: " + load_status );
 	}
 
 	while( !light_itt.isDone() )
@@ -266,7 +287,7 @@ void wmr::ScenegraphParser::AddCallbackValidation(MStatus status, MCallbackId id
 	}
 	else
 	{
-		assert(false);
+		LOGC("Callback coud not be added, it is not valid.");
 	}
 }
 

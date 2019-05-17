@@ -15,6 +15,8 @@
 
 wmr::Renderer::Renderer()
 {
+	LOG("Starting object creation.");
+
 	m_render_system			= std::make_unique<wr::D3D12RenderSystem>();
 	m_window				= std::make_unique<wr::Window>(GetModuleHandleA(nullptr), "Wisp hidden window", 1280, 720, false);
 	m_model_manager			= std::make_unique<ModelManager>();
@@ -23,16 +25,21 @@ wmr::Renderer::Renderer()
 	m_framegraph_manager	= std::make_unique<FrameGraphManager>();
 
 	m_scenegraph			= std::make_shared<wr::SceneGraph>(m_render_system.get());
+
+	LOG("Finished object creation.");
 }
 
 wmr::Renderer::~Renderer()
 {
+	LOG("Starting renderer destructor.");
 	m_render_system->WaitForAllPreviousWork();
 	m_render_system.reset();
+	LOG("Finished renderer destructor.");
 }
 
 void wmr::Renderer::Initialize() noexcept
 {
+	LOG("Starting renderer initialization.");
 	m_render_system	->Init(m_window.get());
 
 	m_model_manager->Initialize();
@@ -48,6 +55,7 @@ void wmr::Renderer::Initialize() noexcept
 
 	m_render_system->InitSceneGraph(*m_scenegraph);
 	m_framegraph_manager->Create(*m_render_system, RendererFrameGraphType::DEFERRED);
+	LOG("Finished renderer initialization.");
 }
 
 void wmr::Renderer::Update()
