@@ -82,12 +82,9 @@ namespace wmr
 				LOG("Current rendering pipeline switched to hybrid.");
 				break;
 			
-			case wmr::RendererFrameGraphType::RENDERING_PIPELINE_TYPE_COUNT:
+			default:
 				LOG("Current rendering pipeline switched to an invalid pipeline.");
 				return;	// Invalid type
-
-			default:
-				break;
 		}
 		
 		m_current_rendering_pipeline_type = new_renderer_frame_graph_type;
