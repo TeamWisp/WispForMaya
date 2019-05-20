@@ -326,7 +326,8 @@ namespace wmr
 	void AttributeMeshTransformCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &other_plug, void *client_data )
 	{
 		// Check if attribute was set
-		if( !( msg & MNodeMessage::kAttributeSet ) )
+		if( !( msg & MNodeMessage::kAttributeSet ) &&
+			!( msg & MNodeMessage::kAttributeEval) )
 		{
 			return;
 		}
@@ -452,7 +453,8 @@ namespace wmr
 
 	void attributeMeshChangedCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &other_plug, void *client_data )
 	{
-		if( !( msg & MNodeMessage::kAttributeSet ) )
+		if( !( msg & MNodeMessage::kAttributeSet ) &&
+			!( msg & MNodeMessage::kAttributeEval ))
 		{
 			return;
 		}
@@ -631,7 +633,7 @@ void wmr::ModelParser::Update()
 		auto itt = std::find_if( m_object_transform_vector.begin(), m_object_transform_vector.end(), getMeshObjectAlgorithm( object ) );
 		if( itt == m_object_transform_vector.end() )
 		{
-			return; // find_if returns last element even if it is not a positive result
+			continue; // find_if returns last element even if it is not a positive result
 		}
 
 		m_renderer.GetModelManager().UpdateModel( *itt->second->m_model , mesh_data );
