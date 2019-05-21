@@ -17,6 +17,7 @@ namespace wmr
 		, m_renderer(dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer())
 		, m_blit_operation(blit_operation)
 	{
+		LOG("Attempting to get a reference to the renderer.");
 		SetDefaultTextureState();
 	}
 
@@ -72,8 +73,11 @@ namespace wmr
 			m_color_texture_desc.fTextureType = MHWRender::kImage2D;
 
 			m_color_texture.texture = MHWRender::MRenderer::theRenderer()->getTextureManager()->acquireTexture("", m_color_texture_desc, cpu_data.m_data, false);
-			assert( m_color_texture.texture != nullptr );
 
+			if (m_color_texture.texture == nullptr)
+			{
+				LOGC("Color texture is nullptr.");
+			}
 
 			m_color_texture.texture->textureDescription(m_color_texture_desc);
 

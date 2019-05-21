@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.14)
 
 add_compile_definitions(_ENABLE_EXTENDED_ALIGNED_STORAGE)
 
-option(ENABLE_UNIT_TEST "enables unit tests." OFF)
-
 # The Maya installation directory location is required for this project to work
 if (NOT EXISTS "$ENV{MAYA_SDK_DIR}")
     message(FATAL_ERROR "\"MAYA_SDK_DIR\" environment variable could not be found!")
@@ -70,6 +68,11 @@ add_subdirectory(deps/WispRenderer ${CMAKE_BINARY_DIR}/wisprenderer)
 include_directories(${MAYA_INCLUDE_DIR})
 link_directories(${MAYA_LIBRARY_DIR})
 
+link_directories(${CMAKE_SOURCE_DIR}/deps/crashpad/out/$(ConfigurationName)/obj/)
+link_directories(${CMAKE_SOURCE_DIR}/deps/crashpad/out/$(ConfigurationName)/obj/client/)
+link_directories(${CMAKE_SOURCE_DIR}/deps/crashpad/out/$(ConfigurationName)/obj/util/)
+link_directories(${CMAKE_SOURCE_DIR}/deps/crashpad/out/$(ConfigurationName)/obj/third_party/mini_chromium/mini_chromium/base/)
+
 # === Maya libraries === #
 set(LIBRARIES "OpenMaya.lib" "OpenMayaUI.lib" "OpenMayaRender.lib" "Foundation.lib")
 
@@ -85,13 +88,16 @@ add_library(${PROJECT_NAME} SHARED
 
 target_include_directories(${PROJECT_NAME} PUBLIC src)
 target_include_directories(${PROJECT_NAME} PUBLIC deps/WispRenderer/src)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/deps/crashpad)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/deps/crashpad/third_party/mini_chromium/mini_chromium)
 
 target_link_libraries(${PROJECT_NAME} WispRenderer)
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
+target_link_libraries(${PROJECT_NAME} crashpad_client crashpad_util base)
 
 # Additional properties
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ${PLUGIN_EXTENSION}) # A Maya plug-in needs its own custom (.mll) extension
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
 set_target_properties(${PROJECT_NAME} PROPERTIES CMAKE_CXX_STANDARD_REQUIRED ON)
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/../")
@@ -104,49 +110,6 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD        # Adds a post-build 
 if (MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /W4 /permissive- /MP /Gm-)
 endif()
-
-if(ENABLE_UNIT_TEST)
-    set(BUILD_GMOCK OFF)
-    set(INSTALL_GTEST OFF)
-    #add_subdirectory(deps/googletest/googletest)
-    file(GLOB TEST_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/test/*.hpp")
-    file(GLOB TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/test/*.cpp")
-
-    set_target_properties (gtest PROPERTIES FOLDER ThirdParty)
-    set_target_properties (gtest_main PROPERTIES FOLDER ThirdParty)
-
-    if (MSVC)
-        target_compile_options(gtest PRIVATE /W0)
-    endif()
-
-    add_executable(MayaUnitTest WIN32
-                    ${HEADERS} ${SOURCES}
-                    ${MISC_HEADERS} ${MISC_SOURCES}
-                    ${PLUGIN_HEADERS} ${PLUGIN_SOURCES}
-                    ${PLUGIN_RENDER_OPERATIONS_HEADERS} ${PLUGIN_RENDER_OPERATIONS_SOURCES}
-                    ${TEST_HEADERS} ${TEST_SOURCES}
-                    ${PLUGIN_PARSERS_HEADERS} ${PLUGIN_PARSERS_SOURCES}
-                    ${PLUGIN_RENDERER_HEADERS} ${PLUGIN_RENDERER_SOURCES}
-                    ${PLUGIN_FRAMEGRAPH_HEADERS} ${PLUGIN_FRAMEGRAPH_SOURCES})
-
-    set_target_properties(MayaUnitTest PROPERTIES CXX_STANDARD 17)
-    set_target_properties(MayaUnitTest PROPERTIES CXX_EXTENSIONS OFF)
-    set_target_properties(MayaUnitTest PROPERTIES CMAKE_CXX_STANDARD_REQUIRED ON)
-
-    target_include_directories(MayaUnitTest PUBLIC src)
-    target_include_directories(MayaUnitTest PUBLIC deps/Procedural-Ray-Tracing/src)
-    target_include_directories(MayaUnitTest PUBLIC deps/googletest/googletest/include)
-    target_include_directories(MayaUnitTest PUBLIC ${MAYA_INCLUDE_DIR})
-    link_directories(MayaUnitTest PUBLIC ${MAYA_LIBRARY_DIR})
-
-    target_link_libraries(MayaUnitTest gtest)
-    target_link_libraries(MayaUnitTest WispRenderer)
-    target_link_libraries(MayaUnitTest ${LIBRARIES})
-    if (MSVC)
-	    target_compile_options(MayaUnitTest PRIVATE /W4 /permissive- /MP /Gm-)
-    endif()
-
-endif(ENABLE_UNIT_TEST)
 
 # Change the startup project to this project (not the CMake projects)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})

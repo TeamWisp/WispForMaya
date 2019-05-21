@@ -9,8 +9,6 @@ global proc switch_rendering_pipeline()
     setParent($gMainWindow);
     
     menu -label "Wisp" -to true -aob true Wisp;
-        menuItem -label "Deferred Pipeline" -command "wisp_switch_rendering_pipeline(\"-deferred\")";
-        menuItem -label "Hybrid Ray-Tracing Pipeline" -command "wisp_switch_rendering_pipeline(\"-hybrid_ray_trace\")";
-        menuItem -label "Full Ray-Tracing Pipeline" -command "wisp_switch_rendering_pipeline(\"-full_ray_trace\")";
-        menuItem -label "Path-Tracing Pipeline" -command "wisp_switch_rendering_pipeline(\"-path_trace\")";
+        menuItem -label "PBR Materials Visualization" -command "wisp_switch_rendering_pipeline(\"-deferred\")";
+        menuItem -label "Real-Time Final Render Preview" -command "wisp_switch_rendering_pipeline(\"-hybrid_ray_trace\")";
 }

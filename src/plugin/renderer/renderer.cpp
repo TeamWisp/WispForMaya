@@ -18,18 +18,18 @@
 
 wmr::Renderer::Renderer()
 {
-	// Get the Maya window handle
-	M3dView view = M3dView::active3dView();
-	HWND hwnd = view.applicationShell();
+	LOG("Starting object creation.");
 
 	m_render_system			= std::make_unique<wr::D3D12RenderSystem>();
-	m_window				= std::make_unique<wr::Window>(GetModuleHandleA(nullptr), "WispHiddenChildWindow", hwnd);
+	m_window				= std::make_unique<wr::Window>(GetModuleHandleA(nullptr), "Wisp hidden window", 1280, 720, false);
 	m_model_manager			= std::make_unique<ModelManager>();
 	m_texture_manager		= std::make_unique<TextureManager>();
 	m_material_manager		= std::make_unique<MaterialManager>();
 	m_framegraph_manager	= std::make_unique<FrameGraphManager>();
 
 	m_scenegraph			= std::make_shared<wr::SceneGraph>(m_render_system.get());
+
+	LOG("Finished object creation.");
 }
 
 wmr::Renderer::~Renderer()
@@ -37,6 +37,7 @@ wmr::Renderer::~Renderer()
 
 void wmr::Renderer::Initialize() noexcept
 {
+	LOG("Starting renderer initialization.");
 	m_render_system	->Init(m_window.get());
 
 	m_model_manager->Initialize();
@@ -52,6 +53,7 @@ void wmr::Renderer::Initialize() noexcept
 
 	m_render_system->InitSceneGraph(*m_scenegraph);
 	m_framegraph_manager->Create(*m_render_system, RendererFrameGraphType::DEFERRED);
+	LOG("Finished renderer initialization.");
 }
 
 void wmr::Renderer::Update()

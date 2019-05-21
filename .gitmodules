@@ -22,3 +22,9 @@
 [submodule "deps/WispRenderer"]
 	path = deps/WispRenderer
 	url = https://github.com/teamwisp/WispRenderer
+[submodule "deps/crashpad"]
+	path = deps/crashpad
+	url = https://github.com/TeamWisp/Crashpad.git
+[submodule "deps/tinygltf"]
+	path = deps/tinygltf
+	url = https://github.com/syoyo/tinygltf

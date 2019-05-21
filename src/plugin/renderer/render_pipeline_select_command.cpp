@@ -1,5 +1,8 @@
 #include "render_pipeline_select_command.hpp"
 
+// Wisp
+#include <util/log.hpp>
+
 // Wisp plug-in
 #include "plugin/framegraph/frame_graph_manager.hpp"
 #include "plugin/viewport_renderer_override.hpp"
@@ -22,15 +25,16 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 
 	// The viewport override has not been initialized properly yet
 	if (!viewport_override->IsInitialized())
+	{
+		LOGE("Viewport override has not been initialized properly yet.");
 		return MStatus::kFailure;
+	}
 
 	auto& renderer = viewport_override->GetRenderer();
 	auto& frame_graph = renderer.GetFrameGraph();
 
 	bool deferred_set = arg_data.isFlagSet("deferred");
 	bool hybrid_set = arg_data.isFlagSet("hybrid_ray_trace");
-	bool full_rt_set = arg_data.isFlagSet("full_ray_trace");
-	bool path_trace_set = arg_data.isFlagSet("path_trace");
 
 	if (deferred_set)
 	{
@@ -39,14 +43,6 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 	else if (hybrid_set)
 	{
 		frame_graph.SetType(RendererFrameGraphType::HYBRID_RAY_TRACING);
-	}
-	else if (full_rt_set)
-	{
-		frame_graph.SetType(RendererFrameGraphType::FULL_RAY_TRACING);
-	}
-	else if (path_trace_set)
-	{
-		frame_graph.SetType(RendererFrameGraphType::PATH_TRACER);
 	}
 	else
 	{
@@ -63,11 +59,11 @@ MSyntax wmr::RenderPipelineSelectCommand::create_syntax()
 
 	syntax.addFlag("-d", "-deferred",			MSyntax::kNoArg);
 	syntax.addFlag("-h", "-hybrid_ray_trace",	MSyntax::kNoArg);
-	syntax.addFlag("-f", "-full_ray_trace",		MSyntax::kNoArg);
-	syntax.addFlag("-p", "-path_trace",			MSyntax::kNoArg);
 
 	syntax.enableQuery(false);
 	syntax.enableEdit(false);
+
+	LOG("Finished creating custom MEL command syntax.");
 
 	return syntax;
 }
