@@ -103,9 +103,6 @@ void main_cs(int3 dispatch_thread_id : SV_DispatchThreadID)
 		//Ao is multiplied with material texture ao, if present
 		ao *= gbuffer_ao;
 
-		//Ao is multiplied with material texture ao, if present
-		ao *= gbuffer_ao;
-
 		// Get shadow factor (0: fully shadowed, 1: no shadow)
 		float shadow_factor = lerp(
 			// Do deferred shadow (fully lit for now)
