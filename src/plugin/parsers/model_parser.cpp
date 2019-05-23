@@ -560,7 +560,7 @@ void wmr::ModelParser::UnSubscribeObject( MObject & maya_object )
 
 }
 
-bool wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
+void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 {
 	wr::MeshData<wr::Vertex> mesh_data;
 	
@@ -610,9 +610,6 @@ bool wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 		// First remove it, then replace it
 		m_renderer.GetScenegraph().DestroyNode<wr::MeshNode>(itt->second);
 		itt->second = model_node;
-
-		// False, if the model HAS NOT been ADDED
-		return false;
 	}
 	m_object_transform_vector.push_back( std::make_pair(mesh_object, model_node ) );
 
@@ -635,8 +632,6 @@ bool wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 	CallbackManager::GetInstance().RegisterCallback( attributeId );
 
 	LOG("Mesh \"{}\" added.", fnmesh.fullPathName().asChar());
-	// True, if the model HAS been ADDED
-	return true;
 }
 
 void wmr::ModelParser::Update()

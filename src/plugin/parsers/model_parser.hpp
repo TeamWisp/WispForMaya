@@ -25,7 +25,7 @@ namespace wmr
 
 		void SubscribeObject( MObject& maya_object );
 		void UnSubscribeObject( MObject& maya_object );
-		bool MeshAdded( MFnMesh & fnmesh );
+		void MeshAdded( MFnMesh & fnmesh );
 		std::shared_ptr<wr::MeshNode> GetWRModel(MObject & maya_object);
 
 		void Update();
