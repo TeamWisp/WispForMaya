@@ -13,9 +13,6 @@
 #include "d3d12/d3d12_renderer.hpp"
 #include "wisp.hpp"
 
-// Maya API
-#include <maya/M3dView.h>
-
 wmr::Renderer::Renderer()
 {
 	LOG("Starting object creation.");
