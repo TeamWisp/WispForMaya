@@ -402,7 +402,8 @@ namespace wmr
 			return;
 		}
 
-		wmr::ModelParser* model_parser = reinterpret_cast< wmr::ModelParser* >( client_data );
+		wmr::ModelParser* model_parser = reinterpret_cast<wmr::ModelParser*>(client_data);
+
 		// Add the mesh
 		model_parser->MeshAdded(mesh);
 
@@ -426,7 +427,8 @@ namespace wmr
 
 		if (model_parser->m_mesh_added_callback_vector.size() <= 0)
 		{
-			LOGC("Mesh added callback vector size is zero.");
+			LOGW("Mesh added callback vector size is zero.");
+			return;
 		}
 
 		auto it_end = --model_parser->m_mesh_added_callback_vector.end();
@@ -592,8 +594,24 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 
 	updateTransform( transform, model_node );
 
-	m_object_transform_vector.push_back( std::make_pair( fnmesh.object(), model_node ) );
-
+	// Check if the mesh is already added
+	MObject mesh_object = fnmesh.object();
+	auto itt = std::find_if(m_object_transform_vector.begin(), m_object_transform_vector.end(), getMeshObjectAlgorithm(mesh_object));
+	if (itt != m_object_transform_vector.end())
+	{
+		// If it is, still add it to mesh changed vector
+		auto changed_itt = std::find(m_changed_mesh_vector.begin(), m_changed_mesh_vector.end(), mesh_object);
+		if (changed_itt == m_changed_mesh_vector.end())
+		{
+			m_changed_mesh_vector.push_back(mesh_object);
+		}
+		
+		// If the model is already in the vector, assume that it should be overwritten
+		// First remove it, then replace it
+		m_renderer.GetScenegraph().DestroyNode<wr::MeshNode>(itt->second);
+		itt->second = model_node;
+	}
+	m_object_transform_vector.push_back( std::make_pair(mesh_object, model_node ) );
 
 	MCallbackId attributeId = MNodeMessage::addAttributeChangedCallback(
 		object,
