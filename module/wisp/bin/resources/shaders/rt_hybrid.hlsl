@@ -17,22 +17,19 @@ struct Vertex
 
 struct Material
 {
-	uint albedo_id;
-	uint normal_id;
-	uint roughness_id;
-	uint metalicness_id;
-	uint emissive_id;
-	uint ao_id;
-	float2 padding;
+	float albedo_id;
+	float normal_id;
+	float roughness_id;
+	float metalicness_id;
 
 	MaterialData data;
 };
 
 struct Offset
 {
-    uint material_idx;
-    uint idx_offset;
-    uint vertex_offset;
+    float material_idx;
+    float idx_offset;
+    float vertex_offset;
 };
 
 RWTexture2D<float4> output_refl_shadow : register(u0); // xyz: reflection, a: shadow factor
@@ -100,7 +97,7 @@ float3 TraceReflectionRay(float3 origin, float3 norm, float3 direction, uint ran
 
 	origin += norm * EPSILON;
 
-	ReflectionHitInfo payload = {origin, float3(0,0,1), rand_seed, depth, cone};
+	ReflectionHitInfo payload = {origin, float3(0, 0, 1), rand_seed, depth, cone};
 
 	// Define a ray, consisting of origin, direction, and the min-max distance values
 	RayDesc ray;
@@ -114,8 +111,8 @@ float3 TraceReflectionRay(float3 origin, float3 norm, float3 direction, uint ran
 		Scene,
 		RAY_FLAG_NONE,
 		//RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH
-		//RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
-		0xFF, // InstanceInclusionMask
+		// RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
+		~0, // InstanceInclusionMask
 		0, // RayContributionToHitGroupIndex
 		1, // MultiplierForGeometryContributionToHitGroupIndex
 		0, // miss shader index
@@ -136,7 +133,7 @@ float3 unpack_position(float2 uv, float depth)
 float3 DoReflection(float3 wpos, float3 V, float3 normal, uint rand_seed, uint depth, RayCone cone)
 {
 	// Calculate ray info
-	float3 reflected = normalize(reflect(-V, normal));
+	float3 reflected = reflect(-V, normal);
 
 	// Shoot reflection ray
 	float3 reflection = TraceReflectionRay(wpos, normal, reflected, rand_seed, depth, cone);
@@ -151,21 +148,21 @@ void RaygenEntry()
 	uint rand_seed = initRand(DispatchRaysIndex().x + DispatchRaysIndex().y * DispatchRaysDimensions().x, frame_idx);
 
 	// Texture UV coordinates [0, 1]
-	float2 uv = float2(DispatchRaysIndex().xy + 0.5f) / float2(DispatchRaysDimensions().xy);
+	float2 uv = float2(DispatchRaysIndex().xy) / float2(DispatchRaysDimensions().xy - 1);
 
 	// Screen coordinates [0, resolution] (inverted y)
 	int2 screen_co = DispatchRaysIndex().xy;
 
 	// Get g-buffer information
-	float4 albedo_roughness = gbuffer_albedo.SampleLevel(s0, uv, 0);
-	float4 normal_metallic = gbuffer_normal.SampleLevel(s0, uv, 0);
+	float4 albedo_roughness = gbuffer_albedo[screen_co];
+	float4 normal_metallic = gbuffer_normal[screen_co];
 
 	// Unpack G-Buffer
-	float depth = gbuffer_depth.SampleLevel(s0, uv, 0).x;
+	float depth = gbuffer_depth[screen_co].x;
 	float3 wpos = unpack_position(float2(uv.x, 1.f - uv.y), depth);
 	float3 albedo = albedo_roughness.rgb;
 	float roughness = albedo_roughness.w;
-	float3 normal = normalize(normal_metallic.xyz);
+	float3 normal = normal_metallic.xyz;
 	float metallic = normal_metallic.w;
 
 	// Do lighting
@@ -180,8 +177,6 @@ void RaygenEntry()
 		return;
 	}
 
-	normal = lerp(normal, -normal, dot(normal, V) < 0);
-
 	// Describe the surface for mip level generation
 	SurfaceHit sfhit;
 	sfhit.pos = wpos;
@@ -192,10 +187,11 @@ void RaygenEntry()
 	// Compute the initial ray cone from the gbuffers.
  	RayCone cone = ComputeRayConeFromGBuffer(sfhit, 1.39626, DispatchRaysDimensions().y);
 	
+	// Get shadow factor
 	float shadow_result = DoShadowAllLights(wpos + normal * EPSILON, 0, rand_seed);
 
 	// Get reflection result
-	float3 reflection_result = clamp(DoReflection(wpos, V, normal, rand_seed, depth, cone), 0, 100000);
+	float3 reflection_result = DoReflection(wpos, V, normal, rand_seed, 0, cone);
 
 	// xyz: reflection, a: shadow factor
 	output_refl_shadow[DispatchRaysIndex().xy] = float4(reflection_result.xyz, shadow_result);
@@ -276,17 +272,13 @@ void ReflectionHit(inout ReflectionHitInfo payload, in MyAttributes attr)
 		g_textures[material.normal_id],
 		g_textures[material.roughness_id],
 		g_textures[material.metalicness_id],
-		g_textures[material.emissive_id],
-		g_textures[material.ao_id],
 		mip_level,
 		s0,
 		uv);
 
-	float3 albedo = output_data.albedo;
+	float3 albedo = pow(output_data.albedo, 2.2f);
 	float roughness = output_data.roughness;
 	float metal = output_data.metallic;
-	float3 emissive = output_data.emissive;
-	float ao = output_data.ao;
 
 	float3 N = normalize(mul(model_matrix, float4(-normal, 0)));
 	float3 T = normalize(mul(model_matrix, float4(tangent, 0)));
@@ -300,7 +292,7 @@ void ReflectionHit(inout ReflectionHitInfo payload, in MyAttributes attr)
 	float3x3 TBN = float3x3(T, B, N);
 
 	float3 fN = normalize(mul(output_data.normal, TBN));
-	fN = lerp(fN, -fN, dot(fN, V) < 0);
+	if (dot(fN, V) <= 0.0f) fN = -fN;
 
 	//Shading
 	float3 flipped_N = fN;
@@ -317,14 +309,14 @@ void ReflectionHit(inout ReflectionHitInfo payload, in MyAttributes attr)
 	const float2 sampled_brdf = brdf_lut.SampleLevel(s0, float2(max(dot(fN, V), 0.01f), roughness), 0).rg;
 
 	//Lighting
-	float3 lighting = shade_pixel(hit_pos, V, albedo, metal, roughness, emissive, fN, payload.seed, payload.depth);
+	float3 lighting = shade_pixel(hit_pos, V, albedo, metal, roughness, fN, payload.seed, payload.depth);
 
 	//Reflection in reflections
 	float3 reflection = DoReflection(hit_pos, V, fN, payload.seed, payload.depth + 1, payload.cone);
 
 	float3 specular = reflection * (kS * sampled_brdf.x + sampled_brdf.y);
 	float3 diffuse = albedo * sampled_irradiance;
-	float3 ambient = (kD * diffuse + specular) * ao;
+	float3 ambient = kD * diffuse + specular;
 
 	// Output the final reflections here
 	payload.color = ambient + lighting;
