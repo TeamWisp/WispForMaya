@@ -129,7 +129,7 @@ namespace wmr
 		// Resize all framegraphs
 		for (auto& frame_graph : m_renderer_frame_graphs)
 		{
-			frame_graph->Resize(render_system, new_width, new_height);
+			frame_graph->Resize( new_width, new_height);
 		}
 
 		LOG("Resized all framegraphs successfully.");
