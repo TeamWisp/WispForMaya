@@ -102,12 +102,13 @@ MStatus initializePlugin(MObject object)
 {
 	std::time_t current_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	auto local_time = std::localtime(&current_time);
-
+#ifndef _DEBUG
 	std::stringstream ss;
 	ss << "log-" << local_time->tm_hour << local_time->tm_min << "-" << local_time->tm_mday << "-" << (local_time->tm_mon + 1) << "-" << (local_time->tm_year + 1900);
-	std::string log_file_name("WispDemo.log");
+	std::string log_file_name("WispForMaya.log");
 	std::filesystem::path path = std::filesystem::path(ss.str());
 	util::log_file_handler = new wr::LogfileHandler(path, log_file_name);
+#endif // !_DEBUG
 
 	LOG("Plugin initialization started.");
 
@@ -167,7 +168,10 @@ MStatus uninitializePlugin(MObject object)
 	ActOnCurrentDirtyState( is_scene_dirty );
 
 	LOG("Finished plug-in uninitialization.");
+#ifndef _DEBUG
 	delete util::log_file_handler;
+#endif // !_DEBUG
+
 	// If the program did not crash before this point, the plug-in was uninitialized correctly
 	return MStatus::kSuccess;
 }
