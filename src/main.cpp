@@ -100,9 +100,9 @@ void LogCallback(std::string const& msg) {
  *  /return Returns MStatus::kSucccess if everything went all right. */
 MStatus initializePlugin(MObject object)
 {
+#ifndef _DEBUG
 	std::time_t current_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	auto local_time = std::localtime(&current_time);
-#ifndef _DEBUG
 	std::stringstream ss;
 	ss << "log-" << local_time->tm_hour << local_time->tm_min << "-" << local_time->tm_mday << "-" << (local_time->tm_mon + 1) << "-" << (local_time->tm_year + 1900);
 	std::string log_file_name("WispForMaya.log");
