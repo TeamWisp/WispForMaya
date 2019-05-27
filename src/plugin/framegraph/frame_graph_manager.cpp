@@ -37,21 +37,6 @@
 
 namespace wmr
 {
-	FrameGraphManager::~FrameGraphManager()
-	{
-		LOG("Starting render task destruction.");
-
-		// Clean up the allocated frame graphs
-		for (auto& frame_graph : m_renderer_frame_graphs)
-		{
-			frame_graph->Destroy();
-			delete frame_graph;
-			frame_graph = nullptr;
-		}
-
-		LOG("Finished render task destruction.");
-	}
-
 	void FrameGraphManager::Create(wr::RenderSystem& render_system, RendererFrameGraphType initial_type, std::uint32_t initial_width, std::uint32_t initial_height) noexcept
 	{
 		LOG("Starting framegraph manager creation.");
@@ -80,6 +65,21 @@ namespace wmr
 		LOG("Finished finalizing framegraphs.");
 
 		LOG("Finished framegraph manager creation.");
+	}
+
+	void FrameGraphManager::Destroy() noexcept
+	{
+		// Clean up the allocated frame graphs
+		for (auto* frame_graph : m_renderer_frame_graphs)
+		{
+			// Not allocated
+			if (!frame_graph)
+				continue;
+
+			frame_graph->Destroy();
+			delete frame_graph;
+			frame_graph = nullptr;
+		}
 	}
 
 	void FrameGraphManager::SetType(RendererFrameGraphType new_renderer_frame_graph_type) noexcept

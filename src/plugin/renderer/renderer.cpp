@@ -30,12 +30,7 @@ wmr::Renderer::Renderer()
 }
 
 wmr::Renderer::~Renderer()
-{
-	LOG("Starting renderer destructor.");
-	m_render_system->WaitForAllPreviousWork();
-	m_render_system.reset();
-	LOG("Finished renderer destructor.");
-}
+{}
 
 void wmr::Renderer::Initialize() noexcept
 {
@@ -64,6 +59,16 @@ void wmr::Renderer::Update()
 void wmr::Renderer::Render()
 {
 	m_result_textures = m_render_system->Render(*m_scenegraph , *m_framegraph_manager->Get());
+}
+
+void wmr::Renderer::Destroy()
+{
+	m_model_manager->Destroy();
+	m_texture_manager->Destroy();
+	m_material_manager->Destroy();
+	m_framegraph_manager->Destroy();
+	m_render_system.reset();
+	m_window->Stop();
 }
 
 const wr::CPUTextures wmr::Renderer::GetRenderResult()

@@ -32,10 +32,8 @@ namespace wmr
 		//! Unused
 		FrameGraphManager() = default;
 		
-		//! Deallocate all frame graphs upon destruction
-		/*! Whenever the frame graph manager goes out of scope, the existing frame graphs will be destroyed. There is no
-		 *  need to keep track of the pointers in this class externally, the class will clean up after itself. */
-		~FrameGraphManager();
+		//! Unused
+		~FrameGraphManager() = default;
 
 		//! Create all frame graphs
 		/*! Configure the render passes for all the frame graphs. For every single type in the RendererFrameGraphType
@@ -47,6 +45,11 @@ namespace wmr
 		 *  /param initial_height Height of the render texture.
 		 *  /sa RendererFrameGraphType */
 		void Create(wr::RenderSystem& render_system, RendererFrameGraphType initial_type = RendererFrameGraphType::DEFERRED, std::uint32_t initial_width = 1280, std::uint32_t initial_height = 720) noexcept;
+
+		//! Deallocate all frame graphs upon destruction
+		/*! Whenever the frame graph manager goes out of scope, the existing frame graphs will be destroyed. There is no
+		 *  need to keep track of the pointers in this class externally, the class will clean up after itself. */
+		void Destroy() noexcept;
 
 		//! Set a frame graph type
 		/*! Replace the currently active frame graph pipeline type with the new type.
