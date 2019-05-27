@@ -105,62 +105,98 @@ void ConnectionAddedCallback(MPlug& src_plug, MPlug& dest_plug, bool made, void*
 	auto src_type = src_plug.node().apiType();
 	auto dest_type = dest_plug.node().apiType();
 
-	// Check if anything is bound to a shading engine
-	// In that case, a material is either added or moved
-	if (dest_type == MFn::kShadingEngine)
+	// ============== CATCHING MATERIAL CONNECTIONS ==============
+	switch (dest_type)
 	{
-		// Get destination object from destination plug
-		MObject dest_object = dest_plug.node();
-		// Bind the mesh to the shading engine if the source plug is a mesh
-		if (src_type == MFn::kMesh)
-		{
-			MObject src_object(src_plug.node());
-			// Check if connection is made
-			if (made)
+		// Check if anything is bound to a shading engine
+		// In that case, a material is either added or moved
+		case MFn::kShadingEngine: {
+			// Get destination object from destination plug
+			MObject dest_object = dest_plug.node();
+
+			// Bind the mesh to the shading engine if the source plug is a mesh
+			switch (src_type)
 			{
-				material_parser->ConnectMeshToShadingEngine(src_object, dest_object);
+				case MFn::kMesh:
+				{
+					MObject src_object(src_plug.node());
+					// Check if connection is made
+					if (made)
+					{
+						material_parser->ConnectMeshToShadingEngine(src_object, dest_object);
+					}
+					else
+					{
+						material_parser->DisconnectMeshFromShadingEngine(src_object, dest_object);
+					}
+					break;
+				}
+				
+				default:
+				{
+					// Get shader type of source plug
+					auto shaderType = material_parser->GetShaderType(src_plug.node());
+					// The type is UNSUPPORTED if we don't support it or if it's not a surface shader
+					if (shaderType != wmr::detail::SurfaceShaderType::UNSUPPORTED)
+					{
+						// Check if connection is made
+						if (made)
+						{
+							material_parser->ConnectShaderToShadingEngine(src_plug, dest_object);
+						}
+						else
+						{
+							material_parser->DisconnectShaderFromShadingEngine(src_plug, dest_object);
+						}
+					}
+					break;
+				}
 			}
-			else
-			{
-				material_parser->DisconnectMeshFromShadingEngine(src_object, dest_object);
-			}
+			break;
 		}
-		else
+
+
+		// When the destination plug is a shader list, a material is either made or removed
+		case MFn::kShaderList:
 		{
 			// Get shader type of source plug
 			auto shaderType = material_parser->GetShaderType(src_plug.node());
 			// The type is UNSUPPORTED if we don't support it or if it's not a surface shader
 			if (shaderType != wmr::detail::SurfaceShaderType::UNSUPPORTED)
 			{
-				// Check if connection is made
 				if (made)
 				{
-					material_parser->ConnectShaderToShadingEngine(src_plug, dest_object);
+					material_parser->OnCreateSurfaceShader(src_plug);
 				}
 				else
 				{
-					material_parser->DisconnectShaderFromShadingEngine(src_plug, dest_object);
+					material_parser->OnRemoveSurfaceShader(src_plug);
 				}
 			}
+			break;
 		}
-	}
-	// When the destination plug is a shader list, a material is either made or removed
-	else if (dest_type == MFn::kShaderList)
-	{
-		// Get shader type of source plug
-		auto shaderType = material_parser->GetShaderType(src_plug.node());
-		// The type is UNSUPPORTED if we don't support it or if it's not a surface shader
-		if (shaderType != wmr::detail::SurfaceShaderType::UNSUPPORTED)
+
+
+		// ============== CATCHING MESH CONNECTIONS ==============
+		// Catch unite and boolean operations
+		case MFn::kPolyCBoolOp:
+		case MFn::kPolyUnite:
 		{
-			if (made)
-			{
-				material_parser->OnCreateSurfaceShader(src_plug);
+			if (src_type == MFn::kMesh) {
+				// The operation is executed when the connection is made
+				if (made)
+				{
+					// Function to store meshes in a temporary array.
+				}
+				// The operation is undone when the connection is broken
+				else
+				{
+					// Function to add meshes in a temporary array again.
+				}
 			}
-			else
-			{
-				material_parser->OnRemoveSurfaceShader(src_plug);
-			}
+			break;
 		}
+
 	}
 }
 
