@@ -25,7 +25,7 @@ namespace wmr
 		LOG("Attempting to load the hard-coded skybox.");
 		
 		// The default texture needs to be loaded at all times
-		m_default_texture = m_texture_pool->LoadFromFile("./resources/textures/Circus_Backstage_3k.hdr", false, false);
+		m_default_texture = m_texture_pool->LoadFromFile("./resources/textures/wisp_default_skybox.png", false, false);
 	}
 
 	const std::shared_ptr<wr::TextureHandle> TextureManager::CreateTexture(const char* path) noexcept
