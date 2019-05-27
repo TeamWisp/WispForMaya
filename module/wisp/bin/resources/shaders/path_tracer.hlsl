@@ -46,7 +46,7 @@ Texture2D gbuffer_albedo : register(t1010);
 Texture2D gbuffer_normal : register(t1011);
 Texture2D gbuffer_emissive : register(t1012);
 Texture2D gbuffer_depth : register(t1013);
-Texture2D skybox : register(t6);
+TextureCube skybox : register(t6);
 TextureCube irradiance_map : register(t9);
 SamplerState s0 : register(s0);
 
@@ -92,7 +92,7 @@ float3 unpack_position(float2 uv, float depth)
 [shader("raygeneration")]
 void RaygenEntry()
 {
-	uint rand_seed = initRand(DispatchRaysIndex().x + DispatchRaysIndex().y * DispatchRaysDimensions().x, frame_idx);
+	uint rand_seed = initRand((DispatchRaysIndex().x + DispatchRaysIndex().y * DispatchRaysDimensions().x), frame_idx);
 
 	// Texture UV coordinates [0, 1]
 	float2 uv = float2(DispatchRaysIndex().xy) / float2(DispatchRaysDimensions().xy - 1);
@@ -124,24 +124,21 @@ void RaygenEntry()
 	float3 result = float3(0, 0, 0);
 
 	nextRand(rand_seed);
-	const float3 rand_dir = getUniformHemisphereSample(rand_seed, normal);
+	const float3 rand_dir = getCosHemisphereSample(rand_seed, normal);
 	const float cos_theta = cos(dot(rand_dir, normal));
 	result = TraceColorRay(wpos + (EPSILON * normal), rand_dir, 0, rand_seed);
 	//result += ggxIndirect(wpos, normal, normal, V, albedo, metallic, roughness, ao, rand_seed, 0);
 	//result += ggxDirect(wpos, normal, normal, V, albedo, metallic, roughness, rand_seed, 0);
 	//result += emissive;
 
-	result = clamp(result, 0, 100);
+	if (any(isnan(result)))
+	{
+		result = 0;
+	}
 
-	// xyz: reflection, a: shadow factor
-	if (frame_idx > 0 && !any(isnan(result)))
-	{
-		output[DispatchRaysIndex().xy] += float4(result, 1);
-	}
-	else
-	{
-		output[DispatchRaysIndex().xy] = float4(result, 1);
-	}
+	result = clamp(result, 0, 100);
+	
+	output[DispatchRaysIndex().xy] = float4(result, 1);
 }
 
 //Reflections
@@ -241,5 +238,5 @@ void ReflectionHit(inout HitInfo payload, in MyAttributes attr)
 [shader("miss")]
 void ReflectionMiss(inout HitInfo payload)
 {
-	payload.color = skybox.SampleLevel(s0, SampleSphericalMap(WorldRayDirection()), 0);
+	payload.color = skybox.SampleLevel(s0, WorldRayDirection(), 0);
 }

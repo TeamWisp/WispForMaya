@@ -45,7 +45,6 @@ void wmr::Renderer::Initialize() noexcept
 	m_wisp_camera->SetPosition({ 0, 0, -1 });
 	m_wisp_camera->m_override_projection = true;
 
-	m_scenegraph->m_skybox = m_texture_manager->GetDefaultTexture();
 	auto skybox = m_scenegraph->CreateChild<wr::SkyboxNode>(nullptr, m_texture_manager->GetDefaultTexture());
 
 	m_render_system->InitSceneGraph(*m_scenegraph);
@@ -59,7 +58,7 @@ void wmr::Renderer::Update()
 
 void wmr::Renderer::Render()
 {
-	m_result_textures = m_render_system->Render(m_scenegraph , *m_framegraph_manager->Get());
+	m_result_textures = m_render_system->Render(*m_scenegraph , *m_framegraph_manager->Get());
 }
 
 void wmr::Renderer::Destroy()
