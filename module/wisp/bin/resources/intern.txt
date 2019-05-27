@@ -1,0 +1,105 @@
+Hello Ubisoft Barcelona,
+
+My name is Meine Zeinstra. I'm a passionate programmer from The Netherlands with a passion for Game Engine/Tools programming, currently studying International Game Architecture and Design at Breda University of Applied Sciences.
+
+My passion to create games started all the way back when I was creating levels in Far Cry 2. Since then, I've always wanted to start programming games. The last 6-7 years I've been focussing on game programming at several educations, continuously looking to work on architectures and tools in languages like C++. I've always focussed on engine/tools programming. Though, I also took the role of gameplay, QA, and AI programmer in a couple of projects. 
+
+At this moment, I feel like I'm done with the exercises from schools and ready to get a taste from the game industry. I would love to work as an engine/tools programmer and what better way is there to start at one of the biggest AAA game companies in the game industry.
+
+Because of Peter van Dranen (a Game Design Lecturer at our school), I found out that you are still looking for an Engine Programmer. I'm hoping to get a chance to fulfill this role as an intern at Ubisoft which would start in September and lasts half a year or full academic year, depending on what's the preferred length or usual length for you.
+Thank you for your time and consideration.
+
+Sincerely,
+
+
+Meine Zeinstra
+www.mhzeinstra.com/meine
+
+
+
+
+
+
+
+Hello Yager,
+
+My name is Meine Zeinstra. I'm a passionate programmer from The Netherlands with a passion for Game Engine/Tools programming, currently studying International Game Architecture and Design at Breda University of Applied Sciences.
+
+My passion to create games started when I was creating levels in several games like Far Cry and some web applications. The last 6-7 years I've been focussing on game programming at several educations, continuously looking to work on architectures and tools in languages like C++. I've always focussed on engine/tools programming. Though, I also took the role of gameplay, QA, and AI programmer in a couple of projects. 
+
+At this moment, I feel like I'm done with the exercises from schools and ready to get a taste from the game industry. I would love to work as a tools programmer and what better way is there to start a rising game company in the game industry like Yager.
+
+Because of your visit at Breda University of Applied Sciences, I figured you have a great work atmosphere. I found out that you are looking for a Tools Programmer and I'm hoping to get a chance to fulfill this role as an intern at Yager which would start in September and lasts half a year or full academic year, depending on what's the preferred or usual length for you.
+Thank you for your time and consideration.
+
+Sincerely,
+
+
+Meine Zeinstra
+www.mhzeinstra.com/meine
+
+
+
+
+
+
+
+
+Mandates: 
+shared tech lead 2 engines. 
+     Constantly important decisions, code reviews. 
+     Most importantly graphics programmers decisions as 
+      they constantly want to up the graphics even though there's a lot 
+      to improve on current implementations and overscope the project.
+
+Epic fail/challenge:
+2 engines in Breda (C++). 
+	Before that, engine in Java 
+		(input, 
+		output (audio), 
+		scenegraph, 
+		UI). 
+	Regret Java (garbage collection). 
+	 Not sure if it's Java or yourself.
+	FPS engine
+	 Didnt care about result (transforms/scenegraph)
+
+
+Challenge:
+Obviously a lot, constant (schools)
+	Maya plugin
+	  Inconsistent API
+	Team work
+	  passive
+	  not motivated
+	Social
+	Control freak
+
+Outside:
+	Soccer
+	Parties / drniking
+	Hanging ut with friends
+	Rocketleague
+	Personal projects
+
+Ask back:
+	Team building?
+	  LAN parties
+
+Passions/quailties:
+	Love to work on core (things that litterally build the game)
+	Because of core:
+	  Learn more about (low-level) C++, APIs libraries, scripting languages etc
+	Always supportive (also outside of projects)
+	  Aka tools
+	Flexible (experience with different carreers)
+	  game and web (own comapny). Working on a project
+
+
+
+
+
+
+
+
+
