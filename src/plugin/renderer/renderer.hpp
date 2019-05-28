@@ -28,6 +28,7 @@ namespace wmr
 		void Update();
 		void Render();
 		void Destroy();
+		void UpdateSkybox(const std::string& path) noexcept;
 		const wr::CPUTextures GetRenderResult();
 
 		ModelManager& GetModelManager() const;

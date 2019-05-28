@@ -33,7 +33,7 @@ namespace wmr
 		const std::shared_ptr<wr::TextureHandle> CreateTexture(const char* path) noexcept;
 
 		//! Get a texture handle to the fall-back texture
-		const wr::TextureHandle GetDefaultTexture() const noexcept;
+		const wr::TextureHandle GetDefaultSkybox() const noexcept;
 
 		//! Get a texture handle by name
 		const std::shared_ptr<wr::TextureHandle> GetTexture(const char* identifier) noexcept;
