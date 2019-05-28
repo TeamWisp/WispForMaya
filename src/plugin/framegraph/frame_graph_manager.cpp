@@ -184,11 +184,6 @@ namespace wmr
 		wr::AddBloomVerticalTask<wr::BloomHData>(*fg);
 		LOG("Added Depth of Field task.");
 
-		// Do some post processing//initialize default settings
-		wr::BloomSettings defaultSettings;
-		fg->UpdateSettings<wr::BloomSettings>(defaultSettings);
-		LOG("Updated bloom settings.");
-
 		wr::AddBloomCompositionTask<wr::DoFCompositionData, wr::BloomVData>(*fg);
 		LOG("Added bloom task.");
 
@@ -255,11 +250,6 @@ namespace wmr
 		wr::AddBloomHorizontalTask<wr::DownScaleData>(*fg);
 		wr::AddBloomVerticalTask<wr::BloomHData>(*fg);
 		LOG("Added Depth of Field task.");
-
-		//initialize default settings
-		wr::BloomSettings defaultSettings;
-		fg->UpdateSettings<wr::BloomSettings>(defaultSettings);
-		LOG("Updated bloom settings.");
 
 		wr::AddBloomCompositionTask<wr::DoFCompositionData, wr::BloomVData>(*fg);
 		LOG("Added bloom task.");

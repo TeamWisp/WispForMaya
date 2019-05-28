@@ -606,7 +606,9 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 		m_renderer.GetScenegraph().DestroyNode<wr::MeshNode>(itt->second);
 		itt->second = model_node;
 	}
-	m_object_transform_vector.push_back( std::make_pair(mesh_object, model_node ) );
+	else {
+		m_object_transform_vector.push_back(std::make_pair(mesh_object, model_node));
+	}
 
 	MCallbackId attributeId = MNodeMessage::addAttributeChangedCallback(
 		object,
@@ -662,6 +664,39 @@ void wmr::ModelParser::SetMeshAddCallback(std::function<void(MFnMesh&)> callback
 		LOGC("Mesh added callback already set.");
 	}
 	mesh_add_callback = callback;
+}
+
+void wmr::ModelParser::ToggleMeshVisibility(MPlug & plug_mesh, bool hide)
+{
+	// Check if the given plug is indeed a mesh object
+	MStatus status;
+	MFnMesh mesh = MFnMesh(plug_mesh.node(), &status);
+	if (status != MS::kSuccess) {
+		if (hide) {
+			LOGW("Couldn't hide mesh, as the given plug isn't a mesh!");
+		}
+		else {
+			LOGW("Couldn't show mesh, as the given plug isn't a mesh!");
+		}
+		return;
+	}
+
+	MObject mesh_object = mesh.object();
+
+	// Get the itt of the given mesh object (from the standard meshes array)
+	auto itt_mesh = std::find_if(m_object_transform_vector.begin(), m_object_transform_vector.end(), getMeshObjectAlgorithm(mesh_object));
+	if (itt_mesh == m_object_transform_vector.end()) {
+		if (hide) {
+			LOG("Can't find the mesh to hide!");
+		}
+		else {
+			LOG("Can't find the mesh to show!");
+		}
+		return;
+	}
+
+	// Hide/show the model
+	itt_mesh->second->m_visible = !hide;
 }
 
 std::shared_ptr<wr::MeshNode> wmr::ModelParser::GetWRModel(MObject & maya_object)

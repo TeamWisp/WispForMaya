@@ -32,6 +32,9 @@ namespace wmr
 
 		void SetMeshAddCallback(std::function<void(MFnMesh&)> callback);
 
+		// Show/Hide meshes
+		void ToggleMeshVisibility(MPlug & plug_mesh, bool hide);
+
 	private:
 		//callbacks that require private access and are part of the ModelParser.
 		friend void AttributeMeshTransformCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData );
