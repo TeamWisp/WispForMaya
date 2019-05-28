@@ -119,12 +119,12 @@ MStatus initializePlugin(MObject object)
 	MFnPlugin plugin(object, wmr::settings::COMPANY_NAME, wmr::settings::PRODUCT_VERSION, "Any");
 
 	// Register the command that enabled a MEL script to switch rendering pipelines
-	plugin.registerCommand(wmr::settings::RENDER_PIPELINE_SELECT_COMMAND_NAME, wmr::RenderPipelineSelectCommand::creator, wmr::RenderPipelineSelectCommand::create_syntax);
+	plugin.registerCommand(wmr::settings::CUSTOM_WISP_UI_CMD, wmr::RenderPipelineSelectCommand::creator, wmr::RenderPipelineSelectCommand::create_syntax);
 
 	LOG("Registered Wisp menu custom command.");
 
-	// Add the Wisp UI to the menu bar in Maya
-	MGlobal::executeCommand("switch_rendering_pipeline");
+	// Add the Wisp UI to the menu bar in Maya (should be the same as the procedure in initialize_wisp_ui.mel)
+	MGlobal::executeCommand("initialize_wisp_ui");
 
 	LOG("Wisp menu item has been added to the main menu.");
 
@@ -167,7 +167,7 @@ MStatus uninitializePlugin(MObject object)
 	wmr::CallbackManager::Destroy();
 
 	// Remove the command used to add the Wisp UI to the menu bar
-	plugin.deregisterCommand(wmr::settings::RENDER_PIPELINE_SELECT_COMMAND_NAME);
+	plugin.deregisterCommand(wmr::settings::CUSTOM_WISP_UI_CMD);
 
 	// Remove the Wisp drop-down menu from the menu bar
 	MGlobal::executeCommand("if(`menu -exists Wisp`) { deleteUI Wisp; }");
