@@ -606,7 +606,9 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 		m_renderer.GetScenegraph().DestroyNode<wr::MeshNode>(itt->second);
 		itt->second = model_node;
 	}
-	m_object_transform_vector.push_back( std::make_pair(mesh_object, model_node ) );
+	else {
+		m_object_transform_vector.push_back(std::make_pair(mesh_object, model_node));
+	}
 
 	MCallbackId attributeId = MNodeMessage::addAttributeChangedCallback(
 		object,
