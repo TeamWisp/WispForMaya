@@ -26,6 +26,9 @@ namespace wmr
 		//! Initialization
 		void Initialize() noexcept;
 
+		//! Deallocate the texture pool
+		void Destroy() noexcept;
+
 		//! Create a new texture
 		const std::shared_ptr<wr::TextureHandle> CreateTexture(const char* path) noexcept;
 

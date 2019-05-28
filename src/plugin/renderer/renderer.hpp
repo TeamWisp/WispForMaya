@@ -27,6 +27,7 @@ namespace wmr
 		void Initialize() noexcept;
 		void Update();
 		void Render();
+		void Destroy();
 		const wr::CPUTextures GetRenderResult();
 
 		ModelManager& GetModelManager() const;
@@ -36,7 +37,6 @@ namespace wmr
 		wr::SceneGraph& GetScenegraph() const;
 		wr::D3D12RenderSystem& GetD3D12Renderer() const;
 		std::shared_ptr<wr::CameraNode> GetCamera() const;
-
 
 	private:
 		std::unique_ptr<FrameGraphManager>		m_framegraph_manager;

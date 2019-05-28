@@ -86,7 +86,7 @@ static MMatrix getParentWorldMatrix(MFnTransform& trans)
 
 static void updateTransform( MFnTransform& transform, std::shared_ptr<wr::MeshNode> mesh_node )
 {
-	MStatus status = MS::kSuccess;
+    MStatus status = MS::kSuccess;
 	MDagPath path;
 	MDagPath::getAPathTo( transform.object(), path );
 	MFnTransform good_trans( path, &status);
@@ -109,11 +109,6 @@ static void updateTransform( MFnTransform& transform, std::shared_ptr<wr::MeshNo
 	
 	double3 scale;
 	status = child_trans_matrix.getScale( scale, MSpace::kWorld );
-
-	if (status != MS::kSuccess)
-	{
-		LOGC("Could not get transform data.");
-	}
 
 	mesh_node->SetPosition( { static_cast< float >( pos.x ), static_cast< float >( pos.y ), static_cast< float >( pos.z ) } );
 	mesh_node->SetQuaternionRotation( quatd[0], quatd[1], quatd[2], quatd[3] );

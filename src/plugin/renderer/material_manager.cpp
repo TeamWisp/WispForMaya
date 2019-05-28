@@ -17,33 +17,31 @@
 #include <maya/MViewport2Renderer.h>
 
 
-wmr::MaterialManager::MaterialManager() :
-	m_scenegraph_parser(nullptr)
+wmr::MaterialManager::MaterialManager()
+	: m_scenegraph_parser(nullptr)
+	, m_default_material_handle({ nullptr, 0 })
 {
-}
-
-wmr::MaterialManager::~MaterialManager()
-{
-	m_mesh_shading_relations.clear();
-	m_surface_shader_shading_relations.clear();
 }
 
 void wmr::MaterialManager::Initialize()
 {
-	LOG("Attempting to get a reference to the renderer.");
-	auto& renderer = dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer();
-
+	const auto& renderer = dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer();
+	m_texture_pool_ptr = renderer.GetTextureManager().GetTexturePool().get();
 	m_material_pool = renderer.GetD3D12Renderer().CreateMaterialPool(0);
-	m_texture_pool = renderer.GetTextureManager().GetTexturePool();
-
-	m_default_material_handle = m_material_pool->Create(m_texture_pool.get());
+	m_default_material_handle = m_material_pool->Create(m_texture_pool_ptr);
 
 	wr::Material* internal_material = m_material_pool->GetMaterial(m_default_material_handle);
-	auto& texture_manager = renderer.GetTextureManager();
 
 	internal_material->SetConstant<wr::MaterialConstant::COLOR>({ 1.0f, 1.0f, 1.0f } );
 	internal_material->SetConstant<wr::MaterialConstant::METALLIC>(1.0f);
 	internal_material->SetConstant<wr::MaterialConstant::ROUGHNESS>(1.0f);
+}
+
+void wmr::MaterialManager::Destroy() noexcept
+{
+	m_material_pool.reset();
+	m_mesh_shading_relations.clear();
+	m_surface_shader_shading_relations.clear();
 }
 
 wr::MaterialHandle wmr::MaterialManager::GetDefaultMaterial() noexcept
@@ -71,7 +69,7 @@ wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::OnCreateSurfaceS
 	}
 	// Surface shader doesn't have a material assigned to it yet
 	// Create Wisp Material handle
-	wr::MaterialHandle material_handle = m_material_pool->Create(m_texture_pool.get());
+	wr::MaterialHandle material_handle = m_material_pool->Create(m_texture_pool_ptr);
 	// Create relationship between surface shader and shading engine
 	m_surface_shader_shading_relations.push_back({
 		material_handle,		// Wisp Material handle
@@ -154,7 +152,7 @@ wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & su
 	}
 	// Surface shader doesn't have a material assigned to it yet
 	// Create Wisp Material handle
-	wr::MaterialHandle material_handle = m_material_pool->Create(m_texture_pool.get());
+	wr::MaterialHandle material_handle = m_material_pool->Create(m_texture_pool_ptr);
 	// Create a vector for the shading engines
 	std::vector<MObject> shading_engines;
 	shading_engines.push_back(shading_engine);
