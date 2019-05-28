@@ -1,0 +1,22 @@
+global proc int onOpen(string $filename, string $type)
+{
+   wisp_handle_ui_input($filename);
+
+   return true;
+}
+
+global proc initialize_wisp_ui()
+{
+    if(`menu -exists Wisp`)
+	{
+		deleteUI Wisp;
+	}
+
+	global string $gMainWindow;
+	setParent($gMainWindow);
+
+	menu -label "Wisp" -to true -aob true Wisp;
+		menuItem -label "PBR Materials Visualization" -command "wisp_handle_ui_input(\"-deferred\")";
+		menuItem -label "Real-Time Final Render Preview" -command "wisp_handle_ui_input(\"-hybrid_ray_trace\")";
+		menuItem -label "Configure Skybox" -command "fileBrowser(\"onOpen\", \"Open\", \"\", 0)";
+}
