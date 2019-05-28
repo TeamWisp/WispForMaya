@@ -99,7 +99,9 @@ void LightRemovedCallback( MObject& node, void* client_data )
 
 void ConnectionAddedCallback(MPlug& src_plug, MPlug& dest_plug, bool made, void* client_data)
 {
- 	auto* material_parser = reinterpret_cast<wmr::MaterialParser*>(client_data);
+ 	auto* scenegraph_parser = reinterpret_cast<wmr::ScenegraphParser*>(client_data);
+	auto* material_parser = &scenegraph_parser->GetMaterialParser();
+	auto* model_parser = &scenegraph_parser->GetModelParser();
 
 	// Get plug types
 	auto src_type = src_plug.node().apiType();
@@ -186,12 +188,12 @@ void ConnectionAddedCallback(MPlug& src_plug, MPlug& dest_plug, bool made, void*
 				// The operation is executed when the connection is made
 				if (made)
 				{
-					// Function to store meshes in a temporary array.
+					model_parser->HideMesh(src_plug);
 				}
 				// The operation is undone when the connection is broken
 				else
 				{
-					// Function to add meshes in a temporary array again.
+					model_parser->ShowMesh(src_plug);
 				}
 			}
 			break;
@@ -248,7 +250,7 @@ void wmr::ScenegraphParser::Initialize()
 	// Connection added (material)
 	addedId = MDGMessage::addConnectionCallback(
 		ConnectionAddedCallback,
-		m_material_parser.get(),
+		this,
 		&status
 	);
 	AddCallbackValidation(status, addedId);

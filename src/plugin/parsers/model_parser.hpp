@@ -32,6 +32,10 @@ namespace wmr
 
 		void SetMeshAddCallback(std::function<void(MFnMesh&)> callback);
 
+		// Show/Hide meshes
+		void ShowMesh(MPlug & plug_mesh);
+		void HideMesh(MPlug & plug_mesh);
+
 	private:
 		//callbacks that require private access and are part of the ModelParser.
 		friend void AttributeMeshTransformCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData );
@@ -42,6 +46,8 @@ namespace wmr
 		std::vector<std::pair<MObject, std::shared_ptr<wr::MeshNode>>> m_object_transform_vector;
 		std::vector<std::pair<MObject, MCallbackId>> m_mesh_added_callback_vector;
 		std::vector<MObject> m_changed_mesh_vector;
+		// Vector of the same type as m_object_transform_vector taht contains hidden meshes
+		decltype(m_object_transform_vector) m_hidden_meshes;
 
 		Renderer& m_renderer;
 

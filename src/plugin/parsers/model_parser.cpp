@@ -502,6 +502,8 @@ wmr::ModelParser::ModelParser() :
 
 wmr::ModelParser::~ModelParser()
 {
+	m_object_transform_vector.clear();
+	m_hidden_meshes.clear();
 }
 
 void wmr::ModelParser::SubscribeObject( MObject & maya_object )
@@ -667,6 +669,78 @@ void wmr::ModelParser::SetMeshAddCallback(std::function<void(MFnMesh&)> callback
 		LOGC("Mesh added callback already set.");
 	}
 	mesh_add_callback = callback;
+}
+
+void wmr::ModelParser::ShowMesh(MPlug & plug_mesh)
+{
+	// Check if the given plug is indeed a mesh object
+	MStatus status;
+	MFnMesh mesh = MFnMesh(plug_mesh.node(), &status);
+	if (status != MS::kSuccess) {
+		LOGW("Couldn't show mesh, as the given plug isn't a mesh!");
+		return;
+	}
+	
+	// Check if the mesh is not in the hidden meshes array
+	// That means that the mesh is already shown.
+	MObject mesh_object = mesh.object();
+	auto itt_hidden = std::find_if(m_hidden_meshes.begin(), m_hidden_meshes.end(), getMeshObjectAlgorithm(mesh_object));
+	if (itt_hidden == m_hidden_meshes.end()) {
+		// This can happen a lot since transforms of meshes are often connected through the type kMesh
+		// So, a normal log is pushed
+		LOG("Couldn't show mesh, as the given mesh is already shown");
+		return;
+	}
+
+	// Get the itt of the given mesh object (from the standard meshes array)
+	auto itt_mesh = std::find_if(m_object_transform_vector.begin(), m_object_transform_vector.end(), getMeshObjectAlgorithm(mesh_object));
+	if (itt_mesh != m_object_transform_vector.end()) {
+		LOG("The mesh is already in the standard meshes array ((m_object_transform_vector). Can't show the same mesh again.");
+		return;
+	}
+
+	// Add mesh-wr::Mesh relationship back to standard meshes array
+	m_object_transform_vector.push_back(*itt_hidden);
+	// Remove mesh from hidden meshes array and add it to the wisp scenegraph again
+}
+
+void wmr::ModelParser::HideMesh(MPlug & plug_mesh)
+{
+	// Check if the given plug is indeed a mesh object
+	MStatus status;
+	MFnMesh mesh = MFnMesh(plug_mesh.node(), &status);
+	if (status != MS::kSuccess) {
+		LOGW("Couldn't hide mesh, as the given plug isn't a mesh!");
+		return;
+	}
+
+	// Check if the mesh is in the hidden meshes array
+	// That means that the mesh is already hidden.
+	MObject mesh_object = mesh.object();
+	auto itt_hidden = std::find_if(m_hidden_meshes.begin(), m_hidden_meshes.end(), getMeshObjectAlgorithm(mesh_object));
+	if (itt_hidden != m_hidden_meshes.end()) {
+		// This can happen a lot since transforms of meshes are often connected through the type kMesh
+		// So, a normal log is pushed
+		LOG("Couldn't hide mesh, as the given mesh is already hidden");
+		return;
+	}
+
+	// Get the itt of the given mesh object (from the standard meshes array)
+	auto itt_mesh = std::find_if(m_object_transform_vector.begin(), m_object_transform_vector.end(), getMeshObjectAlgorithm(mesh_object));
+	if (itt_mesh == m_object_transform_vector.end()) {
+		LOGE("Can't find the mesh to hide in the standard meshes array! (m_object_transform_vector)");
+		return;
+	}
+
+	// Add mesh-wr::Mesh relationship to hidden array
+	m_hidden_meshes.push_back(*itt_mesh);
+	// Remove mesh from standard meshes array and remove it from the wisp scenegraph
+	if (itt_mesh != --m_object_transform_vector.end()) {
+		std::iter_swap(itt_mesh, --m_object_transform_vector.end());
+	}
+	m_object_transform_vector.pop_back();
+	// Get last added hidden mesh and delete it from the scenegraph
+	m_renderer.GetScenegraph().DestroyNode(m_hidden_meshes[m_hidden_meshes.size() - 1].second);
 }
 
 std::shared_ptr<wr::MeshNode> wmr::ModelParser::GetWRModel(MObject & maya_object)
