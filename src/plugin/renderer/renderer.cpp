@@ -45,7 +45,7 @@ void wmr::Renderer::Initialize() noexcept
 	m_wisp_camera->SetPosition({ 0, 0, -1 });
 	m_wisp_camera->m_override_projection = true;
 
-	auto skybox = m_scenegraph->CreateChild<wr::SkyboxNode>(nullptr, m_texture_manager->GetDefaultTexture());
+	auto skybox = m_scenegraph->CreateChild<wr::SkyboxNode>(nullptr, m_texture_manager->GetDefaultSkybox());
 
 	m_render_system->InitSceneGraph(*m_scenegraph);
 	m_framegraph_manager->Create(*m_render_system, RendererFrameGraphType::DEFERRED);
@@ -69,6 +69,11 @@ void wmr::Renderer::Destroy()
 	m_framegraph_manager->Destroy();
 	m_render_system.reset();
 	m_window->Stop();
+}
+
+void wmr::Renderer::UpdateSkybox(const std::string& path) noexcept
+{
+	m_scenegraph->UpdateSkyboxNode(m_scenegraph->GetCurrentSkybox(), *m_texture_manager->CreateTexture(path.c_str()));
 }
 
 const wr::CPUTextures wmr::Renderer::GetRenderResult()

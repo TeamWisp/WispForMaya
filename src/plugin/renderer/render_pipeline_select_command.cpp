@@ -14,6 +14,9 @@
 #include <maya/MSyntax.h>
 #include <maya/MViewport2Renderer.h>
 
+// C++ standard
+#include <string>
+
 MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 {
 	MStatus status;
@@ -36,6 +39,8 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 	bool deferred_set = arg_data.isFlagSet("deferred");
 	bool hybrid_set = arg_data.isFlagSet("hybrid_ray_trace");
 
+	auto skybox_path = arg_data.commandArgumentString(0);
+
 	if (deferred_set)
 	{
 		frame_graph.SetType(RendererFrameGraphType::DEFERRED);
@@ -46,8 +51,17 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 	}
 	else
 	{
-		// Invalid
-		return MStatus::kFailure;
+		try
+		{
+			renderer.UpdateSkybox(skybox_path.asChar());
+		}
+		catch (std::exception& e)
+		{
+			LOGE("Could not load skybox texture {}, probably invalid file extension. {}", skybox_path.asChar(), e.what());
+			return MStatus::kFailure;
+		}
+
+		return MStatus::kSuccess;
 	}
 
 	return MStatus::kSuccess;
@@ -57,6 +71,7 @@ MSyntax wmr::RenderPipelineSelectCommand::create_syntax()
 {
 	MSyntax syntax;
 
+	syntax.addArg(MSyntax::kString);
 	syntax.addFlag("-d", "-deferred",			MSyntax::kNoArg);
 	syntax.addFlag("-h", "-hybrid_ray_trace",	MSyntax::kNoArg);
 

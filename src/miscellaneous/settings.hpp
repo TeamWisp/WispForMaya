@@ -47,6 +47,6 @@ namespace wmr
 		};
 
 		//! Name of the command used to switch rendering pipelines
-		static const constexpr char* RENDER_PIPELINE_SELECT_COMMAND_NAME = "wisp_switch_rendering_pipeline";
+		static const constexpr char* CUSTOM_WISP_UI_CMD = "wisp_handle_ui_input";
 	};
 }

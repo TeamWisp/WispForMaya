@@ -52,7 +52,7 @@ namespace wmr
 		return m_texture_container[hash];
 	}
 
-	const wr::TextureHandle TextureManager::GetDefaultTexture() const noexcept
+	const wr::TextureHandle TextureManager::GetDefaultSkybox() const noexcept
 	{
 		return m_default_texture;
 	}
@@ -103,7 +103,8 @@ namespace wmr
 		{
 			// Only reference left to this texture is the one that's in the unordered_map,
 			// so the texture can be deleted.
-			m_texture_pool->Unload(*m_texture_container[hash]);
+			// #TODO: ADD A FRAMEINDEX SO EVERY TEXTURE CAN BE UNLOADED PROPERLY
+			m_texture_pool->MarkForUnload(*m_texture_container[hash], 0);
 			m_texture_container.erase(hash);
 			
 			// Removed the texture from the texture pool
