@@ -51,37 +51,17 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 	}
 	else
 	{
-		// Convert to std::string
-		std::string path = skybox_path.asChar();
-
-		// Find the extension
-		auto found = path.find_last_of('.');
-		auto extension = path.substr(found + 1);
-
-		// File must have a valid texture extension
-		if (extension == "png" ||
-			extension == "jpg" ||
-			extension == "jpeg" ||
-			extension == "bmp" ||
-			extension == "dds" ||
-			extension == "hdr" ||
-			extension == "tga")
+		try
 		{
-			LOG("Loading new skybox: \"{}\".", path);
-
-			renderer.UpdateSkybox(path);
-			return MStatus::kSuccess;
+			renderer.UpdateSkybox(skybox_path.asChar());
 		}
-		else
+		catch (std::exception& e)
 		{
-			LOGE("Invalid texture file selected: \"{}\".", path);
+			LOGE("Could not load skybox texture {}, probably invalid file extension. {}", skybox_path.asChar(), e.what());
 			return MStatus::kFailure;
 		}
 
-		LOGE("Invalid argument passed to custom command.");
-
-		// Invalid
-		return MStatus::kFailure;
+		return MStatus::kSuccess;
 	}
 
 	return MStatus::kSuccess;
