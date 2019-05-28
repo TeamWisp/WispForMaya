@@ -185,16 +185,8 @@ void ConnectionAddedCallback(MPlug& src_plug, MPlug& dest_plug, bool made, void*
 		case MFn::kPolyUnite:
 		{
 			if (src_type == MFn::kMesh) {
-				// The operation is executed when the connection is made
-				if (made)
-				{
-					model_parser->HideMesh(src_plug);
-				}
-				// The operation is undone when the connection is broken
-				else
-				{
-					model_parser->ShowMesh(src_plug);
-				}
+				// Toggle the visibility of a mesh by specifiying if the connection was made or broken.
+				model_parser->ToggleMeshVisibility(src_plug, made);
 			}
 			break;
 		}
