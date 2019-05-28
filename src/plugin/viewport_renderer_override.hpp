@@ -64,6 +64,9 @@ namespace wmr
 		 *  /sa ReleaseTextureResources()*/
 		~ViewportRendererOverride() override;
 
+		//! Release resources, but don't deregister the override yet!
+		void Destroy() noexcept;
+
 		//! Returns the name of the plug-in that should show up under the "renderer" drop-down menu in the Maya viewport
 		/*! /return Name of the drop-down menu item. */
 		MString uiName() const override;

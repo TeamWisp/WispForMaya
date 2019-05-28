@@ -159,10 +159,18 @@ MStatus uninitializePlugin(MObject object)
 
 	// Workaround for avoiding dirtying the scene when registering overrides
 	const auto is_scene_dirty = IsSceneDirty();
-
+	
 	// Clean-up any used resources
+	viewport_renderer_override->Destroy();
+
 	delete viewport_renderer_override;
 	wmr::CallbackManager::Destroy();
+
+	// Remove the command used to add the Wisp UI to the menu bar
+	plugin.deregisterCommand(wmr::settings::RENDER_PIPELINE_SELECT_COMMAND_NAME);
+
+	// Remove the Wisp drop-down menu from the menu bar
+	MGlobal::executeCommand("if(`menu -exists Wisp`) { deleteUI Wisp; }");
 
 	// If the scene was previously unmodified, return it to that state to avoid dirtying
 	ActOnCurrentDirtyState( is_scene_dirty );
