@@ -147,6 +147,15 @@ auto getMeshObjectAlgorithm(MObject& maya_object)
 	};
 }
 
+int32_t parseDataVertexCmp(uint32_t current_index, wr::Vertex *vertex, wr::Vertex* vertex_other) {
+	if (memcmp(vertex, vertex_other, sizeof(wr::Vertex)) == 0) { // Vertex has found a duplicate!
+		return current_index;
+	}
+	else { // Duplicate vertex has not been found (most often)
+		return -1;
+	}
+}
+
 void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 {
 	MPointArray meshPoints;
@@ -174,21 +183,19 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 	fnmesh.getBinormals( meshBinormals );
 
 	mesh_data.m_indices = std::make_optional( std::vector<uint32_t>() );
+	mesh_data.m_indices->reserve(meshPoints.length());
 
 	MItMeshPolygon itt( fnmesh.object(), &status );
 
-	// hacky way. indices just count up. <-------------------------
-	uint32_t indices_hack = 0;
-
-	while( !itt.isDone() )
+	while (!itt.isDone())
 	{
 		// Get object-relative indices for the vertices in this face.
 		MIntArray polygonVertices;
-		itt.getVertices( polygonVertices );
+		itt.getVertices(polygonVertices);
 
 		// Get triangulation of this polygon
 		int numTriangles;
-		itt.numTriangles( numTriangles );
+		itt.numTriangles(numTriangles);
 
 		// needed for function but never used.
 		MPointArray nonTweaked;
@@ -199,110 +206,174 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 		// face-relative vertex indices for each triangle
 		MIntArray localIndex;
 
-		for( size_t i = 0; i < numTriangles; i++ )
+		for (size_t i = 0; i < numTriangles; i++)
 		{
-			status = itt.getTriangles( nonTweaked,
+			status = itt.getTriangles(nonTweaked,
 				triangleVertices,
-				MSpace::kObject );
+				MSpace::kObject);
 
 			MIntArray firstTriangleVertices;
 
-			firstTriangleVertices.setLength( 3 );
+			firstTriangleVertices.setLength(3);
 
 			firstTriangleVertices[0] = triangleVertices[0 + 3 * i];
 			firstTriangleVertices[1] = triangleVertices[1 + 3 * i];
 			firstTriangleVertices[2] = triangleVertices[2 + 3 * i];
 
-			if( status == MS::kSuccess )
+			if (status == MS::kSuccess)
 			{
-
-				// TODO(jens): hash resolved vertices to check if there are duplicates. start using indices (properly)
-
 				wr::Vertex v1;
 				wr::Vertex v2;
 				wr::Vertex v3;
 
-				v1.m_pos[0] = ( float )meshPoints[firstTriangleVertices[0]].x;
-				v1.m_pos[1] = ( float )meshPoints[firstTriangleVertices[0]].y;
-				v1.m_pos[2] = ( float )meshPoints[firstTriangleVertices[0]].z;
+				// Get vertex positions of vertex 1
+				v1.m_pos[0] = (float)meshPoints[firstTriangleVertices[0]].x;
+				v1.m_pos[1] = (float)meshPoints[firstTriangleVertices[0]].y;
+				v1.m_pos[2] = (float)meshPoints[firstTriangleVertices[0]].z;
 
-				v2.m_pos[0] = ( float )meshPoints[firstTriangleVertices[1]].x;
-				v2.m_pos[1] = ( float )meshPoints[firstTriangleVertices[1]].y;
-				v2.m_pos[2] = ( float )meshPoints[firstTriangleVertices[1]].z;
+				// Get vertex positions of vertex 2
+				v2.m_pos[0] = (float)meshPoints[firstTriangleVertices[1]].x;
+				v2.m_pos[1] = (float)meshPoints[firstTriangleVertices[1]].y;
+				v2.m_pos[2] = (float)meshPoints[firstTriangleVertices[1]].z;
 
-				v3.m_pos[0] = ( float )meshPoints[firstTriangleVertices[2]].x;
-				v3.m_pos[1] = ( float )meshPoints[firstTriangleVertices[2]].y;
-				v3.m_pos[2] = ( float )meshPoints[firstTriangleVertices[2]].z;
+				// Get vertex positions of vertex 3
+				v3.m_pos[0] = (float)meshPoints[firstTriangleVertices[2]].x;
+				v3.m_pos[1] = (float)meshPoints[firstTriangleVertices[2]].y;
+				v3.m_pos[2] = (float)meshPoints[firstTriangleVertices[2]].z;
 
-				localIndex = GetLocalIndex( polygonVertices, firstTriangleVertices );
+				// Get local index
+				localIndex = GetLocalIndex(polygonVertices, firstTriangleVertices);
 
-				v1.m_normal[0] = meshNormals[itt.normalIndex( localIndex[0] )].x;
-				v1.m_normal[1] = meshNormals[itt.normalIndex( localIndex[0] )].y;
-				v1.m_normal[2] = meshNormals[itt.normalIndex( localIndex[0] )].z;
+				// Get normal, tangent and bitangent of vertex 1
+				v1.m_normal[0] = meshNormals[itt.normalIndex(localIndex[0])].x;
+				v1.m_normal[1] = meshNormals[itt.normalIndex(localIndex[0])].y;
+				v1.m_normal[2] = meshNormals[itt.normalIndex(localIndex[0])].z;
 
-				v2.m_normal[0] = meshNormals[itt.normalIndex( localIndex[1] )].x;
-				v2.m_normal[1] = meshNormals[itt.normalIndex( localIndex[1] )].y;
-				v2.m_normal[2] = meshNormals[itt.normalIndex( localIndex[1] )].z;
+				v1.m_tangent[0] = meshTangents[itt.tangentIndex(localIndex[0])].x;
+				v1.m_tangent[1] = meshTangents[itt.tangentIndex(localIndex[0])].y;
+				v1.m_tangent[2] = meshTangents[itt.tangentIndex(localIndex[0])].z;
 
-				v3.m_normal[0] = meshNormals[itt.normalIndex( localIndex[2] )].x;
-				v3.m_normal[1] = meshNormals[itt.normalIndex( localIndex[2] )].y;
-				v3.m_normal[2] = meshNormals[itt.normalIndex( localIndex[2] )].z;
+				v1.m_bitangent[0] = meshBinormals[itt.normalIndex(localIndex[0])].x;
+				v1.m_bitangent[1] = meshBinormals[itt.normalIndex(localIndex[0])].y;
+				v1.m_bitangent[2] = meshBinormals[itt.normalIndex(localIndex[0])].z;
 
-				v1.m_tangent[0] = meshTangents[itt.tangentIndex( localIndex[0] )].x;
-				v1.m_tangent[1] = meshTangents[itt.tangentIndex( localIndex[0] )].y;
-				v1.m_tangent[2] = meshTangents[itt.tangentIndex( localIndex[0] )].z;
+				// Get normal, tangent and bitangent from vertex 2
+				v2.m_normal[0] = meshNormals[itt.normalIndex(localIndex[1])].x;
+				v2.m_normal[1] = meshNormals[itt.normalIndex(localIndex[1])].y;
+				v2.m_normal[2] = meshNormals[itt.normalIndex(localIndex[1])].z;
 
-				v2.m_tangent[0] = meshTangents[itt.tangentIndex( localIndex[1] )].x;
-				v2.m_tangent[1] = meshTangents[itt.tangentIndex( localIndex[1] )].y;
-				v2.m_tangent[2] = meshTangents[itt.tangentIndex( localIndex[1] )].z;
+				v2.m_tangent[0] = meshTangents[itt.tangentIndex(localIndex[1])].x;
+				v2.m_tangent[1] = meshTangents[itt.tangentIndex(localIndex[1])].y;
+				v2.m_tangent[2] = meshTangents[itt.tangentIndex(localIndex[1])].z;
 
-				v3.m_tangent[0] = meshTangents[itt.tangentIndex( localIndex[2] )].x;
-				v3.m_tangent[1] = meshTangents[itt.tangentIndex( localIndex[2] )].y;
-				v3.m_tangent[2] = meshTangents[itt.tangentIndex( localIndex[2] )].z;
+				v2.m_bitangent[0] = meshBinormals[itt.normalIndex(localIndex[1])].x;
+				v2.m_bitangent[1] = meshBinormals[itt.normalIndex(localIndex[1])].y;
+				v2.m_bitangent[2] = meshBinormals[itt.normalIndex(localIndex[1])].z;
 
-				v1.m_bitangent[0] = meshBinormals[itt.normalIndex( localIndex[0] )].x;
-				v1.m_bitangent[1] = meshBinormals[itt.normalIndex( localIndex[0] )].y;
-				v1.m_bitangent[2] = meshBinormals[itt.normalIndex( localIndex[0] )].z;
+				// Get normal, tangent and bitangent from vertex 3
+				v3.m_normal[0] = meshNormals[itt.normalIndex(localIndex[2])].x;
+				v3.m_normal[1] = meshNormals[itt.normalIndex(localIndex[2])].y;
+				v3.m_normal[2] = meshNormals[itt.normalIndex(localIndex[2])].z;
 
-				v2.m_bitangent[0] = meshBinormals[itt.normalIndex( localIndex[1] )].x;
-				v2.m_bitangent[1] = meshBinormals[itt.normalIndex( localIndex[1] )].y;
-				v2.m_bitangent[2] = meshBinormals[itt.normalIndex( localIndex[1] )].z;
+				v3.m_tangent[0] = meshTangents[itt.tangentIndex(localIndex[2])].x;
+				v3.m_tangent[1] = meshTangents[itt.tangentIndex(localIndex[2])].y;
+				v3.m_tangent[2] = meshTangents[itt.tangentIndex(localIndex[2])].z;
 
-				v3.m_bitangent[0] = meshBinormals[itt.normalIndex( localIndex[2] )].x;
-				v3.m_bitangent[1] = meshBinormals[itt.normalIndex( localIndex[2] )].y;
-				v3.m_bitangent[2] = meshBinormals[itt.normalIndex( localIndex[2] )].z;
+				v3.m_bitangent[0] = meshBinormals[itt.normalIndex(localIndex[2])].x;
+				v3.m_bitangent[1] = meshBinormals[itt.normalIndex(localIndex[2])].y;
+				v3.m_bitangent[2] = meshBinormals[itt.normalIndex(localIndex[2])].z;
 
+				// Get Texture coordinates
 				int firstUVID[3];
 
 				// Get UV values for each vertex within this polygon
-				for( int vtxInPolygon = 0; vtxInPolygon < 3; vtxInPolygon++ )
+				for (int vtxInPolygon = 0; vtxInPolygon < 3; vtxInPolygon++)
 				{
-					itt.getUVIndex( localIndex[vtxInPolygon],
+					itt.getUVIndex(localIndex[vtxInPolygon],
 						firstUVID[vtxInPolygon],
-						&UVSets[0] );
+						&UVSets[0]);
 				}
 
+				// Set UV coordinates for vertex 1
 				v1.m_uv[0] = u[firstUVID[0]];
 				v1.m_uv[1] = v[firstUVID[0]];
 
+				// Set UV coordinates for vertex 2
 				v2.m_uv[0] = u[firstUVID[1]];
 				v2.m_uv[1] = v[firstUVID[1]];
 
+				// Set UV coordinates for vertex 3
 				v3.m_uv[0] = u[firstUVID[2]];
 				v3.m_uv[1] = v[firstUVID[2]];
 
-				mesh_data.m_vertices.push_back( v3 );
-				mesh_data.m_vertices.push_back( v2 );
-				mesh_data.m_vertices.push_back( v1 );
+				// Add vertices to the mesh vertex array if it's empty.
+				int32_t vertices_size = static_cast<int32_t>(mesh_data.m_vertices.size());
+				if (vertices_size <= 0) {
+					mesh_data.m_vertices.push_back(v1);
+					mesh_data.m_vertices.push_back(v2);
+					mesh_data.m_vertices.push_back(v3);
 
+					mesh_data.m_indices->push_back(0);
+					mesh_data.m_indices->push_back(1);
+					mesh_data.m_indices->push_back(2);
+				}
+				else {
+					// Check wether or not a vertex already has been processed already
+					// If so, don't add the vertex to the global vertex list, but only add the index
+					int32_t vertex_index[3] = { -1, -1, -1 };
+					for (int32_t vi = 0; vi < vertices_size; ++vi) {
+						/** For each vertex in the triangle: check if the index hasn't been found already
+						  * If it's not found yet, check if the current vertex is the same.
+						**/
+						// Check vertex 1
+						if (vertex_index[0] == -1) {
+							vertex_index[0] = parseDataVertexCmp(vi, &v1, &mesh_data.m_vertices[vi]);
+						}
 
-				// hacky way. indices just count up. <-------------------------
-				mesh_data.m_indices.value().push_back( indices_hack );
-				indices_hack++;
-				mesh_data.m_indices.value().push_back( indices_hack );
-				indices_hack++;
-				mesh_data.m_indices.value().push_back( indices_hack );
-				indices_hack++;
+						// Check vertex 2
+						if (vertex_index[1] == -1) {
+							vertex_index[1] = parseDataVertexCmp(vi, &v2, &mesh_data.m_vertices[vi]);
+						}
+
+						// Check vertex 3
+						if (vertex_index[2] == -1) {
+							vertex_index[2] = parseDataVertexCmp(vi, &v3, &mesh_data.m_vertices[vi]);
+						}
+					}
+
+					/** Check for each vertex in the triangle if a similiar vertex has been found.
+					  * Only add the index of the found vertex, if it was found
+					  * Otherwise add the vertex AND the new index
+					  *
+					  * Add vertices in reverse order to match WispRenderer's winding order
+					**/
+					// Check vertex 3
+					if (vertex_index[2] >= 0) {
+						mesh_data.m_indices->push_back(static_cast<uint32_t>(vertex_index[2]));
+					}
+					else {
+						mesh_data.m_vertices.push_back(v3);
+						mesh_data.m_indices->push_back(mesh_data.m_vertices.size() - 1);
+					}
+
+					// Check vertex 2
+					if (vertex_index[1] >= 0) {
+						mesh_data.m_indices->push_back(static_cast<uint32_t>(vertex_index[1]));
+					}
+					else {
+						mesh_data.m_vertices.push_back(v2);
+						mesh_data.m_indices->push_back(mesh_data.m_vertices.size() - 1);
+					}
+
+					// Check vertex 1
+					if (vertex_index[0] >= 0) {
+						mesh_data.m_indices->push_back(static_cast<uint32_t>(vertex_index[0]));
+					}
+					else {
+						mesh_data.m_vertices.push_back(v1);
+						mesh_data.m_indices->push_back(mesh_data.m_vertices.size() - 1);
+					}
+				}
 			}
 			else
 			{
@@ -311,7 +382,7 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 
 		}
 		itt.next();
-	}
+	} // !itt.isDone()
 }
 #pragma endregion
 
