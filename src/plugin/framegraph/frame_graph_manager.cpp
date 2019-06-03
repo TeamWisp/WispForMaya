@@ -204,7 +204,7 @@ namespace wmr
 		wr::AddDoFCompositionTask<wr::BloomCompostionData, wr::DoFBokehPostFilterData, wr::DoFCoCData>(*fg);
 		LOG("Added depth of field task.");
 
-		wr::AddPostProcessingTask<wr::DoFBokehData>(*fg);
+		wr::AddPostProcessingTask<wr::DoFCompositionData>(*fg);
 		LOG("Added post-processing task.");
 
 		// Save the final texture CPU pointer
