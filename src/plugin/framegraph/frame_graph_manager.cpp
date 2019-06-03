@@ -156,7 +156,7 @@ namespace wmr
 		LOG("Added cubemap convolution task.");
 
 		// Construct the G-buffer
-		wr::AddDeferredMainTask(*fg, std::nullopt, std::nullopt);
+		wr::AddDeferredMainTask(*fg, std::nullopt, std::nullopt, false);
 		LOG("Added deferred main task.");
 
 		// Save the depth buffer CPU pointer
@@ -220,7 +220,7 @@ namespace wmr
 		LOG("Added cubemap convolution task.");
 
 		// Construct the G-buffer
-		wr::AddDeferredMainTask(*fg, std::nullopt, std::nullopt);
+		wr::AddDeferredMainTask(*fg, std::nullopt, std::nullopt, true);
 		LOG("Added deferred main task.");
 
 		// Save the depth buffer CPU pointer
