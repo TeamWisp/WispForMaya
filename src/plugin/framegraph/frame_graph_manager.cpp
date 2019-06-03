@@ -5,22 +5,25 @@
 
 // TODO: Find the best order of include in alphabetical order without breaking the dependencies
 // Wisp rendering framework
+#include "frame_graph/frame_graph.hpp"
+#include "settings.hpp"
+#include "render_tasks/d3d12_imgui_render_task.hpp"
 #include "render_tasks/d3d12_brdf_lut_precalculation.hpp"
-#include "render_tasks/d3d12_build_acceleration_structures.hpp"
-#include "render_tasks/d3d12_cubemap_convolution.hpp"
-#include "render_tasks/d3d12_deferred_composition.hpp"
 #include "render_tasks/d3d12_deferred_main.hpp"
+#include "render_tasks/d3d12_deferred_composition.hpp"
 #include "render_tasks/d3d12_deferred_render_target_copy.hpp"
-#include "wisp_render_tasks/d3d12_depth_data_readback.hpp"
-#include "render_tasks/d3d12_equirect_to_cubemap.hpp"
-#include "wisp_render_tasks/d3d12_pixel_data_readback.hpp"
-#include "render_tasks/d3d12_post_processing.hpp"
 #include "render_tasks/d3d12_raytracing_task.hpp"
 #include "render_tasks/d3d12_rt_hybrid_task.hpp"
+#include "render_tasks/d3d12_rt_reflection_task.hpp"
+#include "render_tasks/d3d12_rt_shadow_task.hpp"
+#include "render_tasks/d3d12_shadow_denoiser_task.hpp"
+#include "render_tasks/d3d12_equirect_to_cubemap.hpp"
+#include "render_tasks/d3d12_cubemap_convolution.hpp"
+#include "render_tasks/d3d12_rtao_task.hpp"
+#include "render_tasks/d3d12_post_processing.hpp"
+#include "render_tasks/d3d12_build_acceleration_structures.hpp"
 #include "render_tasks/d3d12_path_tracer.hpp"
 #include "render_tasks/d3d12_accumulation.hpp"
-#include "util/log.hpp"
-
 #include "render_tasks/d3d12_dof_bokeh.hpp"
 #include "render_tasks/d3d12_dof_bokeh_postfilter.hpp"
 #include "render_tasks/d3d12_dof_coc.hpp"
@@ -34,6 +37,9 @@
 #include "render_tasks/d3d12_bloom_composition.hpp"
 #include "render_tasks/d3d12_bloom_horizontal.hpp"
 #include "render_tasks/d3d12_bloom_vertical.hpp"
+
+#include "wisp_render_tasks/d3d12_depth_data_readback.hpp"
+#include "wisp_render_tasks/d3d12_pixel_data_readback.hpp"
 
 namespace wmr
 {
@@ -50,7 +56,7 @@ namespace wmr
 
 		// Add required tasks to each frame graph
 		CreateDeferredPipeline();
-		CreateHybridRTPipeline();
+		CreateHybridRTPipeline(render_system);
 
 		LOG("Finished creating all rendering pipelines.");
 
@@ -204,7 +210,7 @@ namespace wmr
 		LOG("Finished deferred pipeline creation.");
 	}
 
-	void FrameGraphManager::CreateHybridRTPipeline() noexcept
+	void FrameGraphManager::CreateHybridRTPipeline(wr::RenderSystem& render_system) noexcept
 	{
 		LOG("Starting hybrid pipeline creation.");
 		auto fg = new wr::FrameGraph(18);
@@ -232,8 +238,16 @@ namespace wmr
 		LOG("Added build acceleration structures task.");
 
 		// Ray tracing
-		wr::AddRTHybridTask(*fg);
-		LOG("Added RT-hybrid task.");
+		wr::AddRTReflectionTask(*fg);
+		LOG("Added raytraced reflections task.");
+		wr::AddRTShadowTask(*fg);
+		LOG("Added raytraced shadows task.");
+
+		wr::AddShadowDenoiserTask(*fg);
+		LOG("Added shadow denoiser task.");
+
+		wr::AddRTAOTask(*fg, static_cast<wr::D3D12RenderSystem&>(render_system).m_device);
+		LOG("Added raytraced ambient occlussion task.");
 
 		wr::AddDeferredCompositionTask(*fg, std::nullopt, std::nullopt);
 		LOG("Added deferred composition task.");
@@ -255,7 +269,7 @@ namespace wmr
 		LOG("Added bloom task.");
 
 		// Do some post processing
-		wr::AddPostProcessingTask<wr::DeferredCompositionTaskData>(*fg);
+		wr::AddPostProcessingTask<wr::BloomCompostionData>(*fg);
 		LOG("Added post-processing task.");
 
 		// Save the ray tracing pixel data CPU pointer
