@@ -30,13 +30,18 @@
 #include "render_tasks/d3d12_down_scale.hpp"
 #include "render_tasks/d3d12_dof_composition.hpp"
 #include "render_tasks/d3d12_dof_dilate_near.hpp"
-#include "render_tasks/d3d12_dof_dilate_flatten.hpp"
-#include "render_tasks/d3d12_dof_dilate_flatten_second_pass.hpp"
 #include "render_tasks/d3d12_hbao.hpp"
 #include "render_tasks/d3d12_ansel.hpp"
+#include "render_tasks/d3d12_bloom_extract_bright.hpp"
 #include "render_tasks/d3d12_bloom_composition.hpp"
-#include "render_tasks/d3d12_bloom_horizontal.hpp"
-#include "render_tasks/d3d12_bloom_vertical.hpp"
+#include "render_tasks/d3d12_bloom_half_res.hpp"
+#include "render_tasks/d3d12_bloom_half_res_v.hpp"
+#include "render_tasks/d3d12_bloom_quarter_res.hpp"
+#include "render_tasks/d3d12_bloom_quarter_res_v.hpp"
+#include "render_tasks/d3d12_bloom_eighth_res.hpp"
+#include "render_tasks/d3d12_bloom_eighth_res_v.hpp"
+#include "render_tasks/d3d12_bloom_sixteenth_res.hpp"
+#include "render_tasks/d3d12_bloom_sixteenth_res_v.hpp"
 
 #include "wisp_render_tasks/d3d12_depth_data_readback.hpp"
 #include "wisp_render_tasks/d3d12_pixel_data_readback.hpp"
@@ -177,23 +182,29 @@ namespace wmr
 		wr::AddDeferredCompositionTask(*fg, std::nullopt, std::nullopt);
 		LOG("Added deferred composition task.");
 
+		// High quality bloom pass
+		wr::AddBloomExtractBrightTask<wr::DeferredCompositionTaskData, wr::DeferredMainTaskData>(*fg);
+		wr::AddBloomHalfTask<wr::BloomExtractBrightData>(*fg);
+		wr::AddBloomHalfVTask<wr::BloomHalfData>(*fg);
+		wr::AddBloomQuarterTask<wr::BloomExtractBrightData>(*fg);
+		wr::AddBloomQuarterVTask<wr::BloomQuarterData>(*fg);
+		wr::AddBloomEighthTask<wr::BloomExtractBrightData>(*fg);
+		wr::AddBloomEighthVTask<wr::BloomEighthData>(*fg);
+		wr::AddBloomSixteenthTask<wr::BloomExtractBrightData>(*fg);
+		wr::AddBloomSixteenthVTask<wr::BloomSixteenthData>(*fg);
+		wr::AddBloomCompositionTask<wr::DeferredCompositionTaskData, wr::BloomHalfVData, wr::BloomQuarterVData, wr::BloomEighthVData, wr::BloomSixteenthVData>(*fg);
+		LOG("Added high quality bloom task.");
+
 		// Do Depth of field task
 		wr::AddDoFCoCTask<wr::DeferredMainTaskData>(*fg);
-		wr::AddDownScaleTask<wr::DeferredCompositionTaskData, wr::DoFCoCData>(*fg);
+		wr::AddDownScaleTask<wr::BloomCompostionData, wr::DoFCoCData>(*fg);
 		wr::AddDoFDilateTask<wr::DownScaleData>(*fg);
-		wr::AddDoFDilateFlattenTask<wr::DoFDilateData>(*fg);
-		wr::AddDoFDilateFlattenHTask<wr::DoFDilateFlattenData>(*fg);
-		wr::AddDoFBokehTask<wr::DownScaleData, wr::DoFDilateFlattenHData>(*fg);
+		wr::AddDoFBokehTask<wr::DownScaleData, wr::DoFDilateData>(*fg);
 		wr::AddDoFBokehPostFilterTask<wr::DoFBokehData>(*fg);
-		wr::AddDoFCompositionTask<wr::DeferredCompositionTaskData, wr::DoFBokehPostFilterData, wr::DoFCoCData>(*fg);
-		wr::AddBloomHorizontalTask<wr::DownScaleData>(*fg);
-		wr::AddBloomVerticalTask<wr::BloomHData>(*fg);
-		LOG("Added Depth of Field task.");
+		wr::AddDoFCompositionTask<wr::BloomCompostionData, wr::DoFBokehPostFilterData, wr::DoFCoCData>(*fg);
+		LOG("Added depth of field task.");
 
-		wr::AddBloomCompositionTask<wr::DoFCompositionData, wr::BloomVData>(*fg);
-		LOG("Added bloom task.");
-
-		wr::AddPostProcessingTask<wr::BloomCompostionData>(*fg);
+		wr::AddPostProcessingTask<wr::DoFCompositionData>(*fg);
 		LOG("Added post-processing task.");
 
 		// Save the final texture CPU pointer
@@ -252,24 +263,30 @@ namespace wmr
 		wr::AddDeferredCompositionTask(*fg, std::nullopt, std::nullopt);
 		LOG("Added deferred composition task.");
 
+		// High quality bloom pass
+		wr::AddBloomExtractBrightTask<wr::DeferredCompositionTaskData, wr::DeferredMainTaskData>(*fg);
+		wr::AddBloomHalfTask<wr::BloomExtractBrightData>(*fg);
+		wr::AddBloomHalfVTask<wr::BloomHalfData>(*fg);
+		wr::AddBloomQuarterTask<wr::BloomExtractBrightData>(*fg);
+		wr::AddBloomQuarterVTask<wr::BloomQuarterData>(*fg);
+		wr::AddBloomEighthTask<wr::BloomExtractBrightData>(*fg);
+		wr::AddBloomEighthVTask<wr::BloomEighthData>(*fg);
+		wr::AddBloomSixteenthTask<wr::BloomExtractBrightData>(*fg);
+		wr::AddBloomSixteenthVTask<wr::BloomSixteenthData>(*fg);
+		wr::AddBloomCompositionTask<wr::DeferredCompositionTaskData, wr::BloomHalfVData, wr::BloomQuarterVData, wr::BloomEighthVData, wr::BloomSixteenthVData>(*fg);
+		LOG("Added high quality bloom task.");
+
 		// Do Depth of field task
 		wr::AddDoFCoCTask<wr::DeferredMainTaskData>(*fg);
-		wr::AddDownScaleTask<wr::DeferredCompositionTaskData, wr::DoFCoCData>(*fg);
+		wr::AddDownScaleTask<wr::BloomCompostionData, wr::DoFCoCData>(*fg);
 		wr::AddDoFDilateTask<wr::DownScaleData>(*fg);
-		wr::AddDoFDilateFlattenTask<wr::DoFDilateData>(*fg);
-		wr::AddDoFDilateFlattenHTask<wr::DoFDilateFlattenData>(*fg);
-		wr::AddDoFBokehTask<wr::DownScaleData, wr::DoFDilateFlattenHData>(*fg);
+		wr::AddDoFBokehTask<wr::DownScaleData, wr::DoFDilateData>(*fg);
 		wr::AddDoFBokehPostFilterTask<wr::DoFBokehData>(*fg);
-		wr::AddDoFCompositionTask<wr::DeferredCompositionTaskData, wr::DoFBokehPostFilterData, wr::DoFCoCData>(*fg);
-		wr::AddBloomHorizontalTask<wr::DownScaleData>(*fg);
-		wr::AddBloomVerticalTask<wr::BloomHData>(*fg);
-		LOG("Added Depth of Field task.");
-
-		wr::AddBloomCompositionTask<wr::DoFCompositionData, wr::BloomVData>(*fg);
-		LOG("Added bloom task.");
+		wr::AddDoFCompositionTask<wr::BloomCompostionData, wr::DoFBokehPostFilterData, wr::DoFCoCData>(*fg);
+		LOG("Added depth of field task.");
 
 		// Do some post processing
-		wr::AddPostProcessingTask<wr::BloomCompostionData>(*fg);
+		wr::AddPostProcessingTask<wr::DoFCompositionData>(*fg);
 		LOG("Added post-processing task.");
 
 		// Save the ray tracing pixel data CPU pointer
