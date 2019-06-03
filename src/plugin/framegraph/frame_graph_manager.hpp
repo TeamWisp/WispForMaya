@@ -75,7 +75,7 @@ namespace wmr
 		void CreateDeferredPipeline() noexcept;
 
 		//! Configure a frame graph for a hybrid rendering pipeline
-		void CreateHybridRTPipeline() noexcept;
+		void CreateHybridRTPipeline(wr::RenderSystem& render_system) noexcept;
 
 	private:
 		std::uint32_t m_width;										//! Width of the render texture
