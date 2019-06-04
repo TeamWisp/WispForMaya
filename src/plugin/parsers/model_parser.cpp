@@ -166,30 +166,29 @@ const char checkVertexHash(hash_type * hashes, std::vector<hash_type> & v_hashes
 			found_index[0] = i;
 			c |= 1 << 0;
 		}
-		else if(v_hashes[i] == hashes[1]) {
+		if(v_hashes[i] == hashes[1]) {
 			found_index[1] = i;
 			c |= 1 << 1;
 		}
-		else if (v_hashes[i] == hashes[2]) {
+		if (v_hashes[i] == hashes[2]) {
 			found_index[2] = i;
 			c |= 1 << 2;
 		}
 
-		if (c & 0b111) {
+		if (c == 0b111) {
 			return c;
 		}
 	}
 	return c;
 }
 
-hash_type compute_hash(int v, int n, int u, int t) {
+hash_type compute_hash(int v, int n, int u) {
 	const hash_type m = 1e9 + 9;
 	hash_type hash_value = 0;
 
 	hash_value = (hash_value + hash_type(v + 1) * 1LL) % m;
 	hash_value = (hash_value + hash_type(n + 1) * 31LL) % m;
 	hash_value = (hash_value + hash_type(u + 1) * 961LL) % m;
-	hash_value = (hash_value + hash_type(t + 1) * 12121LL) % m;
 
 	return hash_value;
 }
@@ -203,31 +202,31 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 	fnmesh.getPoints(mesh_points, MSpace::kObject );
 
 	//  Cache normals for each vertex
-	MFloatVectorArray  mesh_normals;
+	MFloatVectorArray mesh_normals;
 
 	// Normals are per-vertex per-face..
 	// use MItMeshPolygon::normalIndex() for index
 	fnmesh.getNormals(mesh_normals);
 
 	// Get UVSets for this mesh
-	MStringArray  uv_sets;
+	MStringArray uv_sets;
 	MStatus status = fnmesh.getUVSetNames(uv_sets);
 
 	// Get all UV coordinates for the first UV set (default "map1").
-	MFloatArray   u, v;
-	fnmesh.getUVs( u, v, &uv_sets[0] );
+	MFloatArray u, v;
+	fnmesh.getUVs(u, v, &uv_sets[0] );
 
-	MFloatVectorArray  mesh_tangents;
+	MFloatVectorArray mesh_tangents;
 	fnmesh.getTangents(mesh_tangents);
 
-	MFloatVectorArray  mesh_binormals;
+	MFloatVectorArray mesh_binormals;
 	fnmesh.getBinormals(mesh_binormals);
 
 	mesh_data.m_vertices.reserve(mesh_points.length());
 	mesh_data.m_indices = std::make_optional( std::vector<uint32_t>() );
 	mesh_data.m_indices->reserve(mesh_points.length());
 
-	MItMeshPolygon itt( fnmesh.object(), &status );
+	MItMeshPolygon itt(fnmesh.object(), &status);
 
 	std::vector<hash_type> hashes;
 	hashes.reserve(mesh_points.length());
@@ -253,7 +252,7 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 		MIntArray triangle_vertices;
 
 		// face-relative vertex indices for each triangle
-		MIntArray localIndex;
+		MIntArray local_index;
 
 		for (size_t i = 0; i < num_triangles; i++)
 		{
@@ -271,38 +270,37 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 				first_triangle_vertices[1] = triangle_vertices[1 + 3 * i];
 				first_triangle_vertices[2] = triangle_vertices[2 + 3 * i];
 
-				localIndex = GetLocalIndex(polygon_vertices, first_triangle_vertices);
+				local_index = GetLocalIndex(polygon_vertices, first_triangle_vertices);
 
-				normal_index[0] = itt.normalIndex(localIndex[0]);
-				normal_index[1] = itt.normalIndex(localIndex[1]);
-				normal_index[2] = itt.normalIndex(localIndex[2]);
+				normal_index[0] = itt.normalIndex(local_index[0]);
+				normal_index[1] = itt.normalIndex(local_index[1]);
+				normal_index[2] = itt.normalIndex(local_index[2]);
 
-				tangent_index[0] = itt.tangentIndex(localIndex[0]);
-				tangent_index[1] = itt.tangentIndex(localIndex[1]);
-				tangent_index[2] = itt.tangentIndex(localIndex[2]);
+				tangent_index[0] = itt.tangentIndex(local_index[0]);
+				tangent_index[1] = itt.tangentIndex(local_index[1]);
+				tangent_index[2] = itt.tangentIndex(local_index[2]);
 
 				// Get Texture coordinates
 				int first_uv_id[3];
 				// Get UV values for each vertex within this polygon
 				for (int vtx_in_polygon = 0; vtx_in_polygon < 3; vtx_in_polygon++)
 				{
-					itt.getUVIndex(localIndex[vtx_in_polygon],
+					itt.getUVIndex(local_index[vtx_in_polygon],
 						first_uv_id[vtx_in_polygon],
 						&uv_sets[0]);
 				}
 
 				hash_type temp_hashes[3] = {
-					compute_hash(first_triangle_vertices[0], normal_index[0], first_uv_id[0], tangent_index[0]),
-					compute_hash(first_triangle_vertices[1], normal_index[1], first_uv_id[1], tangent_index[1]),
-					compute_hash(first_triangle_vertices[2], normal_index[2], first_uv_id[2], tangent_index[2])
+					compute_hash(first_triangle_vertices[0], normal_index[0], first_uv_id[0]),
+					compute_hash(first_triangle_vertices[1], normal_index[1], first_uv_id[1]),
+					compute_hash(first_triangle_vertices[2], normal_index[2], first_uv_id[2])
 				};
 
 				const char hash_res = checkVertexHash(temp_hashes, hashes, hash_index);
 
 				wr::Vertex vertex;
-
-				// Check if hash is found (if vertex is a duplicate)
 				for (int j = 2; j >= 0; --j) {
+					// Check if hash is found (if vertex is a duplicate)
 					if (hash_res & (1 << j)) {
 						++duplicate_count;
 						mesh_data.m_indices->push_back(hash_index[j]);
@@ -341,11 +339,6 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 		}
 		itt.next();
 	} // !itt.isDone()
-	std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-	MString time_str = std::to_string(time_span.count()).c_str();
-	MGlobal::displayInfo(MString("Time in seconds: ") + time_str);
-	MGlobal::displayInfo(MString("Number of duplicate vertices: ") + std::to_string(duplicate_count).c_str() + MString("/") + std::to_string(mesh_data.m_vertices.size() + duplicate_count).c_str());
 
 	hashes.clear();
 }
