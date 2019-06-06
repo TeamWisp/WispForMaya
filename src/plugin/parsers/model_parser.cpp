@@ -193,10 +193,14 @@ hash_type compute_hash(int v, int n, int u) {
 	return hash_value;
 }
 
+using tp = std::chrono::high_resolution_clock::time_point;
+using high_res_clock = std::chrono::high_resolution_clock;
+using duration = std::chrono::duration<double>;
+
 void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 {
+	tp t1 = high_res_clock::now();
 	int duplicate_count = 0;
-	std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 
 	MPointArray mesh_points;
 	fnmesh.getPoints(mesh_points, MSpace::kObject );
@@ -340,7 +344,13 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 		itt.next();
 	} // !itt.isDone()
 
-	hashes.clear();
+	hashes.clear(); 
+	
+	tp t2 = high_res_clock::now();
+
+	duration elapsed_seconds = std::chrono::duration_cast<duration>(t2 - t1);
+	MGlobal::displayInfo(MString("The mesh loading took: ") + std::to_string(elapsed_seconds.count()).c_str() + MString(" seconds!"));
+	MGlobal::displayInfo(std::to_string(duplicate_count).c_str() + MString(" / ") + std::to_string(duplicate_count + mesh_data.m_vertices.size()).c_str() + MString(" duplicates!"));
 }
 #pragma endregion
 
