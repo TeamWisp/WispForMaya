@@ -14,6 +14,7 @@
 #include "wisp.hpp"
 
 wmr::Renderer::Renderer()
+	: m_frame_index(0)
 {
 	LOG("Starting object creation.");
 
@@ -54,6 +55,7 @@ void wmr::Renderer::Initialize() noexcept
 
 void wmr::Renderer::Update()
 {
+	m_frame_index = m_render_system->GetFrameIdx();
 }
 
 void wmr::Renderer::Render()
@@ -79,6 +81,11 @@ void wmr::Renderer::UpdateSkybox(const std::string& path) noexcept
 const wr::CPUTextures wmr::Renderer::GetRenderResult()
 {
 	return m_result_textures;
+}
+
+const std::uint64_t wmr::Renderer::GetFrameIndex() const noexcept(true)
+{
+	return m_frame_index;
 }
 
 wmr::ModelManager& wmr::Renderer::GetModelManager() const
