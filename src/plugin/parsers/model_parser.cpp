@@ -38,7 +38,6 @@
 #include <maya/MDGMessage.h>
 
 #include <string>
-#include <chrono>
 
 // region for internally used functions, these functions cannot be use outside this cpp file
 #pragma region INTERNAL_FUNCTIONS
@@ -148,13 +147,8 @@ auto getMeshObjectAlgorithm(MObject& maya_object)
 	};
 }
 
-using high_res_clock = std::chrono::high_resolution_clock;
-using duration = std::chrono::duration<double>;
-using tp = high_res_clock::time_point;
-
 void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 {
-	tp tp1 = high_res_clock::now();
 	// Get all unique points of this mesh
 	MPointArray mesh_points;
 	fnmesh.getPoints(mesh_points, MSpace::kObject);
@@ -308,9 +302,6 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 		}
 		polygon_it.next();
 	}
-	tp tp2 = high_res_clock::now();
-	duration dur = std::chrono::duration_cast<duration>(tp2 - tp1);
-	MGlobal::displayInfo(std::to_string(dur.count()).c_str() + MString( "seconds!" ));
 }
 #pragma endregion
 
