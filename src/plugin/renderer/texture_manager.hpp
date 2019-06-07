@@ -48,7 +48,7 @@ namespace wmr
 		 *  function will deallocate the memory automatically.
 		 *  
 		 *  \returns : Whether application actually deallocates the memory in Wisp. */
-		bool MarkTextureUnused(const char* identifier) noexcept;
+		bool MarkTextureUnused(wr::TextureHandle handle) noexcept;
 
 	private:
 		//! Holds all texture handles of the texture manager

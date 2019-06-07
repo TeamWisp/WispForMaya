@@ -20,15 +20,15 @@
 wmr::MaterialManager::MaterialManager()
 	: m_scenegraph_parser(nullptr)
 	, m_default_material_handle({ nullptr, 0 })
+	, m_texture_manager(dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer().GetTextureManager())
 {
 }
 
 void wmr::MaterialManager::Initialize()
 {
 	const auto& renderer = dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer();
-	m_texture_pool_ptr = renderer.GetTextureManager().GetTexturePool().get();
 	m_material_pool = renderer.GetD3D12Renderer().CreateMaterialPool(0);
-	m_default_material_handle = m_material_pool->Create(m_texture_pool_ptr);
+	m_default_material_handle = m_material_pool->Create(m_texture_manager.GetTexturePool().get());
 
 	wr::Material* internal_material = m_material_pool->GetMaterial(m_default_material_handle);
 
@@ -69,7 +69,7 @@ wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::OnCreateSurfaceS
 	}
 	// Surface shader doesn't have a material assigned to it yet
 	// Create Wisp Material handle
-	wr::MaterialHandle material_handle = m_material_pool->Create(m_texture_pool_ptr);
+	wr::MaterialHandle material_handle = m_material_pool->Create(m_texture_manager.GetTexturePool().get());
 	// Create relationship between surface shader and shading engine
 	m_surface_shader_shading_relations.push_back({
 		material_handle,		// Wisp Material handle
@@ -109,6 +109,46 @@ void wmr::MaterialManager::OnRemoveSurfaceShader(MPlug & surface_shader)
 				}
 			}
 			it->shading_engines.pop_back();
+		}
+
+		// Get the material associated with this shader
+		auto material_handle = m_surface_shader_shading_relations[it - m_surface_shader_shading_relations.begin()].material_handle;
+		auto material = m_material_pool->GetMaterial(material_handle);
+
+		// Try to deallocate the albedo texture
+		if (material->HasTexture(wr::TextureType::ALBEDO))
+		{
+			m_texture_manager.MarkTextureUnused(material->GetTexture(wr::TextureType::ALBEDO));
+		}
+
+		// Try to deallocate the ambient occlusion texture
+		if (material->HasTexture(wr::TextureType::AO))
+		{
+			m_texture_manager.MarkTextureUnused(material->GetTexture(wr::TextureType::AO));
+		}
+
+		// Try to deallocate the emissive texture
+		if (material->HasTexture(wr::TextureType::EMISSIVE))
+		{
+			m_texture_manager.MarkTextureUnused(material->GetTexture(wr::TextureType::EMISSIVE));
+		}
+
+		// Try to deallocate the metallic texture
+		if (material->HasTexture(wr::TextureType::METALLIC))
+		{
+			m_texture_manager.MarkTextureUnused(material->GetTexture(wr::TextureType::METALLIC));
+		}
+
+		// Try to deallocate the normal texture
+		if (material->HasTexture(wr::TextureType::NORMAL))
+		{
+			m_texture_manager.MarkTextureUnused(material->GetTexture(wr::TextureType::NORMAL));
+		}
+
+		// Try to deallocate the roughness texture
+		if (material->HasTexture(wr::TextureType::ROUGHNESS))
+		{
+			m_texture_manager.MarkTextureUnused(material->GetTexture(wr::TextureType::ROUGHNESS));
 		}
 
 		// Remove surface shader from vector
@@ -152,7 +192,7 @@ wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & su
 	}
 	// Surface shader doesn't have a material assigned to it yet
 	// Create Wisp Material handle
-	wr::MaterialHandle material_handle = m_material_pool->Create(m_texture_pool_ptr);
+	wr::MaterialHandle material_handle = m_material_pool->Create(m_texture_manager.GetTexturePool().get());
 	// Create a vector for the shading engines
 	std::vector<MObject> shading_engines;
 	shading_engines.push_back(shading_engine);

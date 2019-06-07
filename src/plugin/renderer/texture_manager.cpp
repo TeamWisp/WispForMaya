@@ -85,30 +85,42 @@ namespace wmr
 		return m_texture_pool;
 	}
 
-	bool TextureManager::MarkTextureUnused(const char* identifier) noexcept
+	bool TextureManager::MarkTextureUnused(wr::TextureHandle handle) noexcept
 	{
-		auto hash = func::HashCString(identifier);
+		// Flag indicating whether the texture exists in the unordered_map
+		bool texture_exists = false;
 
-		// Does the texture exist?
-		auto it = std::find_if(m_texture_container.begin(), m_texture_container.end(), [&hash](const std::unordered_map<size_t, std::shared_ptr<wr::TextureHandle>>::value_type& vt) {
-			return (vt.first == hash);
-		});
+		// Hash of the texture in the unordered_map when found
+		size_t hash_of_texture = 0;
 
-		if (it == m_texture_container.end())
+		// Go through each element in the container
+		for (const auto& element : m_texture_container)
 		{
-			// Texture does not even exist!
-			return true;
+			// Found the texture that needs to be deallocated
+			if (element.second->m_id == handle.m_id)
+			{
+				texture_exists = true;
+
+				// Save the hash for future use
+				hash_of_texture = element.first;
+			}
 		}
 
-		//// Find the current number of objects that use this texture
-		auto ref_count = m_texture_container[hash].use_count();
+		// Could not find the requested texture (hash cannot be used to index the unordered_map)
+		if (!texture_exists)
+		{
+			return false;
+		}
+
+		// Find the current number of objects that use this texture
+		auto ref_count = m_texture_container[hash_of_texture].use_count();
 
 		if (ref_count == 1)
 		{
 			// Only reference left to this texture is the one that's in the unordered_map,
 			// so the texture can be deleted.
-			m_texture_pool->MarkForUnload(*m_texture_container[hash], m_renderer.GetFrameIndex());
-			m_texture_container.erase(hash);
+			m_texture_pool->MarkForUnload(*m_texture_container[hash_of_texture], m_renderer.GetFrameIndex());
+			m_texture_container.erase(hash_of_texture);
 			
 			// Removed the texture from the texture pool
 			return true;
