@@ -18,7 +18,6 @@ wmr::Renderer::Renderer()
 	, m_render_system(std::make_unique<wr::D3D12RenderSystem>())
 	, m_window(std::make_unique<wr::Window>(GetModuleHandleA(nullptr), "Wisp hidden window", 1280, 720, false))
 	, m_model_manager(std::make_unique<ModelManager>())
-	, m_texture_manager(std::make_unique<TextureManager>())
 	, m_framegraph_manager(std::make_unique<FrameGraphManager>())
 	, m_scenegraph(std::make_shared<wr::SceneGraph>(m_render_system.get()))
 {
@@ -30,6 +29,7 @@ wmr::Renderer::~Renderer()
 void wmr::Renderer::Initialize() noexcept
 {
 	// Need access to the fully initialized renderer, so this had to be moved down here instead of in the constructor like the others
+	m_texture_manager = std::make_unique<TextureManager>();
 	m_material_manager = std::make_unique<MaterialManager>();
 
 	LOG("Starting renderer initialization.");
