@@ -148,191 +148,156 @@ auto getMeshObjectAlgorithm(MObject& maya_object)
 	};
 }
 
-int32_t parseDataVertexCmp(uint32_t current_index, wr::Vertex *vertex, wr::Vertex* vertex_other) {
-	if (memcmp(vertex, vertex_other, sizeof(wr::Vertex)) == 0) { // Vertex has found a duplicate!
-		return current_index;
-	}
-	else { // Duplicate vertex has not been found (most often)
-		return -1;
-	}
-}
-
-using hash_type = unsigned long long;
-
-const char checkVertexHash(hash_type * hashes, std::vector<hash_type> & v_hashes, uint32_t * found_index) {
-	char c = 0;
-	for (int32_t i = 0; i < v_hashes.size(); ++i) {
-		if (v_hashes[i] == hashes[0]) {
-			found_index[0] = i;
-			c |= 1 << 0;
-		}
-		if(v_hashes[i] == hashes[1]) {
-			found_index[1] = i;
-			c |= 1 << 1;
-		}
-		if (v_hashes[i] == hashes[2]) {
-			found_index[2] = i;
-			c |= 1 << 2;
-		}
-
-		if (c == 0b111) {
-			return c;
-		}
-	}
-	return c;
-}
-
-hash_type compute_hash(int v, int n, int u) {
-	const hash_type m = 1e9 + 9;
-	hash_type hash_value = 0;
-
-	hash_value = (hash_value + hash_type(v + 1) * 1LL) % m;
-	hash_value = (hash_value + hash_type(n + 1) * 31LL) % m;
-	hash_value = (hash_value + hash_type(u + 1) * 961LL) % m;
-
-	return hash_value;
-}
-
-using tp = std::chrono::high_resolution_clock::time_point;
 using high_res_clock = std::chrono::high_resolution_clock;
 using duration = std::chrono::duration<double>;
+using tp = high_res_clock::time_point;
 
 void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 {
-	tp t1 = high_res_clock::now();
-	int duplicate_count = 0;
-
+	tp tp1 = high_res_clock::now();
+	// Get all unique points of this mesh
 	MPointArray mesh_points;
-	fnmesh.getPoints(mesh_points, MSpace::kObject );
+	fnmesh.getPoints(mesh_points, MSpace::kObject);
 
-	//  Cache normals for each vertex
+	// Get all 'unique' normals of this mesh
 	MFloatVectorArray mesh_normals;
-
-	// Normals are per-vertex per-face..
-	// use MItMeshPolygon::normalIndex() for index
 	fnmesh.getNormals(mesh_normals);
 
-	// Get UVSets for this mesh
+	// Get all UV sets of this mesh
 	MStringArray uv_sets;
 	MStatus status = fnmesh.getUVSetNames(uv_sets);
 
-	// Get all UV coordinates for the first UV set (default "map1").
+	// Get all unique UV coordinates for the first UV set of this mesh (default "map1")
 	MFloatArray u, v;
-	fnmesh.getUVs(u, v, &uv_sets[0] );
+	fnmesh.getUVs(u, v, &uv_sets[0]);
 
+	// Get all 'unique' tangents of this mesh
 	MFloatVectorArray mesh_tangents;
 	fnmesh.getTangents(mesh_tangents);
 
-	MFloatVectorArray mesh_binormals;
-	fnmesh.getBinormals(mesh_binormals);
+	// Get all 'unique' bitangents of this mesh
+	MFloatVectorArray  mesh_bitangents;
+	fnmesh.getBinormals(mesh_bitangents);
 
+	// Reserve some space for the vertex buffer and index buffer
+	// Be aware that the space that is reserved will most likely not be equal to the final size
+	// Though, mesh_points usually has an accurate size to the final size of the unique vertex buffer
 	mesh_data.m_vertices.reserve(mesh_points.length());
-	mesh_data.m_indices = std::make_optional( std::vector<uint32_t>() );
+	mesh_data.m_indices = std::make_optional(std::vector<uint32_t>());
 	mesh_data.m_indices->reserve(mesh_points.length());
 
-	MItMeshPolygon itt(fnmesh.object(), &status);
+	// Get the iterator to loop over all mesh polygons
+	MItMeshPolygon polygon_it(fnmesh.object(), &status);
 
-	std::vector<hash_type> hashes;
-	hashes.reserve(mesh_points.length());
+	// Initialize all temp/local variables so they don't allocate in the while loop (reduces allocations)
+	// Will contain object-relative indices for the vertices in this face
+	MIntArray polygon_vertices;
 
-	uint32_t normal_index[3] = {0, 0, 0};
-	uint32_t tangent_index[3] = {0, 0, 0};
-	uint32_t hash_index[3] = {0, 0, 0};
+	int32_t num_triangles = 0;
 
-	while (!itt.isDone())
+	// Needed for `getTriangles` function, but is never used
+	MPointArray non_tweaked;
+
+	// Will contain object-relative vertex indices for each triangle
+	MIntArray triangle_indices;
+
+	// Will contain face-relative vertex indices for each triangle
+	MIntArray local_index;
+	int32_t local_uv_index = 0;
+
+	// Will contain face-relative vertex indices for each triangle
+	MIntArray triangle_vertex_indices;
+	triangle_vertex_indices.setLength(3);
+
+	// Used to temporary store the processed vertices
+	wr::Vertex vertex[3];
+
+	// Total vertex count. This is used for the indices.
+	uint32_t total_vertex_count = 0;
+
+	while (!polygon_it.isDone())
 	{
-		// Get object-relative indices for the vertices in this face.
-		MIntArray polygon_vertices;
-		itt.getVertices(polygon_vertices);
+		// Get object-relative indices for the vertices in this face
+		polygon_it.getVertices(polygon_vertices);
 
-		// Get triangulation of this polygon
-		int num_triangles;
-		itt.numTriangles(num_triangles);
+		// Get number of triangles in the mesh
+		polygon_it.numTriangles(num_triangles);
 
-		// needed for function but never used.
-		MPointArray non_tweaked;
-
-		// object-relative vertex indices for each triangle
-		MIntArray triangle_vertices;
-
-		// face-relative vertex indices for each triangle
-		MIntArray local_index;
-
-		for (size_t i = 0; i < num_triangles; i++)
+		for (int32_t i = 0; i < num_triangles; ++i)
 		{
-			status = itt.getTriangles(non_tweaked,
-				triangle_vertices,
+			status = polygon_it.getTriangles(non_tweaked,
+				triangle_indices,
 				MSpace::kObject);
 
 			if (status == MS::kSuccess)
 			{
-				MIntArray first_triangle_vertices;
-
-				first_triangle_vertices.setLength(3);
-
-				first_triangle_vertices[0] = triangle_vertices[0 + 3 * i];
-				first_triangle_vertices[1] = triangle_vertices[1 + 3 * i];
-				first_triangle_vertices[2] = triangle_vertices[2 + 3 * i];
-
-				local_index = GetLocalIndex(polygon_vertices, first_triangle_vertices);
-
-				normal_index[0] = itt.normalIndex(local_index[0]);
-				normal_index[1] = itt.normalIndex(local_index[1]);
-				normal_index[2] = itt.normalIndex(local_index[2]);
-
-				tangent_index[0] = itt.tangentIndex(local_index[0]);
-				tangent_index[1] = itt.tangentIndex(local_index[1]);
-				tangent_index[2] = itt.tangentIndex(local_index[2]);
-
-				// Get Texture coordinates
-				int first_uv_id[3];
-				// Get UV values for each vertex within this polygon
-				for (int vtx_in_polygon = 0; vtx_in_polygon < 3; vtx_in_polygon++)
+				// Use a loop for cleaner code.
+				// This loop may make it a little slower in a Debug configuration,
+				// but a Release configuration will optimize it
 				{
-					itt.getUVIndex(local_index[vtx_in_polygon],
-						first_uv_id[vtx_in_polygon],
-						&uv_sets[0]);
-				}
+					// Get the indices of the vertices in the triangle
+					triangle_vertex_indices[0] = triangle_indices[0 + 3 * i];
+					triangle_vertex_indices[1] = triangle_indices[1 + 3 * i];
+					triangle_vertex_indices[2] = triangle_indices[2 + 3 * i];
 
-				hash_type temp_hashes[3] = {
-					compute_hash(first_triangle_vertices[0], normal_index[0], first_uv_id[0]),
-					compute_hash(first_triangle_vertices[1], normal_index[1], first_uv_id[1]),
-					compute_hash(first_triangle_vertices[2], normal_index[2], first_uv_id[2])
-				};
+					{ // Get the position values of the vertices in the triangle
+						vertex[0].m_pos[0] = static_cast<float>(mesh_points[triangle_vertex_indices[0]].x);
+						vertex[0].m_pos[1] = static_cast<float>(mesh_points[triangle_vertex_indices[0]].y);
+						vertex[0].m_pos[2] = static_cast<float>(mesh_points[triangle_vertex_indices[0]].z);
 
-				const char hash_res = checkVertexHash(temp_hashes, hashes, hash_index);
+						vertex[1].m_pos[0] = static_cast<float>(mesh_points[triangle_vertex_indices[1]].x);
+						vertex[1].m_pos[1] = static_cast<float>(mesh_points[triangle_vertex_indices[1]].y);
+						vertex[1].m_pos[2] = static_cast<float>(mesh_points[triangle_vertex_indices[1]].z);
 
-				wr::Vertex vertex;
-				for (int j = 2; j >= 0; --j) {
-					// Check if hash is found (if vertex is a duplicate)
-					if (hash_res & (1 << j)) {
-						++duplicate_count;
-						mesh_data.m_indices->push_back(hash_index[j]);
+						vertex[2].m_pos[0] = static_cast<float>(mesh_points[triangle_vertex_indices[2]].x);
+						vertex[2].m_pos[1] = static_cast<float>(mesh_points[triangle_vertex_indices[2]].y);
+						vertex[2].m_pos[2] = static_cast<float>(mesh_points[triangle_vertex_indices[2]].z);
 					}
-					else {
-						vertex.m_pos[0] = (float)mesh_points[first_triangle_vertices[j]].x;
-						vertex.m_pos[1] = (float)mesh_points[first_triangle_vertices[j]].y;
-						vertex.m_pos[2] = (float)mesh_points[first_triangle_vertices[j]].z;
-					
-						vertex.m_normal[0] = mesh_normals[normal_index[j]].x;
-						vertex.m_normal[1] = mesh_normals[normal_index[j]].y;
-						vertex.m_normal[2] = mesh_normals[normal_index[j]].z;
-					
-						vertex.m_tangent[0] = mesh_tangents[tangent_index[j]].x;
-						vertex.m_tangent[1] = mesh_tangents[tangent_index[j]].y;
-						vertex.m_tangent[2] = mesh_tangents[tangent_index[j]].z;
-					
-						vertex.m_bitangent[0] = mesh_binormals[normal_index[j]].x;
-						vertex.m_bitangent[1] = mesh_binormals[normal_index[j]].y;
-						vertex.m_bitangent[2] = mesh_binormals[normal_index[j]].z;
-					
-						vertex.m_uv[0] = u[first_uv_id[j]];
-						vertex.m_uv[1] = v[first_uv_id[j]];
 
-						mesh_data.m_vertices.push_back(vertex);
-						mesh_data.m_indices->push_back(mesh_data.m_vertices.size() - 1);
-						hashes.push_back(temp_hashes[j]);
+					// Get the local indices of the normals, tangents, bittangents, and uv-coords
+					local_index = GetLocalIndex(polygon_vertices, triangle_vertex_indices);
+
+					{ // Get the normal values of the vertices in the triangle
+						memcpy(vertex[0].m_normal, &mesh_normals[polygon_it.normalIndex(local_index[0])], sizeof(float) * 3);
+						memcpy(vertex[1].m_normal, &mesh_normals[polygon_it.normalIndex(local_index[1])], sizeof(float) * 3);
+						memcpy(vertex[2].m_normal, &mesh_normals[polygon_it.normalIndex(local_index[2])], sizeof(float) * 3);
 					}
+
+					{ // Get the bitangent values of the vertices in the triangle
+						memcpy(vertex[0].m_tangent, &mesh_tangents[polygon_it.tangentIndex(local_index[0])], sizeof(float) * 3);
+						memcpy(vertex[1].m_tangent, &mesh_tangents[polygon_it.tangentIndex(local_index[1])], sizeof(float) * 3);
+						memcpy(vertex[2].m_tangent, &mesh_tangents[polygon_it.tangentIndex(local_index[2])], sizeof(float) * 3);
+					}
+
+					{ // Get the bitangent values of the vertices in the triangle
+						// Maya forces you to use ::normalIndex for binormals/bitangents
+						memcpy(vertex[0].m_bitangent, &mesh_bitangents[polygon_it.normalIndex(local_index[0])], sizeof(float) * 3);
+						memcpy(vertex[1].m_bitangent, &mesh_bitangents[polygon_it.normalIndex(local_index[1])], sizeof(float) * 3);
+						memcpy(vertex[2].m_bitangent, &mesh_bitangents[polygon_it.normalIndex(local_index[2])], sizeof(float) * 3);
+					}
+
+					{ // Get the UV values of the vertices in the triangle
+						polygon_it.getUVIndex(local_index[0], local_uv_index, &uv_sets[0]);
+						vertex[0].m_uv[0] = u[local_uv_index];
+						vertex[0].m_uv[1] = v[local_uv_index];
+
+						polygon_it.getUVIndex(local_index[1], local_uv_index, &uv_sets[0]);
+						vertex[1].m_uv[0] = u[local_uv_index];
+						vertex[1].m_uv[1] = v[local_uv_index];
+
+						polygon_it.getUVIndex(local_index[2], local_uv_index, &uv_sets[0]);
+						vertex[2].m_uv[0] = u[local_uv_index];
+						vertex[2].m_uv[1] = v[local_uv_index];
+					}
+
+					// Add vertices and indices to the buffer
+					mesh_data.m_vertices.push_back(vertex[0]);
+					mesh_data.m_vertices.push_back(vertex[1]);
+					mesh_data.m_vertices.push_back(vertex[2]);
+					mesh_data.m_indices->push_back(total_vertex_count++);
+					mesh_data.m_indices->push_back(total_vertex_count++);
+					mesh_data.m_indices->push_back(total_vertex_count++);
+
 				}
 			}
 			else
@@ -341,16 +306,11 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 			}
 
 		}
-		itt.next();
-	} // !itt.isDone()
-
-	hashes.clear(); 
-	
-	tp t2 = high_res_clock::now();
-
-	duration elapsed_seconds = std::chrono::duration_cast<duration>(t2 - t1);
-	MGlobal::displayInfo(MString("The mesh loading took: ") + std::to_string(elapsed_seconds.count()).c_str() + MString(" seconds!"));
-	MGlobal::displayInfo(std::to_string(duplicate_count).c_str() + MString(" / ") + std::to_string(duplicate_count + mesh_data.m_vertices.size()).c_str() + MString(" duplicates!"));
+		polygon_it.next();
+	}
+	tp tp2 = high_res_clock::now();
+	duration dur = std::chrono::duration_cast<duration>(tp2 - tp1);
+	MGlobal::displayInfo(std::to_string(dur.count()).c_str() + MString( "seconds!" ));
 }
 #pragma endregion
 
