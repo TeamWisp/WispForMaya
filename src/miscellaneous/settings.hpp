@@ -16,7 +16,7 @@ namespace wmr
 		static const constexpr std::uint32_t MAX_VERTEX_DATA_SIZE_MB = 64MB;
 
 		//! Maximum amount of index data in the model pool in MB
-		static const constexpr std::uint32_t MAX_INDEX_DATA_SIZE_MB = 64MB;
+		static const constexpr std::uint32_t MAX_INDEX_DATA_SIZE_MB = 8MB;
 
 		//! Name of the studio / company developing this product
 		static const constexpr char* COMPANY_NAME = "Team Wisp";
