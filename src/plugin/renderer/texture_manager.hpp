@@ -17,10 +17,12 @@ namespace wr
 
 namespace wmr
 {
+	class Renderer;
+
 	class TextureManager
 	{
 	public:
-		TextureManager() = default;
+		TextureManager();
 		~TextureManager() = default;
 
 		//! Initialization
@@ -53,7 +55,11 @@ namespace wmr
 		// Texture manager keeps refs and automatically gets rid of the texture once the ref count equals 1
 		std::unordered_map<size_t, std::shared_ptr<wr::TextureHandle>> m_texture_container;
 
+		//! Default texture that can always be used (our Wisp skybox texture)
 		wr::TextureHandle m_default_texture;
+
+		// Reference to the renderer that will allow us to get access to the internal frame index
+		Renderer& m_renderer;
 
 		//! Wisp texture pool
 		std::shared_ptr<wr::TexturePool> m_texture_pool;

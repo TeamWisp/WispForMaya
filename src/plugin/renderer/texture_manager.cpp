@@ -15,6 +15,10 @@
 
 namespace wmr
 {
+	TextureManager::TextureManager()
+		: m_renderer(dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer())
+	{}
+	
 	void TextureManager::Initialize() noexcept
 	{
 		LOG("Attempting to get a reference to the texture pool via the renderer.");
@@ -103,8 +107,7 @@ namespace wmr
 		{
 			// Only reference left to this texture is the one that's in the unordered_map,
 			// so the texture can be deleted.
-			// #TODO: ADD A FRAMEINDEX SO EVERY TEXTURE CAN BE UNLOADED PROPERLY
-			m_texture_pool->MarkForUnload(*m_texture_container[hash], 0);
+			m_texture_pool->MarkForUnload(*m_texture_container[hash], m_renderer.GetFrameIndex());
 			m_texture_container.erase(hash);
 			
 			// Removed the texture from the texture pool
