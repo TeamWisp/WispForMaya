@@ -225,9 +225,8 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 
 			if (status == MS::kSuccess)
 			{
-				// Use a loop for cleaner code.
-				// This loop may make it a little slower in a Debug configuration,
-				// but a Release configuration will optimize it
+				// We're not using a for-loop to loop over the three vertices in the triangle
+				// This to make more use of caching
 				{
 					// Get the indices of the vertices in the triangle
 					triangle_vertex_indices[0] = triangle_indices[0 + 3 * i];
