@@ -147,6 +147,32 @@ auto getMeshObjectAlgorithm(MObject& maya_object)
 	};
 }
 
+void loadTriangle(wr::MeshData<wr::Vertex>& mesh_data)
+{
+	// Set up variables
+	mesh_data.m_indices = std::make_optional(std::vector<uint32_t>());
+	wr::Vertex vertex;
+
+	// Set up vertex attribute values
+	float pos[3][3] = {
+		{  0.0f, 1.0f, 0.0f },
+		{  0.5f, 0.0f, 0.0f },
+		{ -0.5f, 0.0f, 0.0f }
+	};
+	float norm[3] = { 0.0f, 0.0f, 1.0f };
+
+	// Copy normal to vertex
+	memcpy(vertex.m_normal, norm, sizeof(float) * 3);
+
+	// Copy positions and add vertices and indices to the list
+	for (uint32_t i = 0; i < 3; ++i) {
+		memcpy(vertex.m_pos, pos[i], sizeof(float) * 3);
+
+		mesh_data.m_vertices.push_back(vertex);
+		mesh_data.m_indices->push_back(i);
+	}
+}
+
 void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 {
 	// Get all unique points of this mesh
@@ -172,6 +198,22 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 	// Get all 'unique' bitangents of this mesh
 	MFloatVectorArray  mesh_bitangents;
 	fnmesh.getBinormals(mesh_bitangents);
+
+	// Check if an attribute list of the vertices is empty.
+	// When either one of them is empty, we assume that this initial load of a mesh and first load a triangle 
+	// We also assume that there will be an update later, which gives us the missing attributes and we'll try to load the model again
+	// A lot of assumpions, but this is how we use the callbacks that Maya gives us (intended behaviour)
+	if (u.length()					<= 0 || 
+		v.length()					<= 0 ||
+		mesh_tangents.length()		<= 0 ||
+		mesh_bitangents.length()	<= 0) 
+	{
+		loadTriangle(mesh_data);
+		return;
+	}
+	loadTriangle(mesh_data);
+
+	return;
 
 	// Reserve some space for the vertex buffer and index buffer
 	// Be aware that the space that is reserved will most likely not be equal to the final size
@@ -302,6 +344,7 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 		polygon_it.next();
 	}
 }
+
 #pragma endregion
 
 #pragma region callbacks

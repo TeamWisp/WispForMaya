@@ -41,7 +41,6 @@ namespace wmr
 		friend void AttributeMeshAddedCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData );
 		friend void attributeMeshChangedCallback( MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &other_plug, void *client_data );
 
-
 		std::vector<std::pair<MObject, std::shared_ptr<wr::MeshNode>>> m_object_transform_vector;
 		std::vector<std::pair<MObject, MCallbackId>> m_mesh_added_callback_vector;
 		std::vector<MObject> m_changed_mesh_vector;
