@@ -23,16 +23,14 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
-
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+**System (please complete the following information):**
+ - OS: [e.g. Windows 95]
+ - Maya [e.g. 2017, 2019, 2019]
+ - Maya version / update [e.g. 2018.1, 2018.2]
+ - Graphics card [e.g. GTX 470, Intel GMA 900]
+ - RAM [e.g. DDR2-100MHz]
+ - CPU [e.g. Intel 8080, AMD FX series]
+ - Screen resolution [e.g 320x200, 800x600]
 
 **Additional context**
 Add any other context about the problem here.
