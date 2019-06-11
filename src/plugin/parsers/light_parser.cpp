@@ -134,7 +134,6 @@ namespace wmr
 		if (status != MS::kSuccess)
 		{
 			LOGE("Could not get the dag node.");
-			MGlobal::displayError("Error: " + status.errorString());
 		}
 		MFnTransform transform = dagnode.object();
 
