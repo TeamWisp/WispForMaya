@@ -12,6 +12,7 @@
 
 // C++ standard
 #include <algorithm>
+#include <exception>
 
 namespace wmr
 {
@@ -48,9 +49,14 @@ namespace wmr
 
 		if (it == m_texture_container.end())
 		{
+			wr::TextureHandle texture_handle;
 			// Texture does not exist yet
-			auto texture_handle = m_texture_pool->LoadFromFile(path, false, false);
-			m_texture_container[hash] = std::make_shared<wr::TextureHandle>(texture_handle);
+			try {
+				texture_handle = m_texture_pool->LoadFromFile(path, false, false);
+				m_texture_container[hash] = std::make_shared<wr::TextureHandle>(texture_handle);
+			} catch (std::exception e) {
+				return std::shared_ptr<wr::TextureHandle>(nullptr);
+			}
 		}
 
 		return m_texture_container[hash];

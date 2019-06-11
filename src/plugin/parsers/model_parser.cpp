@@ -211,9 +211,6 @@ void parseData( MFnMesh & fnmesh, wr::MeshData<wr::Vertex>& mesh_data )
 		loadTriangle(mesh_data);
 		return;
 	}
-	loadTriangle(mesh_data);
-
-	return;
 
 	// Reserve some space for the vertex buffer and index buffer
 	// Be aware that the space that is reserved will most likely not be equal to the final size
@@ -557,7 +554,6 @@ void wmr::ModelParser::UnSubscribeObject( MObject & maya_object )
 	MStatus status = MS::kSuccess;
 
 	MFnMesh fnmesh( maya_object );
-
 	
 	auto it = std::find_if( m_object_transform_vector.begin(), m_object_transform_vector.end(), getMeshObjectAlgorithm(maya_object) );
 	if( it == m_object_transform_vector.end() )
@@ -683,8 +679,7 @@ void wmr::ModelParser::Update()
 			continue; // find_if returns last element even if it is not a positive result
 		}
 
-		m_renderer.GetModelManager().UpdateModel( *itt->second->m_model , mesh_data );
-
+		m_renderer.GetModelManager().UpdateModel(*itt->second->m_model, mesh_data);
 	}
 	m_changed_mesh_vector.clear();
 }
