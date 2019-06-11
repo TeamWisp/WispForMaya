@@ -100,7 +100,6 @@ namespace wmr
 		if( status != MS::kSuccess )
 		{
 			LOGE("Could not get a transform node.");
-			MGlobal::displayInfo( status.errorString() );
 			return;
 		}
 		wmr::LightParser* light_parser = reinterpret_cast< wmr::LightParser* >( client_data );
@@ -156,8 +155,7 @@ namespace wmr
 		switch (api_type)
 		{
 		case MFn::Type::kAmbientLight:
-			LOGE("Wisp does not support ambient light, user tried to add ambient light.");
-			//cry, crash, burn!!
+			LOGE("Wisp does not support ambient light, user moved an ambient light??");
 			break;
 		case MFn::Type::kPointLight:
 		{
@@ -275,7 +273,6 @@ void wmr::LightParser::LightAdded( MFnLight & fn_light )
 	{
 	case MFn::Type::kAmbientLight:
 		LOGE("Wisp does not support ambient light, user tried to add ambient light.");
-		//cry, crash, burn!!
 		break;
 	case MFn::Type::kPointLight:
 	{
