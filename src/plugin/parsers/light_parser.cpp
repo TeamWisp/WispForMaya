@@ -118,6 +118,87 @@ namespace wmr
 		}
 		updateTransform( transform, it->second );
 	}
+	void AttributeLightCallback(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void* client_data)
+	{
+		// Check if attribute was set
+		if (!(msg & MNodeMessage::kAttributeSet))
+		{
+			return;
+		}
+
+		wmr::LightParser* light_parser = reinterpret_cast<wmr::LightParser*>(client_data);
+
+		MStatus status = MS::kSuccess;
+		MFnLight fn_light(plug.node(), &status);
+		
+		MFnDagNode dagnode = fn_light.parent(0, &status);
+		if (status != MS::kSuccess)
+		{
+			LOGE("Could not get the dag node.");
+			MGlobal::displayError("Error: " + status.errorString());
+		}
+		MFnTransform transform = dagnode.object();
+
+		// specialized find_if algorithm
+		auto it = std::find_if(light_parser->m_object_transform_vector.begin(), light_parser->m_object_transform_vector.end(), getTransformFindAlgorithm(transform));
+
+		auto api_type = fn_light.object().apiType();
+		auto light_node = it->second;
+
+		if (it == --light_parser->m_object_transform_vector.end())
+		{
+			if (it->first != transform.object() )
+			{
+				return;
+			}
+		}
+
+		switch (api_type)
+		{
+		case MFn::Type::kAmbientLight:
+			LOGE("Wisp does not support ambient light, user tried to add ambient light.");
+			//cry, crash, burn!!
+			break;
+		case MFn::Type::kPointLight:
+		{
+			LOG("Added point light.");
+			MFnPointLight fn_point_light(fn_light.object());
+			auto light_color = fn_point_light.color();
+			DirectX::XMVECTOR wisp_color{ light_color.r ,light_color.g ,light_color.b };
+			wisp_color *= fn_point_light.intensity();
+			light_node->SetColor(wisp_color);
+			light_node->SetRadius(20.0f);
+		}
+		break;
+		case MFn::Type::kSpotLight:
+		{
+			LOG("Added spot light.");
+			MFnSpotLight fn_spot_light(fn_light.object());
+			auto light_color = fn_spot_light.color();
+			DirectX::XMVECTOR wisp_color{ light_color.r ,light_color.g ,light_color.b };
+			wisp_color *= fn_spot_light.intensity();
+			light_node->SetColor(wisp_color);
+			light_node->SetAngle(fn_spot_light.coneAngle() * 0.5f);
+		}
+		break;
+		case MFn::Type::kDirectionalLight:
+		{
+			LOG("Added directional light.");
+			MFnDirectionalLight fn_dir_light(fn_light.object());
+			auto light_color = fn_dir_light.color();
+			DirectX::XMVECTOR wisp_color{ light_color.r ,light_color.g ,light_color.b };
+			wisp_color *= fn_dir_light.intensity();
+			light_node->SetColor(wisp_color);
+		}
+		break;
+
+		default:
+			break;
+		}
+
+
+
+	}
 }
 #pragma endregion
 
@@ -215,7 +296,7 @@ void wmr::LightParser::LightAdded( MFnLight & fn_light )
 		DirectX::XMVECTOR wisp_color{ light_color.r ,light_color.g ,light_color.b };
 		wisp_color *= fn_spot_light.intensity();
 		light_node = m_renderer.GetScenegraph().CreateChild<wr::LightNode>( nullptr, wr::LightType::SPOT, wisp_color );
-		light_node->SetAngle(fn_spot_light.coneAngle());
+		light_node->SetAngle(fn_spot_light.coneAngle() * 0.5f);
 	}
 		break;
 	case MFn::Type::kDirectionalLight:
@@ -262,6 +343,15 @@ void wmr::LightParser::LightAdded( MFnLight & fn_light )
 		this,
 		&status
 	);
+
+	MObject light_obj = fn_light.object();
 	CallbackManager::GetInstance().RegisterCallback( attributeId );
+	attributeId = MNodeMessage::addAttributeChangedCallback(
+		light_obj,
+		AttributeLightCallback,
+		this,
+		&status
+	);
+	CallbackManager::GetInstance().RegisterCallback(attributeId);
 
 }
