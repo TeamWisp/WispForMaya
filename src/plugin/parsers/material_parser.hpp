@@ -54,8 +54,8 @@ namespace wmr
 		static const constexpr char * plug_color_b = "B";
 		static const constexpr char * plug_color_a = "A";
 
-		static const constexpr float default_albedo[3] = { 0.5f, 0.5f, 0.5f };
-		static const constexpr float default_normal[3] = { 0.0f, 1.0f, 0.0f };
+		static const constexpr float default_albedo[3] = { 0.00f, 0.93f, 0.40f };
+		static const constexpr float default_normal[3] = { 0.00f, 1.00f, 0.00f };
 		static const constexpr float default_metallicness = 0.0f;
 		static const constexpr float default_roughness = 0.5f;
 	};
