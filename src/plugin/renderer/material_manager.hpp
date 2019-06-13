@@ -18,6 +18,7 @@ namespace wr
 namespace wmr
 {
 	class ScenegraphParser;
+	class TextureManager;
 
 	struct MeshShadingEngineRelation
 	{
@@ -93,7 +94,7 @@ namespace wmr
 		
 		wr::MaterialHandle m_default_material_handle;
 		std::shared_ptr<wr::MaterialPool> m_material_pool;
-		wr::TexturePool* m_texture_pool_ptr; //! Does not need to be deleted, it's just a way to get hold of the pool
+		wmr::TextureManager* m_texture_manager;
 
 		//! Relationship array of meshes and shading engines (shader groups)
 		// Don't need a struct if mesh can be extracted from a shading engine
