@@ -12,7 +12,6 @@
 
 // C++ standard
 #include <algorithm>
-#include <exception>
 
 namespace wmr
 {
