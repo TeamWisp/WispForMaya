@@ -5,6 +5,9 @@ WispForMaya is heavily under development which means that you might encounter we
 Bug and feature updates will be released frequenty. If you encounter bugs or want to provide us with feedback, contact us on discord:
 https://discordapp.com/invite/KthSUvs
 
+You can also report your issues here: 
+https://github.com/TeamWisp/WispForMaya/issues (requires GitHub account)
+
 Either way, enjoy WispForMaya!
 
-/ Team Wisp
+    Team Wisp
