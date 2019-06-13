@@ -65,7 +65,9 @@ set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MT")
 
-# === Dependencies === $
+# === Dependencies === #
+set(WISP_LOG_TO_STDOUT OFF)
+
 add_subdirectory(deps/WispRenderer ${CMAKE_BINARY_DIR}/wisprenderer)
 
 # === Maya API === #
