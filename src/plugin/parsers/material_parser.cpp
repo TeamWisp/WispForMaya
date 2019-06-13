@@ -587,7 +587,7 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::LambertShaderData & d
 		}
 		else {
 			// Set to default values if texture wasn't found
-			material->SetConstant<wr::MaterialConstant::COLOR>({ wmr::MayaMaterialProps::default_albedo[0], wmr::MayaMaterialProps::default_albedo[1], wmr::MayaMaterialProps::default_albedo[1] });
+			material->SetConstant<wr::MaterialConstant::COLOR>({ wmr::MayaMaterialProps::default_albedo[0], wmr::MayaMaterialProps::default_albedo[1], wmr::MayaMaterialProps::default_albedo[2] });
 		}
 	}
 
@@ -619,7 +619,7 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::PhongShaderData & dat
 		}
 		else {
 			// Set to default values if texture wasn't found
-			material->SetConstant<wr::MaterialConstant::COLOR>({ wmr::MayaMaterialProps::default_albedo[0], wmr::MayaMaterialProps::default_albedo[1], wmr::MayaMaterialProps::default_albedo[1] });
+			material->SetConstant<wr::MaterialConstant::COLOR>({ wmr::MayaMaterialProps::default_albedo[0], wmr::MayaMaterialProps::default_albedo[1], wmr::MayaMaterialProps::default_albedo[2] });
 		}
 	}
 
@@ -653,7 +653,7 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::ArnoldStandardSurface
 		}
 		else {
 			// Set to default values if texture wasn't found
-			material->SetConstant<wr::MaterialConstant::COLOR>({ wmr::MayaMaterialProps::default_albedo[0], wmr::MayaMaterialProps::default_albedo[1], wmr::MayaMaterialProps::default_albedo[1] });
+			material->SetConstant<wr::MaterialConstant::COLOR>({ wmr::MayaMaterialProps::default_albedo[0], wmr::MayaMaterialProps::default_albedo[1], wmr::MayaMaterialProps::default_albedo[2] });
 		}
 	}
 
