@@ -1,10 +1,13 @@
 Hey there!
 
-Wisp is heavily under development which means that you might encounter weird, annoying and sometimes work-losing bugs/crashes. Don't worry, we are working on them!
+WispForMaya is heavily under development which means that you might encounter weird, annoying and sometimes work-losing bugs/crashes. Don't worry, we are working on them!
 
 Bug and feature updates will be released frequenty. If you encounter bugs or want to provide us with feedback, contact us on discord:
 https://discordapp.com/invite/KthSUvs
 
-Either way, enjoy Wisp!
+You can also report your issues here: 
+https://github.com/TeamWisp/WispForMaya/issues (requires GitHub account)
 
-/ Team Wisp
+Either way, enjoy WispForMaya!
+
+\- Team Wisp
