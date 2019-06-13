@@ -48,8 +48,13 @@ namespace wmr
 
 		if (it == m_texture_container.end())
 		{
+			wr::TextureHandle texture_handle;
 			// Texture does not exist yet
-			auto texture_handle = m_texture_pool->LoadFromFile(path, false, false);
+			texture_handle = m_texture_pool->LoadFromFile(path, false, false);
+			// Return an invalid shared_ptr if the texture couldn't be loaded
+			if (texture_handle.m_pool == (wr::TextureHandle()).m_pool) {
+				return std::shared_ptr<wr::TextureHandle>(nullptr);
+			}
 			m_texture_container[hash] = std::make_shared<wr::TextureHandle>(texture_handle);
 		}
 

@@ -13,7 +13,6 @@
 #include "render_tasks/d3d12_deferred_composition.hpp"
 #include "render_tasks/d3d12_deferred_render_target_copy.hpp"
 #include "render_tasks/d3d12_raytracing_task.hpp"
-#include "render_tasks/d3d12_rt_hybrid_task.hpp"
 #include "render_tasks/d3d12_rt_reflection_task.hpp"
 #include "render_tasks/d3d12_rt_shadow_task.hpp"
 #include "render_tasks/d3d12_shadow_denoiser_task.hpp"
@@ -211,10 +210,6 @@ namespace wmr
 		wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*fg, std::nullopt, std::nullopt);
 		LOG("Added pixel data readback task.");
 
-		// Copy the composition pixel data to the final render target
-		wr::AddRenderTargetCopyTask<wr::PostProcessingData>(*fg);
-		LOG("Added render target copy task.");
-
 		// Store the frame graph for future use
 		m_renderer_frame_graphs[static_cast<size_t>(RendererFrameGraphType::DEFERRED)] = fg;
 
@@ -292,10 +287,6 @@ namespace wmr
 		// Save the ray tracing pixel data CPU pointer
 		wr::AddPixelDataReadBackTask<wr::PostProcessingData>(*fg, std::nullopt, std::nullopt);
 		LOG("Added pixel data readback task.");
-
-		// Copy the ray tracing pixel data to the final render target
-		wr::AddRenderTargetCopyTask<wr::PostProcessingData>(*fg);
-		LOG("Added render target copy task.");
 
 		// Store the frame graph for future use
 		m_renderer_frame_graphs[static_cast<size_t>(RendererFrameGraphType::HYBRID_RAY_TRACING)] = fg;
