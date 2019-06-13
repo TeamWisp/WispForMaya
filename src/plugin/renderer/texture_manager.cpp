@@ -51,12 +51,12 @@ namespace wmr
 		{
 			wr::TextureHandle texture_handle;
 			// Texture does not exist yet
-			try {
-				texture_handle = m_texture_pool->LoadFromFile(path, false, false);
-				m_texture_container[hash] = std::make_shared<wr::TextureHandle>(texture_handle);
-			} catch (std::exception e) {
+			texture_handle = m_texture_pool->LoadFromFile(path, false, false);
+			// Return an invalid shared_ptr if the texture couldn't be loaded
+			if (texture_handle.m_pool == (wr::TextureHandle()).m_pool) {
 				return std::shared_ptr<wr::TextureHandle>(nullptr);
 			}
+			m_texture_container[hash] = std::make_shared<wr::TextureHandle>(texture_handle);
 		}
 
 		return m_texture_container[hash];

@@ -589,8 +589,7 @@ void wmr::ModelParser::MeshAdded( MFnMesh & fnmesh )
 	
 	parseData( fnmesh, mesh_data );
 
-	bool model_reloaded = false;
-	wr::Model* model = m_renderer.GetModelManager().AddModel( fnmesh.name(), { mesh_data }, model_reloaded );
+	wr::Model* model = m_renderer.GetModelManager().AddModel({ mesh_data } );
 	m_renderer.GetD3D12Renderer().WaitForAllPreviousWork();
 	auto model_node = m_renderer.GetScenegraph().CreateChild<wr::MeshNode>( nullptr, model );
 	MStatus status;
