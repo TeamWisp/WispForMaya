@@ -29,7 +29,7 @@ void wmr::MaterialManager::Initialize()
 	const auto& renderer = dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer();
 	m_texture_manager = &renderer.GetTextureManager();
 	m_material_pool = renderer.GetD3D12Renderer().CreateMaterialPool(0);
-	m_default_material_handle = m_material_pool->Create(&*m_texture_manager->GetTexturePool());
+	m_default_material_handle = m_material_pool->Create(m_texture_manager->GetTexturePool().get());
 
 	wr::Material* internal_material = m_material_pool->GetMaterial(m_default_material_handle);
 
@@ -188,7 +188,7 @@ wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & su
 	}
 	// Surface shader doesn't have a material assigned to it yet
 	// Create Wisp Material handle
-	wr::MaterialHandle material_handle = m_material_pool->Create(&*m_texture_manager->GetTexturePool());
+	wr::MaterialHandle material_handle = m_material_pool->Create(m_texture_manager->GetTexturePool().get());
 	// Create a vector for the shading engines
 	std::vector<MObject> shading_engines;
 	shading_engines.push_back(shading_engine);
