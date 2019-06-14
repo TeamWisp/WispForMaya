@@ -10,4 +10,4 @@ https://github.com/TeamWisp/WispForMaya/issues (requires GitHub account)
 
 Either way, enjoy WispForMaya!
 
-\- Team Wisp
+ - Team Wisp
