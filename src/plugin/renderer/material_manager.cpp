@@ -10,6 +10,7 @@
 #include "d3d12/d3d12_renderer.hpp"
 #include "scene_graph/mesh_node.hpp"
 #include "util/log.hpp"
+#include "texture_manager.hpp"
 
 #include <maya/MFnMesh.h>
 #include <maya/MFnTransform.h>
@@ -26,9 +27,9 @@ wmr::MaterialManager::MaterialManager()
 void wmr::MaterialManager::Initialize()
 {
 	const auto& renderer = dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer();
-	m_texture_pool_ptr = renderer.GetTextureManager().GetTexturePool().get();
+	m_texture_manager = &renderer.GetTextureManager();
 	m_material_pool = renderer.GetD3D12Renderer().CreateMaterialPool(0);
-	m_default_material_handle = m_material_pool->Create(m_texture_pool_ptr);
+	m_default_material_handle = m_material_pool->Create(m_texture_manager->GetTexturePool().get());
 
 	wr::Material* internal_material = m_material_pool->GetMaterial(m_default_material_handle);
 
@@ -69,7 +70,7 @@ wmr::SurfaceShaderShadingEngineRelation * wmr::MaterialManager::OnCreateSurfaceS
 	}
 	// Surface shader doesn't have a material assigned to it yet
 	// Create Wisp Material handle
-	wr::MaterialHandle material_handle = m_material_pool->Create(m_texture_pool_ptr);
+	wr::MaterialHandle material_handle = m_material_pool->Create(&*m_texture_manager->GetTexturePool());
 	// Create relationship between surface shader and shading engine
 	m_surface_shader_shading_relations.push_back({
 		material_handle,		// Wisp Material handle
@@ -109,6 +110,41 @@ void wmr::MaterialManager::OnRemoveSurfaceShader(MPlug & surface_shader)
 				}
 			}
 			it->shading_engines.pop_back();
+		}
+
+		// Clear all textures
+		wr::Material* m = m_material_pool->GetMaterial(it->material_handle);
+		{
+			// Clear albedo texture
+			if (m->HasTexture(wr::TextureType::ALBEDO)) {
+				m_texture_manager->MarkTextureUnused(m->GetTexture(wr::TextureType::ALBEDO));
+				m->ClearTexture(wr::TextureType::ALBEDO);
+			}
+			// Clear AO texture
+			if (m->HasTexture(wr::TextureType::AO)) {
+				m_texture_manager->MarkTextureUnused(m->GetTexture(wr::TextureType::AO));
+				m->ClearTexture(wr::TextureType::AO);
+			}
+			// Clear emissive texture
+			if (m->HasTexture(wr::TextureType::EMISSIVE)) {
+				m_texture_manager->MarkTextureUnused(m->GetTexture(wr::TextureType::EMISSIVE));
+				m->ClearTexture(wr::TextureType::EMISSIVE);
+			}
+			// Clear metallic texture
+			if (m->HasTexture(wr::TextureType::METALLIC)) {
+				m_texture_manager->MarkTextureUnused(m->GetTexture(wr::TextureType::METALLIC));
+				m->ClearTexture(wr::TextureType::METALLIC);
+			}
+			// Clear normal texture
+			if (m->HasTexture(wr::TextureType::NORMAL)) {
+				m_texture_manager->MarkTextureUnused(m->GetTexture(wr::TextureType::NORMAL));
+				m->ClearTexture(wr::TextureType::NORMAL);
+			}
+			// Clear roughness texture
+			if (m->HasTexture(wr::TextureType::ROUGHNESS)) {
+				m_texture_manager->MarkTextureUnused(m->GetTexture(wr::TextureType::ROUGHNESS));
+				m->ClearTexture(wr::TextureType::ROUGHNESS);
+			}
 		}
 
 		// Remove surface shader from vector
@@ -152,7 +188,7 @@ wr::MaterialHandle wmr::MaterialManager::ConnectShaderToShadingEngine(MPlug & su
 	}
 	// Surface shader doesn't have a material assigned to it yet
 	// Create Wisp Material handle
-	wr::MaterialHandle material_handle = m_material_pool->Create(m_texture_pool_ptr);
+	wr::MaterialHandle material_handle = m_material_pool->Create(m_texture_manager->GetTexturePool().get());
 	// Create a vector for the shading engines
 	std::vector<MObject> shading_engines;
 	shading_engines.push_back(shading_engine);

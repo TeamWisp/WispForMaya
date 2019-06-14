@@ -22,7 +22,7 @@ namespace wmr
 	class TextureManager
 	{
 	public:
-		TextureManager();
+		TextureManager(Renderer *renderer);
 		~TextureManager() = default;
 
 		//! Initialization
@@ -38,7 +38,7 @@ namespace wmr
 		const wr::TextureHandle GetDefaultSkybox() const noexcept;
 
 		//! Get a texture handle by name
-		const std::shared_ptr<wr::TextureHandle> GetTexture(const char* identifier) noexcept;
+		const std::shared_ptr<wr::TextureHandle> GetTexture(const wr::TextureHandle& texture_handle) noexcept;
 
 		const std::shared_ptr<wr::TexturePool> GetTexturePool() noexcept;
 
@@ -48,7 +48,7 @@ namespace wmr
 		 *  function will deallocate the memory automatically.
 		 *  
 		 *  \returns : Whether application actually deallocates the memory in Wisp. */
-		bool MarkTextureUnused(const char* identifier) noexcept;
+		bool MarkTextureUnused(const wr::TextureHandle& texture_handle) noexcept;
 
 	private:
 		//! Holds all texture handles of the texture manager

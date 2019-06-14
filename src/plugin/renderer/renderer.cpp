@@ -21,7 +21,7 @@ wmr::Renderer::Renderer()
 	m_render_system			= std::make_unique<wr::D3D12RenderSystem>();
 	m_window				= std::make_unique<wr::Window>(GetModuleHandleA(nullptr), "Wisp hidden window", 1280, 720, false);
 	m_model_manager			= std::make_unique<ModelManager>();
-	m_texture_manager		= std::make_unique<TextureManager>();
+	m_texture_manager		= std::make_unique<TextureManager>(this);
 	m_material_manager		= std::make_unique<MaterialManager>();
 	m_framegraph_manager	= std::make_unique<FrameGraphManager>();
 

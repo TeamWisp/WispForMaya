@@ -15,8 +15,8 @@
 
 namespace wmr
 {
-	TextureManager::TextureManager()
-		: m_renderer(dynamic_cast<const ViewportRendererOverride*>(MHWRender::MRenderer::theRenderer()->findRenderOverride(settings::VIEWPORT_OVERRIDE_NAME))->GetRenderer())
+	TextureManager::TextureManager(Renderer* renderer)
+		: m_renderer(*renderer)
 	{}
 	
 	void TextureManager::Initialize() noexcept
@@ -66,13 +66,11 @@ namespace wmr
 		return m_default_texture;
 	}
 
-	const std::shared_ptr<wr::TextureHandle> TextureManager::GetTexture(const char* identifier) noexcept
+	const std::shared_ptr<wr::TextureHandle> TextureManager::GetTexture(const wr::TextureHandle& texture_handle) noexcept
 	{
-		auto hash = func::HashCString(identifier);
-
 		// Does the texture exist?
-		auto it = std::find_if(m_texture_container.begin(), m_texture_container.end(), [&hash](const std::unordered_map<size_t, std::shared_ptr<wr::TextureHandle>>::value_type& vt) {
-			return (vt.first == hash);
+		auto it = std::find_if(m_texture_container.begin(), m_texture_container.end(), [&texture_handle](const std::unordered_map<size_t, std::shared_ptr<wr::TextureHandle>>::value_type& vt) {
+			return (vt.second->m_id == texture_handle.m_id);
 		});
 
 		if (it == m_texture_container.end())
@@ -82,7 +80,7 @@ namespace wmr
 		}
 
 		// Use a known texture
-		return m_texture_container[hash];
+		return it->second;
 	}
 
 	const std::shared_ptr<wr::TexturePool> TextureManager::GetTexturePool() noexcept
@@ -90,13 +88,11 @@ namespace wmr
 		return m_texture_pool;
 	}
 
-	bool TextureManager::MarkTextureUnused(const char* identifier) noexcept
+	bool TextureManager::MarkTextureUnused(const wr::TextureHandle& texture_handle) noexcept
 	{
-		auto hash = func::HashCString(identifier);
-
 		// Does the texture exist?
-		auto it = std::find_if(m_texture_container.begin(), m_texture_container.end(), [&hash](const std::unordered_map<size_t, std::shared_ptr<wr::TextureHandle>>::value_type& vt) {
-			return (vt.first == hash);
+		auto it = std::find_if(m_texture_container.begin(), m_texture_container.end(), [&texture_handle](const std::unordered_map<size_t, std::shared_ptr<wr::TextureHandle>>::value_type& vt) {
+			return (vt.second->m_id == texture_handle.m_id);
 		});
 
 		if (it == m_texture_container.end())
@@ -106,14 +102,14 @@ namespace wmr
 		}
 
 		//// Find the current number of objects that use this texture
-		auto ref_count = m_texture_container[hash].use_count();
+		auto ref_count = it->second.use_count();
 
 		if (ref_count == 1)
 		{
 			// Only reference left to this texture is the one that's in the unordered_map,
 			// so the texture can be deleted.
-			m_texture_pool->MarkForUnload(*m_texture_container[hash], m_renderer.GetFrameIndex());
-			m_texture_container.erase(hash);
+			m_texture_pool->MarkForUnload(*it->second, m_renderer.GetFrameIndex());
+			m_texture_container.erase(it);
 			
 			// Removed the texture from the texture pool
 			return true;
