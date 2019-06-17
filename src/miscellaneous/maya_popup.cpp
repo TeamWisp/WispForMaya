@@ -11,13 +11,30 @@
 
 namespace wmr
 {
-	void MayaPopup::Spawn(std::stringstream &content, const Options& options) noexcept
+	void MayaPopup::Spawn(std::string& content, const Options& options) noexcept
 	{
-		constexpr const char const* text_prefix = "text - ww on - align \"left\" - rs on - w 400 \"";
-		constexpr const char const* text_postfix = "\";";
+		std::stringstream s;
+		s << content.c_str();
+
+		MayaPopup::Spawn(s, options);
+	}
+
+	void MayaPopup::Spawn(std::stringstream &content, const Options &options) noexcept
+	{
+		constexpr const char const* text_prefix = "text -ww on -align \"left\" -rs on -w 400 \"";
+		constexpr const char const* text_postfix = "\";\n";
 
 		// Create window
-		MString notify_command("window -title \"Wisp\" -sizeable off -maximizeButton off -minimizeButton off WispInfoWindow;\n");
+		MString notify_command("window -title \"");
+		
+		// Window settings
+		// Window title
+		notify_command += options.window_title.c_str();
+		// Other options
+		notify_command += "\" -sizeable off -maximizeButton off -minimizeButton off ";
+		// Window "behind the scenes" name
+		notify_command += options.window_name.c_str();
+		notify_command += ";\n";
 
 		// Set layout
 		notify_command += "rowColumnLayout -columnOffset 1 \"both\" 10 -rowOffset 1 \"both\" 15 -nc 1 -cal 1 \"left\";\n";
@@ -48,7 +65,9 @@ namespace wmr
 		// Add button to close
 		if (options.btn_ok)
 		{
-			notify_command += "button - enable on - command \"deleteUI WispInfoWindow\" \"Ok\";\n";
+			notify_command += "button -enable on -command \"deleteUI ";
+			notify_command += options.window_name.c_str();
+			notify_command += "\" \"Ok\";\n";
 
 			// Add spacing below the button
 			notify_command += text_prefix;
@@ -57,7 +76,9 @@ namespace wmr
 		}
 
 		// Display window
-		notify_command += "showWindow WispInfoWindow;";
+		notify_command += "showWindow ";
+		notify_command += options.window_name.c_str(); 
+		notify_command += ";";
 
 		MGlobal::displayInfo(notify_command);
 
@@ -69,7 +90,7 @@ namespace wmr
 	{
 		// Get file
 		std::ifstream infile(path);
-		if (!infile.is_open())
+		if (infile.is_open())
 		{
 			std::stringstream s;
 			s << infile.rdbuf();

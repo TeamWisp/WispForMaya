@@ -13,10 +13,19 @@ namespace wmr
 	public:
 		struct Options
 		{
-			bool btn_ok = true;
+			bool btn_ok = true; /**< Defines if the popup should have an "Ok" button */
+			std::string window_title = std::string("WispForMaya"); /**< The title of the window */
+			std::string window_name = std::string("unique_name"); /**< A unique name for the maya window */
 		};
 
-		//! Spawn a popup with some text
+		//! Spawn a popup with some text from a string
+		/*!
+			\param content The popup content in plain ASCII text.
+			\param options [Optional] The options for this popup
+		*/
+		static void Spawn(std::string& content, const Options& options = Options()) noexcept;
+
+		//! Spawn a popup with some text from a stringstream
 		/*!
 			\param content The popup content in plain ASCII text.
 			\param options [Optional] The options for this popup 
