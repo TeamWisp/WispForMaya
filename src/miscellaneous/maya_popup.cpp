@@ -1,6 +1,6 @@
 #include "maya_popup.hpp"
 
-// Maya includesd
+// Maya includes
 #include <maya/MGlobal.h>
 #include <maya/MString.h>
 

@@ -61,7 +61,8 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 
 			MayaPopup::SpawnFromFile("resources/hybrid_switch.txt", options);
 		}
-		else {
+		else 
+		{
 			frame_graph.SetType(RendererFrameGraphType::HYBRID_RAY_TRACING);
 		}
 	}

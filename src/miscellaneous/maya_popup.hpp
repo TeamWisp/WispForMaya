@@ -1,6 +1,6 @@
 #pragma once
 
-//STD includes
+// STD includes
 #include <string>
 
 //! Generic plug-in namespace (Wisp Maya Renderer)
@@ -40,8 +40,6 @@ namespace wmr
 			\return A boolean that defines if the file could be loaded or not. `true` is it was loaded correctly.
 		*/
 		static bool SpawnFromFile(const char * path, const Options& options = Options()) noexcept;
-
-	private:
 
 	};
 }
