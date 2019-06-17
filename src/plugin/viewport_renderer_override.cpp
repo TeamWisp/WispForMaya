@@ -296,16 +296,16 @@ namespace wmr
 
 			// Show old (may be outdated) popup. Also warn the user that the popup may be outdated.
 			std::string temp_content = std::string(
-				"Hey there!\
-				Something went wrong with loading the contents of this window. Please keep in mind that the following could be outdated.\
-				Wisp is heavily under development which means that you might encounter weird, annoying and sometimes work-losing bugs/crashes. Don't worry we are working on them!\
-				\
-				Bug and feature updates will be released frequenty. If you encounter bugs or want to provide us with feedback, contact us on discord:\
-				https://discordapp.com/invite/KthSUvs\
-				\
-				Either way, enjoy Wisp!\
-				\
-				 / Team Wisp");
+"Hey there!\n\
+Something went wrong with loading the contents of this window. Please keep in mind that the following could be outdated.\n\
+Wisp is heavily under development which means that you might encounter weird, annoying and sometimes work-losing bugs/crashes. Don't worry we are working on them!\n\
+\n\
+Bug and feature updates will be released frequenty. If you encounter bugs or want to provide us with feedback, contact us on discord:\n\
+https://discordapp.com/invite/KthSUvs\n\
+\n\
+Either way, enjoy Wisp!\n\
+\n\
+/ Team Wisp");
 
 			MayaPopup::Spawn(temp_content, options);
 		}
