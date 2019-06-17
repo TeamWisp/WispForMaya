@@ -1,9 +1,11 @@
 #include "render_pipeline_select_command.hpp"
 
 // Wisp
+#include <d3d12/d3d12_renderer.hpp>
 #include <util/log.hpp>
 
 // Wisp plug-in
+#include "miscellaneous/maya_popup.hpp"
 #include "plugin/framegraph/frame_graph_manager.hpp"
 #include "plugin/viewport_renderer_override.hpp"
 #include "renderer.hpp"
@@ -47,7 +49,21 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 	}
 	else if (hybrid_set)
 	{
-		frame_graph.SetType(RendererFrameGraphType::HYBRID_RAY_TRACING);
+		static bool first_time_hybrid = true;
+		if (first_time_hybrid && !renderer.GetD3D12Renderer().m_device->m_dxr_support)
+		{
+			first_time_hybrid = false;
+
+			// Open warning popup
+			MayaPopup::Options options;
+			options.window_name = "hybrid_open_popup";
+			options.width = 500;
+
+			MayaPopup::SpawnFromFile("resources/hybrid_switch.txt", options);
+		}
+		else {
+			frame_graph.SetType(RendererFrameGraphType::HYBRID_RAY_TRACING);
+		}
 	}
 	else
 	{
