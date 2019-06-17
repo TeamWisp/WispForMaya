@@ -1,0 +1,9 @@
+Your device doesn't seem to support DXR (the official DirectX Ray Tracing API).
+
+This could have several reasons:
+    1) Wrong SDK version. (Required: `Windows 10 October 2018 Update SDK (17763)`)
+    2) Wrong OS version. (Required: 1809 (17763.107))
+    3) DX12 GPU with a incompatible DirectX Raytracing driver. (NVIDIA: driver version 415 or higher, AMD: Consult Vendor for availability)
+
+If you still want to continue this action, try to open the Real-Time Final Render Preview render mode again.
+BE AWARE! Because DXR is not supported, it is using a quite unstable Fallback API. This may crash Maya and you may lose your work! Be sure to save your work before you continue!
