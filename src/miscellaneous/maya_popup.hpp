@@ -16,6 +16,7 @@ namespace wmr
 			bool btn_ok = true; /**< Defines if the popup should have an "Ok" button */
 			std::string window_title = std::string("WispForMaya"); /**< The title of the window */
 			std::string window_name = std::string("unique_name"); /**< A unique name for the maya window */
+			uint32_t width = 400; /**< The width of the popup */
 		};
 
 		//! Spawn a popup with some text from a string

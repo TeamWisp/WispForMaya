@@ -21,7 +21,10 @@ namespace wmr
 
 	void MayaPopup::Spawn(std::stringstream &content, const Options &options) noexcept
 	{
-		constexpr const char const* text_prefix = "text -ww on -align \"left\" -rs on -w 400 \"";
+		std::string str_text_prefix = "text -ww on -align \"left\" -rs on -w ";
+		str_text_prefix += std::to_string(options.width);
+		str_text_prefix += " \"";
+		const char const* text_prefix = str_text_prefix.c_str();
 		constexpr const char const* text_postfix = "\";\n";
 
 		// Create window
