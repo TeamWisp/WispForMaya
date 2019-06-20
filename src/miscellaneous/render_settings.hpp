@@ -14,6 +14,11 @@
 //! Generic plug-in namespace (Wisp Maya Renderer)
 namespace wmr
 {
+	//! Gets the settings by the templated typename
+	/*! 
+		\param frame_graph The framegraph to search in to gather the settings
+		\return Returns an optional version of the settings. It may return `std::nullopt` if the settings couldn't be found in the provided framegraph
+	*/
 	template<typename T>
 	inline std::optional<T> GetSettings(wr::FrameGraph* frame_graph)
 	{
@@ -61,6 +66,11 @@ namespace wmr
 		return std::nullopt;
 	}
 
+	//! Sets the settings by the templated typename
+	/*!
+		\param frame_graph The framegraph to search in to set the settings
+		\param settings The settings to set
+	*/
 	template<typename T>
 	inline void SetSettings(wr::FrameGraph* frame_graph, T &settings)
 	{
