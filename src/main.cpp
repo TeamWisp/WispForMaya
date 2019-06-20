@@ -104,7 +104,7 @@ MStatus initializePlugin(MObject object)
 	std::time_t current_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	auto local_time = std::localtime(&current_time);
 	std::stringstream ss;
-	ss << "log-" << local_time->tm_hour << local_time->tm_min << "-" << local_time->tm_mday << "-" << (local_time->tm_mon + 1) << "-" << (local_time->tm_year + 1900);
+	ss << "log-" << local_time->tm_hour << local_time->tm_min << "_" << local_time->tm_sec << "-" << local_time->tm_mday << "-" << (local_time->tm_mon + 1) << "-" << (local_time->tm_year + 1900);
 	std::string log_file_name("WispForMaya.log");
 	std::filesystem::path path = std::filesystem::path(ss.str());
 	util::log_file_handler = new wr::LogfileHandler(path, log_file_name);

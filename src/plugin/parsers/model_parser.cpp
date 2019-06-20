@@ -561,6 +561,7 @@ void wmr::ModelParser::UnSubscribeObject( MObject & maya_object )
 		LOGC("Iterator past end of object transform vector.");
 		return; // find_if returns last element even if it is not a positive result
 	}
+	m_renderer.GetModelManager().DeleteModel(*it->second->m_model);
 	m_renderer.GetScenegraph().DestroyNode( it->second );
 
 	if (m_object_transform_vector.empty())

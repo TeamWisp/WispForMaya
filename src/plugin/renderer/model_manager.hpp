@@ -36,6 +36,9 @@ namespace wmr
 		//! Update existing mode data
 		void UpdateModel( wr::Model& model, const wr::MeshData<wr::Vertex>& data );
 
+		//! Delete Model from pool
+		void DeleteModel( wr::Model& model );
+
 		//! Deallocate used resources
 		void Destroy() noexcept;
 
