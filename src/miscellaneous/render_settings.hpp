@@ -1,10 +1,10 @@
 #pragma once
 
 // Wisp Includes
-#include <render_tasks/d3d12_rtao_task.hpp>
-#include <render_tasks/d3d12_hbao.hpp>
-#include <render_tasks/d3d12_ansel.hpp>
+#include <render_tasks/d3d12_bloom_composition.hpp>
 #include <render_tasks/d3d12_build_acceleration_structures.hpp>
+#include <render_tasks/d3d12_hbao.hpp>
+#include <render_tasks/d3d12_rtao_task.hpp>
 #include <render_tasks/d3d12_rt_shadow_task.hpp>
 #include <render_tasks/d3d12_shadow_denoiser_task.hpp>
 
@@ -62,6 +62,14 @@ namespace wmr
 				return frame_graph->GetSettings<wr::ShadowDenoiserData, T>();
 			}
 		}
+		// Bloom settings
+		else if constexpr (std::is_same<wr::BloomSettings, T>::value)
+		{
+			if (frame_graph->HasTask<wr::BloomCompostionData>())
+			{
+				return frame_graph->GetSettings<wr::BloomCompostionData, T>();
+			}
+		}
 
 		return std::nullopt;
 	}
@@ -79,7 +87,7 @@ namespace wmr
 		{
 			if (frame_graph->HasTask<wr::RTAOData>())
 			{
-				frame_graph->GetSettings<wr::RTAOData, T>();
+				frame_graph->UpdateSettings(settings);
 			}
 		}
 		// Horizon Based Ambient Oclussion settings
@@ -87,7 +95,7 @@ namespace wmr
 		{
 			if (frame_graph->HasTask<wr::HBAOData>())
 			{
-				frame_graph->GetSettings<wr::HBAOData, T>();
+				frame_graph->UpdateSettings(settings);
 			}
 		}
 		// Acceleration Build settings
@@ -95,7 +103,7 @@ namespace wmr
 		{
 			if (frame_graph->HasTask<wr::ASBuildData>())
 			{
-				frame_graph->GetSettings<wr::ASBuildData, T>();
+				frame_graph->UpdateSettings(settings);
 			}
 		}
 		// Ray Tracing Shadow settings
@@ -103,7 +111,7 @@ namespace wmr
 		{
 			if (frame_graph->HasTask<wr::RTShadowData>())
 			{
-				frame_graph->GetSettings<wr::RTShadowData, T>();
+				frame_graph->UpdateSettings(settings);
 			}
 		}
 		// Ray Tracing Shadow Denoiser settings
@@ -111,7 +119,15 @@ namespace wmr
 		{
 			if (frame_graph->HasTask<wr::ShadowDenoiserData>())
 			{
-				frame_graph->GetSettings<wr::ShadowDenoiserData, T>();
+				frame_graph->UpdateSettings(settings);
+			}
+		}
+		// Bloom settings
+		else if constexpr (std::is_same<wr::BloomSettings, T>::value)
+		{
+			if (frame_graph->HasTask<wr::BloomCompostionData>())
+			{
+				frame_graph->UpdateSettings(settings);
 			}
 		}
 	}
