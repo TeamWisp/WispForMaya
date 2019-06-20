@@ -20,7 +20,7 @@ namespace wmr
 		\return Returns an optional version of the settings. It may return `std::nullopt` if the settings couldn't be found in the provided framegraph
 	*/
 	template<typename T>
-	inline std::optional<T> GetSettings(wr::FrameGraph* frame_graph)
+	inline std::optional<T> GetRenderSettings(wr::FrameGraph* frame_graph)
 	{
 		// Ray Tracing Ambient Oclussion settings
 		if constexpr (std::is_same<wr::RTAOSettings, T>::value)
@@ -72,7 +72,7 @@ namespace wmr
 		\param settings The settings to set
 	*/
 	template<typename T>
-	inline void SetSettings(wr::FrameGraph* frame_graph, T &settings)
+	inline void SetRenderSettings(wr::FrameGraph* frame_graph, T &settings)
 	{
 		// Ray Tracing Ambient Oclussion settings
 		if constexpr (std::is_same<wr::RTAOSettings, T>::value)
