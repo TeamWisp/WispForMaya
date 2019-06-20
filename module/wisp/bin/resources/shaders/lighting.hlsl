@@ -1,12 +1,4 @@
-#ifndef __LIGHTING_HLSL__
-#define __LIGHTING_HLSL__
-
-#define CALLINGPASS_SHADOWS 0
-#define CALLINGPASS_REFLECTIONS 1
-#define CALLINGPASS_PATHTRACING 2
-#define CALLINGPASS_FULLRAYTRACING 3
-
-#include "dxr_shadow_functions.hlsl"
+#include "shadow_ray.hlsl"
 
 struct Light
 {
@@ -18,9 +10,6 @@ struct Light
 
 	float3 dir;			//Direction for spot & directional
 	float ang;			//Angle for spot; in radians
-
-	float3 padding;
-	float light_size;
 };
 
 StructuredBuffer<Light> lights : LIGHTS_REGISTER;
@@ -28,16 +17,6 @@ StructuredBuffer<Light> lights : LIGHTS_REGISTER;
 static uint light_type_point = 0;
 static uint light_type_directional = 1;
 static uint light_type_spot = 2;
-
-float calc_attenuation(Light light, float3 L, float light_dist)
-{
-	uint tid = light.tid & 3;
-
-	float min_cos = cos(light.ang);
-	float max_cos = lerp(min_cos, 1, 0.5f);
-	float cos_angle = dot(light.dir, L);
-	return lerp(smoothstep(min_cos, max_cos, cos_angle), 1.0f - smoothstep(0, light.rad, light_dist), tid != light_type_spot);
-}
 
 //Copied version for testing stuff
 float3 shade_light(float3 pos, float3 V, float3 albedo, float3 normal, float metallic, float roughness, Light light)
@@ -49,32 +28,35 @@ float3 shade_light(float3 pos, float3 V, float3 albedo, float3 normal, float met
 	float light_dist = length(L);
 	L /= light_dist;
 
-	float attenuation = calc_attenuation(light, L, light_dist);
+	//Spot intensity (only used with spot; but always calculated)
+	float min_cos = cos(light.ang);
+	float max_cos = lerp(min_cos, 1, 0.5f);
+	float cos_angle = dot(light.dir, L);
+	float spot_intensity = lerp(smoothstep(min_cos, max_cos, cos_angle), 1, tid != light_type_spot);
 
-	float3 radiance = light.col * attenuation;
+	//Attenuation & spot intensity (only used with point or spot)
+	float attenuation = lerp(1.0f - smoothstep(0, light.rad, light_dist), 1, tid == light_type_directional);
+
+	float3 radiance = (light.col * spot_intensity) * attenuation;
 
 	float3 lighting = BRDF(L, V, normal, metallic, roughness, albedo, radiance);
 
 	return lighting;
 }
 
-float3 shade_pixel(float3 pos, float3 V, float3 albedo, float metallic, float roughness, float3 emissive, float3 normal, float3 irradiance, float ao, float3 reflection, float2 brdf, float3 shadow_factor, bool uses_luminance)
+float3 shade_pixel(float3 pos, float3 V, float3 albedo, float metallic, float roughness, float3 normal, float3 irradiance, float3 reflection, float2 brdf, float shadow_factor)
 {
 	float3 res = float3(0.0f, 0.0f, 0.0f);
 
 	uint light_count = lights[0].tid >> 2;	//Light count is stored in 30 upper-bits of first light
 
-	if(!uses_luminance)
+	res = float3(0.0f, 0.0f, 0.0f);
+
+	for (uint i = 0; i < light_count; i++)
 	{
-		for (uint i = 0; i < light_count; i++)
-		{
-			res += shade_light(pos, V, albedo, normal, metallic, roughness, lights[i]);
-		}
+		res += shade_light(pos, V, albedo, normal, metallic, roughness, lights[i]) * shadow_factor;
 	}
-	else
-	{
-		res = albedo * shadow_factor;
-	}
+
 
 	// Ambient Lighting using Irradiance for Diffuse
 	float3 kS = F_SchlickRoughness(max(dot(normal, V), 0.0f), metallic, albedo, roughness);
@@ -90,12 +72,12 @@ float3 shade_pixel(float3 pos, float3 V, float3 albedo, float metallic, float ro
 	float3 specular = prefiltered_color * (kS * sampled_brdf.x + sampled_brdf.y);
 	//float3 specular = reflection * kS;
 	
-	float3 ambient = (kD * diffuse + specular) * ao;
+	float3 ambient = (kD * diffuse + specular) * 1.0f; //Replace 1.0f with AO, when we have it.
 
-	return ambient + res + emissive;
+	return ambient + (res * shadow_factor);
 }
 
-float3 shade_light(float3 pos, float3 V, float3 albedo, float3 normal, float metallic, float roughness, Light light, inout uint rand_seed, uint shadow_sample_count, uint depth, uint calling_pass)
+float3 shade_light(float3 pos, float3 V, float3 albedo, float3 normal, float metallic, float roughness, Light light, inout uint rand_seed, uint depth)
 {
 	uint tid = light.tid & 3;
 
@@ -104,25 +86,33 @@ float3 shade_light(float3 pos, float3 V, float3 albedo, float3 normal, float met
 	float light_dist = length(L);
 	L /= light_dist;
 
-	float attenuation = calc_attenuation(light, L, light_dist);
+	//Spot intensity (only used with spot; but always calculated)
+	float min_cos = cos(light.ang);
+	float max_cos = lerp(min_cos, 1, 0.5f);
+	float cos_angle = dot(light.dir, L);
+	float spot_intensity = lerp(smoothstep(min_cos, max_cos, cos_angle), 1, tid != light_type_spot);
+
+	//Attenuation & spot intensity (only used with point or spot)
+	float attenuation = lerp(1.0f - smoothstep(0, light.rad, light_dist), 1, tid == light_type_directional);
 
 	// Maybe change hard-coded 100000 to be dynamic according to the scene size?
 	float t_max = lerp(light_dist, 100000, tid == light_type_directional);
 
-	float3 radiance = light.col * attenuation;
+	float3 radiance = (light.col * spot_intensity) * attenuation;
 
 	float3 lighting = BRDF(L, V, normal, metallic, roughness, albedo, radiance);
 
 	float3 wpos = pos + (normal * EPSILON);
-	
-	float shadow_factor = GetShadowFactor(wpos, L, light.light_size, t_max, shadow_sample_count, depth, calling_pass, rand_seed);
+
+	// Offset shadow ray direction to get soft-shadows
+	float shadow_factor = GetShadowFactor(wpos, L, t_max, depth, rand_seed);
 
 	lighting *= shadow_factor;
 
 	return lighting;
 }
 
-float3 shade_pixel(float3 pos, float3 V, float3 albedo, float metallic, float roughness, float3 emissive, float3 normal, inout uint rand_seed, uint shadow_sample_count, uint depth, uint calling_pass)
+float3 shade_pixel(float3 pos, float3 V, float3 albedo, float metallic, float roughness, float3 normal, inout uint rand_seed, uint depth)
 {
 	uint light_count = lights[0].tid >> 2;	//Light count is stored in 30 upper-bits of first light
 
@@ -131,18 +121,17 @@ float3 shade_pixel(float3 pos, float3 V, float3 albedo, float metallic, float ro
 	[unroll]
 	for (uint i = 0; i < light_count; i++)
 	{
-		res += shade_light(pos, V, albedo, normal, metallic, roughness, lights[i], rand_seed, shadow_sample_count, depth, calling_pass);
+		res += shade_light(pos, V, albedo, normal, metallic, roughness, lights[i], rand_seed, depth);
 	}
 
-	return res + emissive;
+	return res;
 }
 
-float4 DoShadowAllLights(float3 wpos, float3 V, float3 normal, float metallic, float roughness, float3 albedo, uint shadow_sample_count, uint depth, uint calling_pass, inout float rand_seed)
+float DoShadowAllLights(float3 wpos, uint depth, inout float rand_seed)
 {
 	uint light_count = lights[0].tid >> 2;	//Light count is stored in 30 upper-bits of first light
 
-	float4 res = float4(0.0, 0.0, 0.0, 0.0);
-	uint sampled_lights = 0;
+	float res = 0;
 
 	for (uint i = 0; i < light_count; i++)
 	{
@@ -155,41 +144,13 @@ float4 DoShadowAllLights(float3 wpos, float3 V, float3 normal, float metallic, f
 		float light_dist = length(L);
 		L /= light_dist;
 
-		float dir_dot = dot(L, normal);
-
-		if (dir_dot < 0.0f)
-		{
-			continue;
-		}
-
-		float attenuation = calc_attenuation(light, L, light_dist);
-
-		if (light_dist > light.rad && tid != light_type_directional)
-		{
-			continue;
-		}
-
-		float3 radiance = attenuation * light.col;
-
-		float3 lighting = BRDF(L, V, normal, metallic, roughness, float3(1.0, 1.0, 1.0), radiance) /* / max(albedo, float3(0.001, 0.001, 0.001)) */;
-
 		// Get maxium ray length (depending on type)
 		float t_max = lerp(light_dist, 100000, tid == light_type_directional);
 
 		// Add shadow factor to final result
-		float shadow = GetShadowFactor(wpos, L, light.light_size, t_max, shadow_sample_count, depth, calling_pass, rand_seed);
-
-		res.w += shadow;
-
-		res.rgb += lighting * shadow;
-
-		sampled_lights++;
+		res += GetShadowFactor(wpos, L, t_max, depth + 1, rand_seed);
 	}
 
 	// return final res
-	res.w = res.w / float(sampled_lights);
-
-	return res;
+	return res / float(light_count);
 }
-
-#endif //__LIGHTING_HLSL__
