@@ -13,21 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __FULLSCREEN_QUAD_HLSL__
-#define __FULLSCREEN_QUAD_HLSL__
+#ifndef __PP_BLOOM_UTIL_HLSL__
+#define __PP_BLOOM_UTIL_HLSL__
 
-struct VS_OUTPUT
-{
-	float4 pos : SV_POSITION;
-	float2 uv : TEXCOORD;
-};
+static const float gaussian_weights[15] = { 0.023089f, 0.034587f,	0.048689f,	0.064408f,	0.080066f,	0.093531f,	0.102673f,	0.105915f,	0.102673f,	0.093531f,	0.080066f,	0.064408f,	0.048689f,	0.034587f,	0.023089f };
 
-VS_OUTPUT main_vs(float2 pos : POSITION)
-{
-	VS_OUTPUT output;
-	output.pos = float4(pos.x, pos.y, 0.0f, 1.0f);
-	output.uv = 0.5 * (pos.xy + float2(1.0, 1.0));
-    return output;
-}
-
-#endif //__FULLSCREEN_QUAD_HLSL__
+#endif //__PP_BLOOM_UTIL_HLSL__

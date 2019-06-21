@@ -13,21 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __FULLSCREEN_QUAD_HLSL__
-#define __FULLSCREEN_QUAD_HLSL__
+#ifndef __MATH_HLSL__
+#define __MATH_HLSL__
 
-struct VS_OUTPUT
-{
-	float4 pos : SV_POSITION;
-	float2 uv : TEXCOORD;
-};
+#define M_PI 3.14159265358979
 
-VS_OUTPUT main_vs(float2 pos : POSITION)
-{
-	VS_OUTPUT output;
-	output.pos = float4(pos.x, pos.y, 0.0f, 1.0f);
-	output.uv = 0.5 * (pos.xy + float2(1.0, 1.0));
-    return output;
+float linterp(float t) {
+	return saturate(1.0 - abs(2.0 * t - 1.0));
 }
 
-#endif //__FULLSCREEN_QUAD_HLSL__
+float remap(float t, float a, float b) 
+{
+	return saturate((t - a) / (b - a));
+}
+
+float4 spectrum_offset(float t) 
+{
+	float4 ret;
+	float lo = step(t, 0.5);
+	float hi = 1.0 - lo;
+	float w = linterp(remap(t, 1.0 / 6.0, 5.0 / 6.0));
+	ret = float4(lo, 1.0, hi, 1.) * float4(1.0 - w, w, 1.0 - w, 1.);
+
+	return pow(ret, float4(1.0 / 2.2, 1.0 / 2.2, 1.0 / 2.2, 1.0 / 2.2));
+}
+
+#endif //__MATH_HLSL__

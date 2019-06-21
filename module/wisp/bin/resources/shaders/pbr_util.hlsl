@@ -1,5 +1,23 @@
-static const float PI = 3.14159265359;
- 
+/*!
+ * Copyright 2019 Breda University of Applied Sciences and Team Wisp (Viktor Zoutman, Emilio Laiso, Jens Hagen, Meine Zeinstra, Tahar Meijs, Koen Buitenhuis, Niels Brunekreef, Darius Bouma, Florian Schut)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef __PBR_UTILS_HLSL__
+#define __PBR_UTILS_HLSL__
+
+#include "math.hlsl"
+
 // Based omn http://byteblacksmith.com/improvements-to-the-canonical-one-liner-glsl-rand-for-opengl-es-2-0/
 float random(float2 co)
 {
@@ -28,8 +46,8 @@ float3 importanceSample_GGX(float2 Xi, float roughness, float3 normal)
 {
 	// Maps a 2D point to a hemisphere with spread based on roughness
 	float alpha = roughness * roughness;
-	//float phi = 2.f * PI * Xi.x + random(normal.xz) * 0.1;
-	float phi = 2.f * PI * Xi.x;
+	//float phi = 2.f * M_PI * Xi.x + random(normal.xz) * 0.1;
+	float phi = 2.f * M_PI * Xi.x;
 	float cosTheta = sqrt((1.f - Xi.y) / (1.f + (alpha*alpha - 1.f) * Xi.y));
 	float sinTheta = sqrt(1.f - cosTheta * cosTheta);
 	
@@ -53,7 +71,7 @@ float D_GGX(float dotNH, float roughness)
 	float alpha = roughness * roughness;
 	float alpha2 = alpha * alpha;
 	float denom = dotNH * dotNH * (alpha2 - 1.0) + 1.0;
-	return (alpha2)/(PI * denom * denom); 
+	return (alpha2)/(M_PI * denom * denom);
 }
 
 // Get a GGX half vector / microfacet normal, sampled according to the distribution computed by
@@ -73,7 +91,7 @@ float3 getGGXMicrofacet(inout uint randSeed, float roughness, float3 hitNorm)
 	float a2 = roughness * roughness;
 	float cosThetaH = sqrt(max(0.0f, (1.0 - randVal.x) / ((a2 - 1.0) * randVal.x + 1)));
 	float sinThetaH = sqrt(max(0.0f, 1.0f - cosThetaH * cosThetaH));
-	float phiH = randVal.y * PI * 2.0f;
+	float phiH = randVal.y * M_PI * 2.0f;
 
 	// Get our GGX NDF sample (i.e., the half vector)
 	return T * (sinThetaH * cos(phiH)) + B * (sinThetaH * sin(phiH)) + hitNorm * cosThetaH;
@@ -150,7 +168,7 @@ float3 BRDF(float3 L, float3 V, float3 N, float metallic, float roughness, float
  
 		float3 kD = (float3(1, 1, 1) - F) * (1.0 - metallic);
  
-		color += (kD * albedo / PI + spec) * radiance * dotNL;
+		color += (kD * albedo / M_PI + spec) * radiance * dotNL;
 	}
  
 	return color;
@@ -164,3 +182,5 @@ float2 SampleSphericalMap(float3 v)
 	uv += 0.5f;
 	return uv;
 }
+
+#endif //__PBR_UTILS_HLSL__

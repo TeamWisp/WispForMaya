@@ -13,21 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __FULLSCREEN_QUAD_HLSL__
-#define __FULLSCREEN_QUAD_HLSL__
+#ifndef __DXR_SHADOW_ENTRIES_HLSL__
+#define __DXR_SHADOW_ENTRIES_HLSL__
 
-struct VS_OUTPUT
-{
-	float4 pos : SV_POSITION;
-	float2 uv : TEXCOORD;
-};
+#include "pbr_util.hlsl"
+#include "material_util.hlsl"
 
-VS_OUTPUT main_vs(float2 pos : POSITION)
+// Definitions for: 
+// - Vertex, Material, Offset
+// - Ray, RayCone, ReflectionHitInfo
+#include "dxr_structs.hlsl"
+
+[shader("closesthit")]
+void ShadowClosestHitEntry(inout ShadowHitInfo hit, Attributes bary)
 {
-	VS_OUTPUT output;
-	output.pos = float4(pos.x, pos.y, 0.0f, 1.0f);
-	output.uv = 0.5 * (pos.xy + float2(1.0, 1.0));
-    return output;
+	hit.is_hit = true;
 }
 
-#endif //__FULLSCREEN_QUAD_HLSL__
+[shader("miss")]
+void ShadowMissEntry(inout ShadowHitInfo hit : SV_RayPayload)
+{
+	hit.is_hit = false;
+}
+
+#endif //__DXR_SHADOW_ENTRIES_HLSL__

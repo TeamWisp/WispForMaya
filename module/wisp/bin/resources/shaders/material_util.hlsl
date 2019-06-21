@@ -1,68 +1,81 @@
-#define MATERIAL_HAS_ALBEDO_TEXTURE 1<<0;
-#define MATERIAL_HAS_ALBEDO_CONSTANT 1<<1;
-#define MATERIAL_USE_ALBEDO_CONSTANT 1<<2;
-#define MATERIAL_HAS_NORMAL_TEXTURE 1<<3;
-#define MATERIAL_HAS_ROUGHNESS_TEXTURE 1<<4;
-#define MATERIAL_HAS_ROUGHNESS_CONSTANT 1<<5;
-#define MATERIAL_USE_ROUGHNESS_CONSTANT 1<<6;
-#define MATERIAL_HAS_METALLIC_TEXTURE 1<<7;
-#define MATERIAL_HAS_METALLIC_CONSTANT 1<<8;
-#define MATERIAL_USE_METALLIC_CONSTANT 1<<9;
-#define MATERIAL_HAS_AO_TEXTURE 1<<10;
-#define MATERIAL_HAS_ALPHA_MASK 1<<11;
-#define MATERIAL_HAS_ALPHA_CONSTANT 1<<12;
-#define MATERIAL_IS_DOUBLE_SIDED 1<<13;
+/*!
+ * Copyright 2019 Breda University of Applied Sciences and Team Wisp (Viktor Zoutman, Emilio Laiso, Jens Hagen, Meine Zeinstra, Tahar Meijs, Koen Buitenhuis, Niels Brunekreef, Darius Bouma, Florian Schut)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef __MATERIAL_UTIL_HLSL__
+#define __MATERIAL_UTIL_HLSL__
 
-struct MaterialData
-{
-	float4 albedo_alpha;
-	float4 metallic_roughness;
-	uint flags;
-	uint3 padding;
-};
+#define MATERIAL_HAS_ALBEDO_TEXTURE 1<<0
+#define MATERIAL_HAS_NORMAL_TEXTURE 1<<1
+#define MATERIAL_HAS_ROUGHNESS_TEXTURE 1<<2
+#define MATERIAL_HAS_METALLIC_TEXTURE 1<<3
+#define MATERIAL_HAS_EMISSIVE_TEXTURE 1<<4
+#define MATERIAL_HAS_AO_TEXTURE 1<<5
+
+#include "dxr_structs.hlsl"
 
 struct OutputMaterialData
 {
 	float3 albedo;
+	float alpha;
 	float roughness;
 	float3 normal;
 	float metallic;
+	float3 emissive;
+	float ao;
 };
-OutputMaterialData InterpretMaterialData(MaterialData data, 
+
+OutputMaterialData InterpretMaterialData(MaterialData data,
 	Texture2D material_albedo,
 	Texture2D material_normal,
 	Texture2D material_roughness,
 	Texture2D material_metallic,
+	Texture2D material_emissive,
+	Texture2D material_ambient_occlusion,
 	SamplerState s0,
 	float2 uv
-	) 
+)
 {
 	OutputMaterialData output;
 
-	uint use_albedo_constant = data.flags & MATERIAL_USE_ALBEDO_CONSTANT;
-	uint has_albedo_texture = data.flags & MATERIAL_HAS_ALBEDO_TEXTURE;
-	uint use_roughness_constant = data.flags & MATERIAL_USE_ROUGHNESS_CONSTANT;
-	uint has_roughness_texture = data.flags & MATERIAL_HAS_ROUGHNESS_TEXTURE;
-	uint use_metallic_constant = data.flags & MATERIAL_USE_METALLIC_CONSTANT;
-	uint has_metallic_texture = data.flags & MATERIAL_HAS_METALLIC_TEXTURE;
-	uint use_normal_texture = data.flags & MATERIAL_HAS_NORMAL_TEXTURE;
+	float use_albedo_texture = float((data.flags & MATERIAL_HAS_ALBEDO_TEXTURE) != 0);
+	float use_roughness_texture = float((data.flags & MATERIAL_HAS_ROUGHNESS_TEXTURE) != 0);
+	float use_metallic_texture = float((data.flags & MATERIAL_HAS_METALLIC_TEXTURE) != 0);
+	float use_normal_texture = float((data.flags & MATERIAL_HAS_NORMAL_TEXTURE) != 0);
+	float use_emissive_texture = float((data.flags & MATERIAL_HAS_EMISSIVE_TEXTURE) != 0);
+	float use_ao_texture = float((data.flags & MATERIAL_HAS_AO_TEXTURE) != 0);
 
-	float4 albedo = lerp(material_albedo.Sample(s0, uv), float4(data.albedo_alpha.xyz, 1.0f), use_albedo_constant != 0 || has_albedo_texture == 0);
-
-	//#define COMPRESSED_PBR
-#ifdef COMPRESSED_PBR
-	float4 roughness = lerp(material_metallic.Sample(s0, uv).y, data.metallic_roughness.w, use_roughness_constant != 0 || has_roughness_texture == 0);
-	float4 metallic = lerp(material_metallic.Sample(s0, uv).z, length(data.metallic_roughness.xyz), use_metallic_constant != 0 || has_metallic_texture == 0);
+	float4 albedo = lerp(float4(data.color, 1), material_albedo.Sample(s0, uv * data.albedo_uv_scale), use_albedo_texture);
+#ifdef COMPRESSED
+	float roughness = lerp(data.roughness, max(0.05f, material_roughness.Sample(s0, uv * data.roughness_uv_scale).y), use_roughness_texture);
+	float metallic = lerp(data.metallic, material_metallic.Sample(s0, uv * data.metallic_uv_scale).z, use_metallic_texture);
 #else
-	float4 roughness = lerp(max(0.05f, material_roughness.Sample(s0, uv)), data.metallic_roughness.wwww, use_roughness_constant != 0 || has_roughness_texture == 0);
-	float4 metallic = lerp(material_metallic.Sample(s0, uv), data.metallic_roughness.xyzx, use_metallic_constant != 0 || has_metallic_texture == 0);
+	float roughness = lerp(data.roughness, max(0.05f, material_roughness.Sample(s0, uv * data.roughness_uv_scale).x), use_roughness_texture);
+	float metallic = lerp(data.metallic, material_metallic.Sample(s0, uv * data.metallic_uv_scale).x, use_metallic_texture);
 #endif
-	float3 tex_normal = lerp(material_normal.Sample(s0, uv).rgb * 2.0 - float3(1.0, 1.0, 1.0), float3(0.0, 0.0, 1.0), use_normal_texture == 0);
 
-	output.albedo = albedo.xyz;
-	output.roughness = roughness.x;
+	float3 tex_normal = lerp(float3(0.0f, 0.0f, 1.0f), material_normal.Sample(s0, uv * data.normal_uv_scale).rgb * 2.0f - float3(1.0f, 1.0f, 1.0f), use_normal_texture);
+	float3 emissive = lerp(float3(0.0f, 0.0f, 0.0f), material_emissive.Sample(s0, uv * data.emissive_uv_scale).xyz, use_emissive_texture);
+	float ao = lerp(1.0f, material_ambient_occlusion.Sample(s0, uv * data.ao_uv_scale).x, use_ao_texture);
+
+	output.albedo = pow(albedo.xyz, 2.2f);
+	output.alpha = albedo.w;
+	output.roughness = roughness;
 	output.normal = tex_normal;
-	output.metallic = metallic.x;
+	output.metallic = metallic;
+	output.emissive = pow(emissive,2.2f) * data.emissive_multiplier;
+	output.ao = ao;
 
 	return output;
 }
@@ -72,53 +85,52 @@ OutputMaterialData InterpretMaterialDataRT(MaterialData data,
 	Texture2D material_normal,
 	Texture2D material_roughness,
 	Texture2D material_metallic,
+	Texture2D material_emissive,
+	Texture2D material_ambient_occlusion,
 	float mip_level,
 	SamplerState s0,
 	float2 uv)
 {
 	OutputMaterialData output;
 
-	uint use_albedo_constant = data.flags & MATERIAL_USE_ALBEDO_CONSTANT;
-	uint has_albedo_texture = data.flags & MATERIAL_HAS_ALBEDO_TEXTURE;
-	uint use_roughness_constant = data.flags & MATERIAL_USE_ROUGHNESS_CONSTANT;
-	uint has_roughness_texture = data.flags & MATERIAL_HAS_ROUGHNESS_TEXTURE;
-	uint use_metallic_constant = data.flags & MATERIAL_USE_METALLIC_CONSTANT;
-	uint has_metallic_texture = data.flags & MATERIAL_HAS_METALLIC_TEXTURE;
-	uint use_normal_texture = data.flags & MATERIAL_HAS_NORMAL_TEXTURE;
+	float use_albedo_texture = float((data.flags & MATERIAL_HAS_ALBEDO_TEXTURE) != 0);
+	float use_roughness_texture = float((data.flags & MATERIAL_HAS_ROUGHNESS_TEXTURE) != 0);
+	float use_metallic_texture = float((data.flags & MATERIAL_HAS_METALLIC_TEXTURE) != 0);
+	float use_normal_texture = float((data.flags & MATERIAL_HAS_NORMAL_TEXTURE) != 0);
+	float use_emissive_texture = float((data.flags & MATERIAL_HAS_EMISSIVE_TEXTURE) != 0);
+	float use_ao_texture = float((data.flags & MATERIAL_HAS_AO_TEXTURE) != 0);
 
-	//#define COMPRESSED_PBR
-#ifdef COMPRESSED_PBR
-	const float3 albedo = lerp(material_albedo.SampleLevel(s0, uv, mip_level).xyz,
-		data.albedo_alpha.xyz,
-		use_albedo_constant != 0 || has_albedo_texture == 0);
-	const float roughness = lerp(max(0.05, material_metallic.SampleLevel(s0, uv, mip_level).y),
-		data.metallic_roughness.w,
-		use_roughness_constant != 0 || has_roughness_texture == 0);
-	float metal = lerp(material_metallic.SampleLevel(s0, uv, mip_level).z,
-		length(data.metallic_roughness.xyz),
-		use_metallic_constant != 0 || has_metallic_texture == 0);
-	metal = metal * roughness;
-	const float3 normal_t = lerp((material_normal.SampleLevel(s0, uv, mip_level).xyz) * 2.0 - float3(1.0, 1.0, 1.0),
-		float3(0.0, 0.0, 1.0),
-		use_normal_texture == 0);
-#else
-	const float3 albedo = lerp(material_albedo.SampleLevel(s0, uv, mip_level).xyz,
-		data.albedo_alpha.xyz,
-		use_albedo_constant != 0 || has_albedo_texture == 0);
-	const float roughness = lerp(max(0.05, material_roughness.SampleLevel(s0, uv, mip_level).r),
-		data.metallic_roughness.w,
-		use_roughness_constant != 0 || has_roughness_texture == 0);
-	const float metal = lerp(material_metallic.SampleLevel(s0, uv, mip_level).r,
-		length(data.metallic_roughness.xyz),
-		use_metallic_constant != 0 || has_metallic_texture == 0);
-	const float3 normal_t = lerp((material_normal.SampleLevel(s0, uv, mip_level).xyz * 2.0) - float3(1.0, 1.0, 1.0),
-		float3(0.0, 0.0, 1.0),
-		use_normal_texture == 0);
-#endif
+	const float4 albedo = lerp(float4(data.color, 1),
+		material_albedo.SampleLevel(s0, uv * (data.albedo_uv_scale), mip_level),
+		use_albedo_texture);
 
-	output.albedo = albedo;
+	#ifdef COMPRESSED
+	const float roughness = lerp(data.roughness, max(0.05, material_roughness.SampleLevel(s0, uv * data.roughness_uv_scale, mip_level).z), use_roughness_texture);
+	const float metallic = lerp(data.metallic, material_metallic.SampleLevel(s0, uv * data.metallic_uv_scale, mip_level).y, use_metallic_texture); 
+	#else
+	const float roughness = lerp(data.roughness, max(0.05, material_roughness.SampleLevel(s0, uv * data.roughness_uv_scale, mip_level).x), use_roughness_texture);
+	const float metallic = lerp(data.metallic, material_metallic.SampleLevel(s0, uv * data.metallic_uv_scale, mip_level).x, use_metallic_texture); 
+	#endif
+	
+	const float3 normal_t = lerp(float3(0.0, 0.0, 1.0),
+		material_normal.SampleLevel(s0, uv * data.normal_uv_scale, mip_level).xyz * 2 - 1,
+		use_normal_texture);
+
+	float3 emissive = lerp(float3(0.0f, 0.0f, 0.0f), 
+		material_emissive.SampleLevel(s0, uv * data.emissive_uv_scale, mip_level).xyz, use_emissive_texture);
+
+	float ao = lerp(1.0f, 
+		material_ambient_occlusion.SampleLevel(s0, uv * data.ao_uv_scale, mip_level).x, use_ao_texture);
+
+	output.albedo = pow(albedo.xyz, 2.2f);
+	output.alpha = albedo.w;
 	output.roughness = roughness;
 	output.normal = normal_t;
-	output.metallic = metal;
+	output.metallic = metallic;
+	output.emissive = pow(emissive, 2.2f) * data.emissive_multiplier;
+	output.ao = ao;
+
 	return output;
 }
+
+#endif //__MATERIAL_UTIL_HLSL__

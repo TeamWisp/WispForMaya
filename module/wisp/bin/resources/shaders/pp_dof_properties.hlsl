@@ -13,21 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __FULLSCREEN_QUAD_HLSL__
-#define __FULLSCREEN_QUAD_HLSL__
+#ifndef __PP_DOF_PROPERTIES_HLSL__
+#define __PP_DOF_PROPERTIES_HLSL__
 
-struct VS_OUTPUT
-{
-	float4 pos : SV_POSITION;
-	float2 uv : TEXCOORD;
-};
+static const float MAXBOKEHSIZE = 20.f;
+static const uint NUMDOFSAMPLES = 8;
 
-VS_OUTPUT main_vs(float2 pos : POSITION)
-{
-	VS_OUTPUT output;
-	output.pos = float4(pos.x, pos.y, 0.0f, 1.0f);
-	output.uv = 0.5 * (pos.xy + float2(1.0, 1.0));
-    return output;
-}
-
-#endif //__FULLSCREEN_QUAD_HLSL__
+#endif //__PP_DOF_PROPERTIES_HLSL__
