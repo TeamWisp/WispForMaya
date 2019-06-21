@@ -7,34 +7,37 @@
 // Wisp rendering framework
 #include "frame_graph/frame_graph.hpp"
 #include "settings.hpp"
-#include "render_tasks/d3d12_imgui_render_task.hpp"
-#include "render_tasks/d3d12_brdf_lut_precalculation.hpp"
-#include "render_tasks/d3d12_deferred_main.hpp"
-#include "render_tasks/d3d12_deferred_composition.hpp"
-#include "render_tasks/d3d12_deferred_render_target_copy.hpp"
-#include "render_tasks/d3d12_raytracing_task.hpp"
-#include "render_tasks/d3d12_rt_reflection_task.hpp"
-#include "render_tasks/d3d12_rt_shadow_task.hpp"
-#include "render_tasks/d3d12_shadow_denoiser_task.hpp"
-#include "render_tasks/d3d12_equirect_to_cubemap.hpp"
-#include "render_tasks/d3d12_cubemap_convolution.hpp"
-#include "render_tasks/d3d12_rtao_task.hpp"
-#include "render_tasks/d3d12_post_processing.hpp"
-#include "render_tasks/d3d12_build_acceleration_structures.hpp"
-#include "render_tasks/d3d12_path_tracer.hpp"
 #include "render_tasks/d3d12_accumulation.hpp"
+#include "render_tasks/d3d12_ansel.hpp"
+#include "render_tasks/d3d12_bloom_composition.hpp"
+#include "render_tasks/d3d12_bloom_extract_bright.hpp"
+#include "render_tasks/d3d12_bloom_horizontal_blur.hpp"
+#include "render_tasks/d3d12_bloom_vertical_blur.hpp"
+#include "render_tasks/d3d12_brdf_lut_precalculation.hpp"
+#include "render_tasks/d3d12_build_acceleration_structures.hpp"
+#include "render_tasks/d3d12_cubemap_convolution.hpp"
+#include "render_tasks/d3d12_deferred_composition.hpp"
+#include "render_tasks/d3d12_deferred_main.hpp"
+#include "render_tasks/d3d12_deferred_render_target_copy.hpp"
 #include "render_tasks/d3d12_dof_bokeh.hpp"
 #include "render_tasks/d3d12_dof_bokeh_postfilter.hpp"
 #include "render_tasks/d3d12_dof_coc.hpp"
-#include "render_tasks/d3d12_down_scale.hpp"
 #include "render_tasks/d3d12_dof_composition.hpp"
 #include "render_tasks/d3d12_dof_dilate_near.hpp"
+#include "render_tasks/d3d12_down_scale.hpp"
+#include "render_tasks/d3d12_equirect_to_cubemap.hpp"
 #include "render_tasks/d3d12_hbao.hpp"
-#include "render_tasks/d3d12_ansel.hpp"
-#include "render_tasks/d3d12_bloom_extract_bright.hpp"
-#include "render_tasks/d3d12_bloom_composition.hpp"
-#include "render_tasks/d3d12_bloom_horizontal_blur.hpp"
-#include "render_tasks/d3d12_bloom_vertical_blur.hpp"
+#include "render_tasks/d3d12_imgui_render_task.hpp"
+#include "render_tasks/d3d12_path_tracer.hpp"
+#include "render_tasks/d3d12_post_processing.hpp"
+#include "render_tasks/d3d12_raytracing_task.hpp"
+#include "render_tasks/d3d12_reflection_denoiser.hpp"
+#include "render_tasks/d3d12_rtao_task.hpp"
+#include "render_tasks/d3d12_rt_reflection_task.hpp"
+#include "render_tasks/d3d12_rt_shadow_task.hpp"
+#include "render_tasks/d3d12_shadow_denoiser_task.hpp"
+#include "render_tasks/d3d12_spatial_reconstruction.hpp"
+
 
 #include "wisp_render_tasks/d3d12_depth_data_readback.hpp"
 #include "wisp_render_tasks/d3d12_pixel_data_readback.hpp"
@@ -239,6 +242,11 @@ namespace wmr
 
 		wr::AddShadowDenoiserTask(*fg);
 		LOG("Added shadow denoiser task.");
+		wr::AddSpatialReconstructionTask(*fg);
+		LOG("Added spatial reconstruction task.");
+
+		wr::AddReflectionDenoiserTask(*fg);
+		LOG("Added reflection denoiser task.");
 
 		wr::AddRTAOTask(*fg, static_cast<wr::D3D12RenderSystem&>(render_system).m_device);
 		LOG("Added raytraced ambient occlussion task.");
