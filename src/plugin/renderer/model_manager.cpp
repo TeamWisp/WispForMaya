@@ -46,6 +46,11 @@ void wmr::ModelManager::UpdateModel(wr::Model& model, const wr::MeshData<wr::Ver
 	m_model_pool->EditMesh( model.m_meshes[0].first, data.m_vertices, data.m_indices.value() );
 }
 
+void wmr::ModelManager::DeleteModel(wr::Model& model)
+{
+	m_model_pool->Destroy(&model);
+}
+
 void wmr::ModelManager::Destroy() noexcept
 {
 	m_model_pool.reset();

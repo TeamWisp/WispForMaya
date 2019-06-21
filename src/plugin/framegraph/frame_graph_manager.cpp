@@ -21,40 +21,37 @@
 // Wisp rendering framework
 #include "frame_graph/frame_graph.hpp"
 #include "settings.hpp"
-#include "render_tasks/d3d12_imgui_render_task.hpp"
-#include "render_tasks/d3d12_brdf_lut_precalculation.hpp"
-#include "render_tasks/d3d12_deferred_main.hpp"
-#include "render_tasks/d3d12_deferred_composition.hpp"
-#include "render_tasks/d3d12_deferred_render_target_copy.hpp"
-#include "render_tasks/d3d12_raytracing_task.hpp"
-#include "render_tasks/d3d12_rt_reflection_task.hpp"
-#include "render_tasks/d3d12_rt_shadow_task.hpp"
-#include "render_tasks/d3d12_shadow_denoiser_task.hpp"
-#include "render_tasks/d3d12_equirect_to_cubemap.hpp"
-#include "render_tasks/d3d12_cubemap_convolution.hpp"
-#include "render_tasks/d3d12_rtao_task.hpp"
-#include "render_tasks/d3d12_post_processing.hpp"
-#include "render_tasks/d3d12_build_acceleration_structures.hpp"
-#include "render_tasks/d3d12_path_tracer.hpp"
 #include "render_tasks/d3d12_accumulation.hpp"
+#include "render_tasks/d3d12_ansel.hpp"
+#include "render_tasks/d3d12_bloom_composition.hpp"
+#include "render_tasks/d3d12_bloom_extract_bright.hpp"
+#include "render_tasks/d3d12_bloom_horizontal_blur.hpp"
+#include "render_tasks/d3d12_bloom_vertical_blur.hpp"
+#include "render_tasks/d3d12_brdf_lut_precalculation.hpp"
+#include "render_tasks/d3d12_build_acceleration_structures.hpp"
+#include "render_tasks/d3d12_cubemap_convolution.hpp"
+#include "render_tasks/d3d12_deferred_composition.hpp"
+#include "render_tasks/d3d12_deferred_main.hpp"
+#include "render_tasks/d3d12_deferred_render_target_copy.hpp"
 #include "render_tasks/d3d12_dof_bokeh.hpp"
 #include "render_tasks/d3d12_dof_bokeh_postfilter.hpp"
 #include "render_tasks/d3d12_dof_coc.hpp"
-#include "render_tasks/d3d12_down_scale.hpp"
 #include "render_tasks/d3d12_dof_composition.hpp"
 #include "render_tasks/d3d12_dof_dilate_near.hpp"
+#include "render_tasks/d3d12_down_scale.hpp"
+#include "render_tasks/d3d12_equirect_to_cubemap.hpp"
 #include "render_tasks/d3d12_hbao.hpp"
-#include "render_tasks/d3d12_ansel.hpp"
-#include "render_tasks/d3d12_bloom_extract_bright.hpp"
-#include "render_tasks/d3d12_bloom_composition.hpp"
-#include "render_tasks/d3d12_bloom_half_res.hpp"
-#include "render_tasks/d3d12_bloom_half_res_v.hpp"
-#include "render_tasks/d3d12_bloom_quarter_res.hpp"
-#include "render_tasks/d3d12_bloom_quarter_res_v.hpp"
-#include "render_tasks/d3d12_bloom_eighth_res.hpp"
-#include "render_tasks/d3d12_bloom_eighth_res_v.hpp"
-#include "render_tasks/d3d12_bloom_sixteenth_res.hpp"
-#include "render_tasks/d3d12_bloom_sixteenth_res_v.hpp"
+#include "render_tasks/d3d12_imgui_render_task.hpp"
+#include "render_tasks/d3d12_path_tracer.hpp"
+#include "render_tasks/d3d12_post_processing.hpp"
+#include "render_tasks/d3d12_raytracing_task.hpp"
+#include "render_tasks/d3d12_reflection_denoiser.hpp"
+#include "render_tasks/d3d12_rtao_task.hpp"
+#include "render_tasks/d3d12_rt_reflection_task.hpp"
+#include "render_tasks/d3d12_rt_shadow_task.hpp"
+#include "render_tasks/d3d12_shadow_denoiser_task.hpp"
+#include "render_tasks/d3d12_spatial_reconstruction.hpp"
+
 
 #include "wisp_render_tasks/d3d12_depth_data_readback.hpp"
 #include "wisp_render_tasks/d3d12_pixel_data_readback.hpp"
@@ -167,7 +164,7 @@ namespace wmr
 	void FrameGraphManager::CreateDeferredPipeline() noexcept
 	{
 		LOG("Starting deferred pipeline creation.");
-		auto fg = new wr::FrameGraph(17);
+		auto fg = new wr::FrameGraph(19);
 
 		// Precalculate BRDF Lut
 		wr::AddBrdfLutPrecalculationTask(*fg);
@@ -197,15 +194,9 @@ namespace wmr
 
 		// High quality bloom pass
 		wr::AddBloomExtractBrightTask<wr::DeferredCompositionTaskData, wr::DeferredMainTaskData>(*fg);
-		wr::AddBloomHalfTask<wr::BloomExtractBrightData>(*fg);
-		wr::AddBloomHalfVTask<wr::BloomHalfData>(*fg);
-		wr::AddBloomQuarterTask<wr::BloomExtractBrightData>(*fg);
-		wr::AddBloomQuarterVTask<wr::BloomQuarterData>(*fg);
-		wr::AddBloomEighthTask<wr::BloomExtractBrightData>(*fg);
-		wr::AddBloomEighthVTask<wr::BloomEighthData>(*fg);
-		wr::AddBloomSixteenthTask<wr::BloomExtractBrightData>(*fg);
-		wr::AddBloomSixteenthVTask<wr::BloomSixteenthData>(*fg);
-		wr::AddBloomCompositionTask<wr::DeferredCompositionTaskData, wr::BloomHalfVData, wr::BloomQuarterVData, wr::BloomEighthVData, wr::BloomSixteenthVData>(*fg);
+		wr::AddBloomBlurHorizontalTask<wr::BloomExtractBrightData>(*fg);
+		wr::AddBloomBlurVerticalTask<wr::BloomBlurHorizontalData>(*fg);
+		wr::AddBloomCompositionTask<wr::DeferredCompositionTaskData, wr::BloomBlurVerticalData>(*fg);
 		LOG("Added high quality bloom task.");
 
 		// Do Depth of field task
@@ -265,6 +256,11 @@ namespace wmr
 
 		wr::AddShadowDenoiserTask(*fg);
 		LOG("Added shadow denoiser task.");
+		wr::AddSpatialReconstructionTask(*fg);
+		LOG("Added spatial reconstruction task.");
+
+		wr::AddReflectionDenoiserTask(*fg);
+		LOG("Added reflection denoiser task.");
 
 		wr::AddRTAOTask(*fg, static_cast<wr::D3D12RenderSystem&>(render_system).m_device);
 		LOG("Added raytraced ambient occlussion task.");
@@ -274,15 +270,9 @@ namespace wmr
 
 		// High quality bloom pass
 		wr::AddBloomExtractBrightTask<wr::DeferredCompositionTaskData, wr::DeferredMainTaskData>(*fg);
-		wr::AddBloomHalfTask<wr::BloomExtractBrightData>(*fg);
-		wr::AddBloomHalfVTask<wr::BloomHalfData>(*fg);
-		wr::AddBloomQuarterTask<wr::BloomExtractBrightData>(*fg);
-		wr::AddBloomQuarterVTask<wr::BloomQuarterData>(*fg);
-		wr::AddBloomEighthTask<wr::BloomExtractBrightData>(*fg);
-		wr::AddBloomEighthVTask<wr::BloomEighthData>(*fg);
-		wr::AddBloomSixteenthTask<wr::BloomExtractBrightData>(*fg);
-		wr::AddBloomSixteenthVTask<wr::BloomSixteenthData>(*fg);
-		wr::AddBloomCompositionTask<wr::DeferredCompositionTaskData, wr::BloomHalfVData, wr::BloomQuarterVData, wr::BloomEighthVData, wr::BloomSixteenthVData>(*fg);
+		wr::AddBloomBlurHorizontalTask<wr::BloomExtractBrightData>(*fg);
+		wr::AddBloomBlurVerticalTask<wr::BloomBlurHorizontalData>(*fg);
+		wr::AddBloomCompositionTask<wr::DeferredCompositionTaskData, wr::BloomBlurVerticalData>(*fg);
 		LOG("Added high quality bloom task.");
 
 		// Do Depth of field task

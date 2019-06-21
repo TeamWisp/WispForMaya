@@ -1,3 +1,18 @@
+/*!
+ * Copyright 2019 Breda University of Applied Sciences and Team Wisp (Viktor Zoutman, Emilio Laiso, Jens Hagen, Meine Zeinstra, Tahar Meijs, Koen Buitenhuis, Niels Brunekreef, Darius Bouma, Florian Schut)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 #include "rand_util.hlsl"
 #include "pbr_util.hlsl"
 
@@ -54,7 +69,5 @@ void main_cs(uint3 dt_id : SV_DispatchThreadID)
 	float2 screen_coord = int2(dt_id.x, dt_id.y) + 0.5f;
 	float2 uv = screen_coord / screen_size;
 
-	uv.y = 1.0f - uv.y;
-
-	output[dt_id.xy] = IntegrateBRDF(uv.y, uv.x);
+	output[dt_id.xy] = IntegrateBRDF(uv.x, uv.y);
 }
