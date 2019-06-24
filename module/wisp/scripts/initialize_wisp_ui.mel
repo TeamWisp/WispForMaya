@@ -1,8 +1,112 @@
 global proc int onOpen(string $filename, string $type)
 {
-   wisp_handle_ui_input -sb $filename;
+  wisp_handle_ui_input -sb $filename;
+  return true;
+}
 
-   return true;
+global proc showWispSettings()
+{
+  // Create a new template object.
+  if (!`uiTemplate -exists WispForMaya_settings_template`) {
+    uiTemplate WispForMaya_settings_template;
+  }
+
+  $window_width = 500;
+  $frame_width = 500;
+
+    // Add the command default parameters to the template.
+    frameLayout -defineTemplate WispForMaya_settings_template
+      -borderVisible off -labelVisible true -labelAlign "center" -marginWidth 5 -marginHeight 5 -collapsable on -collapse on -width $frame_width;
+
+    button -defineTemplate WispForMaya_settings_template
+      -width 150;
+
+    floatSliderGrp -defineTemplate WispForMaya_settings_template
+      -label "Float Attribute" -field true -fieldMinValue 1 -fieldMaxValue 100 -minValue 1 -maxValue 100 -value 50;
+
+    intSliderGrp -defineTemplate WispForMaya_settings_template
+      -label "Int Attribute" -field true -fieldMinValue 3 -fieldMaxValue 7 -minValue 3 -maxValue 7 -value 5;
+
+  // Create window
+  window -title "WispForMaya Render Settings" -width $window_width window_wispformaya_settings;
+  setUITemplate -pushTemplate WispForMaya_settings_template;
+  columnLayout;
+
+    frameLayout -label "General" -collapse off general_settings;
+      columnLayout;
+
+        frameLayout -label "Depth of field" dof_settings;
+          columnLayout;
+            separator -w $frame_width -style "single";
+
+            floatSliderGrp -label "Film size" -fieldMinValue 25 -fieldMaxValue 100 -minValue 25 -maxValue 100 -value 45 -dragCommand "wisp_handle_ui_input -fs #1";;
+            floatSliderGrp -label "Bokeh shape size" -fieldMinValue 0 -fieldMaxValue 1 -minValue 0 -maxValue 1 -value 0.5 -dragCommand "wisp_handle_ui_input -bss #1";
+            intSliderGrp -label "Aperture blade count" -fieldMinValue 3 -fieldMaxValue 7 -minValue 3 -maxValue 7 -value 5 -dragCommand "wisp_handle_ui_input -abc #1";
+            setParent ..;
+          setParent ..;
+
+        frameLayout -label "Bloom" bloom_settings;
+          columnLayout;
+            checkBox -label "Enable" -value off -onCommand "wisp_handle_ui_input -eb on" -offCommand "wisp_handle_ui_input -eb on";
+            setParent ..;
+          setParent ..;
+
+        setParent ..;
+      setParent ..;
+
+    frameLayout -label "PBR Materials Visualization" -collapse off pbr_materials_settings;
+      columnLayout;
+
+        frameLayout -label "Horizon Based Ambient Oclussion" rtao_settings;
+          columnLayout;
+            floatSliderGrp -label "Meters to units" -fieldMinValue 0.1 -fieldMaxValue 100 -minValue 0.1 -maxValue 100 -value 1;
+            floatSliderGrp -label "Radius" -fieldMinValue 0 -fieldMaxValue 100 -minValue 0 -maxValue 100 -value 2;
+            floatSliderGrp -label "Bias" -fieldMinValue 0 -fieldMaxValue 5 -minValue 0 -maxValue 5 -value 0.1;
+            floatSliderGrp -label "Power" -fieldMinValue 1 -fieldMaxValue 4 -minValue 1 -maxValue 4 -value 2;
+            checkBox -label "Blur" -value on;
+            floatSliderGrp -label "Blur Sharpness" -fieldMinValue 0 -fieldMaxValue 16 -minValue 0 -maxValue 16 -value 16;
+            setParent ..;
+          setParent ..;
+
+        setParent ..;
+      setParent ..;
+
+    frameLayout -label "Real-Time Final Render Preview" -collapse off rt_final_preview_settings;
+      columnLayout;
+
+        frameLayout -label "Ray Traced Shadows" rtshadow_settings;
+          columnLayout;
+            floatSliderGrp -label "Epsilon" -fieldMinValue 0 -fieldMaxValue 15 -minValue 0 -maxValue 15 -value 0.01;
+              intSliderGrp -label "Samples Per Pixel" -fieldMinValue 1 -fieldMaxValue 256 -minValue 1 -maxValue 256 -value 1;
+                text " ";
+                floatSliderGrp -label "Denoiser - Alpha" -fieldMinValue 0.001 -fieldMaxValue 1 -minValue 0.001 -maxValue 1 -value 0.05;
+                floatSliderGrp -label "Denoiser - Moments Alpha" -fieldMinValue 0.001 -fieldMaxValue 1 -minValue 0.001 -maxValue 1 -value 0.2;
+                floatSliderGrp -label "Denoiser - L Phi" -fieldMinValue 0.1 -fieldMaxValue 16 -minValue 0.1 -maxValue 16 -value 4;
+                floatSliderGrp -label "Denoiser - N Phi" -fieldMinValue 1.0 -fieldMaxValue 360 -minValue 1.0 -maxValue 360 -value 128;
+                floatSliderGrp -label "Denoiser - Z Phi" -fieldMinValue 0.1 -fieldMaxValue 16 -minValue 0.1 -maxValue 16 -value 1;
+                setParent ..;
+              setParent ..;
+
+            frameLayout -label "Ray Traced Ambient Oclussion" rtao_settings;
+              columnLayout;
+                floatSliderGrp -label "Bias" -fieldMinValue 0 -fieldMaxValue 100 -minValue 0 -maxValue 100 -value 0.05;
+                floatSliderGrp -label "Radius" -fieldMinValue 0 -fieldMaxValue 1000 -minValue 0 -maxValue 1000 -value 0.5;
+                floatSliderGrp -label "Power" -fieldMinValue 0 -fieldMaxValue 10 -minValue 0 -maxValue 10 -value 1.0;
+                floatSliderGrp -label "Samples Per Pixel" -fieldMinValue 1 -fieldMaxValue 1024 -minValue 1 -maxValue 1024 -value 8;
+                setParent ..;
+              setParent ..;
+
+            frameLayout -label "Acceleration Structure" as_settings;
+              columnLayout;
+                checkBox -label "Disable rebuilding" -value off;
+                setParent ..;
+              setParent ..;
+
+            setParent ..;
+          setParent ..;
+
+  setUITemplate -popTemplate;
+  showWindow window_wispformaya_settings;
 }
 
 global proc showCameraSettings()
@@ -21,17 +125,17 @@ global proc showCameraSettings()
 
 global proc initialize_wisp_ui()
 {
-    if(`menu -exists Wisp`)
+  if(`menu -exists Wisp`)
 	{
-		deleteUI Wisp;
-	}
+ 		deleteUI Wisp;
+ 	}
 
-	global string $gMainWindow;
-	setParent($gMainWindow);
+ 	global string $gMainWindow;
+ 	setParent($gMainWindow);
 
-	menu -label "Wisp" -to true -aob true Wisp;
-		menuItem -label "PBR Materials Visualization" -command "wisp_handle_ui_input -p 0";
-		menuItem -label "Real-Time Final Render Preview" -command "wisp_handle_ui_input -p 1";
-		menuItem -label "Configure Skybox" -command "fileBrowser(\"onOpen\", \"Open\", \"\", 0)";
-		menuItem -label "Configure depth of field" -command "showCameraSettings()";
+ 	menu -label "Wisp" -to true -aob true Wisp;
+ 		menuItem -label "PBR Materials Visualization" -command "wisp_handle_ui_input -p 0";
+ 		menuItem -label "Real-Time Final Render Preview" -command "wisp_handle_ui_input -p 1";
+ 		menuItem -label "Configure Skybox" -command "fileBrowser(\"onOpen\", \"Open\", \"\", 0)";
+ 		menuItem -label "Configure depth of field" -command "showWispSettings()";
 }
