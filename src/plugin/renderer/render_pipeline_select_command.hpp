@@ -18,6 +18,20 @@
 
 namespace wmr
 {
+	const constexpr char* PIPELINE_SHORT_FLAG = "-p";
+	const constexpr char* SKYBOX_SHORT_FLAG = "-sb";
+	const constexpr char* DOF_FILM_SIZE_SHORT_FLAG = "-fs";
+	const constexpr char* DOF_BOKEH_SHAPE_SIZE_SHORT_FLAG = "-bss";
+	const constexpr char* DOF_APERTURE_BLADE_COUNT_SHORT_FLAG = "-abc";
+	const constexpr char* DOF_AUTO_FOCUS_SHORT_FLAG = "-af";
+
+	const constexpr char* PIPELINE_LONG_FLAG = "-pipeline";
+	const constexpr char* SKYBOX_LONG_FLAG = "-skybox";
+	const constexpr char* DOF_FILM_SIZE_LONG_FLAG = "-dof_film_size";
+	const constexpr char* DOF_BOKEH_SHAPE_SIZE_LONG_FLAG = "-dof_bokeh_shape_size";
+	const constexpr char* DOF_APERTURE_BLADE_COUNT_LONG_FLAG = "-dof_aperature_blade_count";
+	const constexpr char* DOF_AUTO_FOCUS_LONG_FLAG = "-dof_auto_focus";
+
 	class Renderer;
 
 	class RenderPipelineSelectCommand final : public MPxCommand
@@ -33,5 +47,7 @@ namespace wmr
 		bool isUndoable() const override { return false; };
 		static void* creator() { return new RenderPipelineSelectCommand(); }
 		static MSyntax create_syntax();
+
+	private:
 	};
 }

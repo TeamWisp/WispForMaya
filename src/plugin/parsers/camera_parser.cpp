@@ -90,6 +90,11 @@ void wmr::CameraParser::UpdateViewportCamera(const MString & panel_name)
 	m_viewport_camera->m_frustum_far = camera_functions.farClippingPlane();
 	m_viewport_camera->m_frustum_near = camera_functions.nearClippingPlane();
 
+	m_viewport_camera->m_enable_dof = camera_functions.isDepthOfField();
+	m_viewport_camera->m_f_number = camera_functions.fStop();
+	m_viewport_camera->m_focus_dist = camera_functions.focusDistance();
+	m_viewport_camera->m_focal_length = camera_functions.focalLength();
+
 	m_viewport_camera->SetFov(DirectX::XMConvertToDegrees(camera_functions.horizontalFieldOfView()));
 	m_viewport_camera->SetAspectRatio((float)current_viewport_width / (float)current_viewport_height);
 

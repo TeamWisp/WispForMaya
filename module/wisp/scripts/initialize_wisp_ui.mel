@@ -1,8 +1,22 @@
 global proc int onOpen(string $filename, string $type)
 {
-   wisp_handle_ui_input($filename);
+   wisp_handle_ui_input -sb $filename;
 
    return true;
+}
+
+global proc showCameraSettings()
+{
+    window -title "Wisp depth of field settings" wisp_depth_of_field_settings;
+
+    columnLayout;
+        checkBox -label "Depth of field auto-focus" -onCommand "wisp_handle_ui_input -af on" -offCommand "wisp_handle_ui_input -af off";
+
+		floatSliderGrp -label "Film size" -field true -fieldMinValue 25 -fieldMaxValue 100 -minValue 25 -maxValue 100 -value 45 -dragCommand "wisp_handle_ui_input -fs #1";
+		floatSliderGrp -label "Bokeh shape size" -field true -fieldMinValue 0 -fieldMaxValue 1 -minValue 0 -maxValue 1 -value 0.5 -dragCommand "wisp_handle_ui_input -bss #1";
+		intSliderGrp -label "Aperture blade count" -field true -fieldMinValue 3 -fieldMaxValue 7 -minValue 3 -maxValue 7 -value 5 -dragCommand "wisp_handle_ui_input -abc #1";
+
+    showWindow wisp_depth_of_field_settings;
 }
 
 global proc initialize_wisp_ui()
@@ -16,7 +30,8 @@ global proc initialize_wisp_ui()
 	setParent($gMainWindow);
 
 	menu -label "Wisp" -to true -aob true Wisp;
-		menuItem -label "PBR Materials Visualization" -command "wisp_handle_ui_input(\"-deferred\")";
-		menuItem -label "Real-Time Final Render Preview" -command "wisp_handle_ui_input(\"-hybrid_ray_trace\")";
+		menuItem -label "PBR Materials Visualization" -command "wisp_handle_ui_input -p 0";
+		menuItem -label "Real-Time Final Render Preview" -command "wisp_handle_ui_input -p 1";
 		menuItem -label "Configure Skybox" -command "fileBrowser(\"onOpen\", \"Open\", \"\", 0)";
+		menuItem -label "Configure depth of field" -command "showCameraSettings()";
 }

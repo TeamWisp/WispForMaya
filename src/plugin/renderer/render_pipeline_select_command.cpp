@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "render_pipeline_select_command.hpp"
-
 // Wisp
 #include <d3d12/d3d12_renderer.hpp>
+#include <scene_graph/camera_node.hpp>
 #include <util/log.hpp>
 
 // Wisp plug-in
 #include "miscellaneous/maya_popup.hpp"
 #include "plugin/framegraph/frame_graph_manager.hpp"
 #include "plugin/viewport_renderer_override.hpp"
-#include "renderer.hpp"
+#include "plugin/renderer/renderer.hpp"
+#include "render_pipeline_select_command.hpp"
 
 // Maya API
 #include <maya/MArgList.h>
@@ -52,47 +52,69 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 	auto& renderer = viewport_override->GetRenderer();
 	auto& frame_graph = renderer.GetFrameGraph();
 
-	bool deferred_set = arg_data.isFlagSet("deferred");
-	bool hybrid_set = arg_data.isFlagSet("hybrid_ray_trace");
+	// Camera so we can set depth of field data
+	auto camera = renderer.GetScenegraph().GetActiveCamera();
 
-	auto skybox_path = arg_data.commandArgumentString(0);
+	if (arg_data.isFlagSet(PIPELINE_SHORT_FLAG))
+	{
+		auto param_0 = arg_data.flagArgumentInt(PIPELINE_SHORT_FLAG, 0);
 
-	if (deferred_set)
-	{
-		frame_graph.SetType(RendererFrameGraphType::DEFERRED);
-	}
-	else if (hybrid_set)
-	{
-		static bool first_time_hybrid = true;
-		if (first_time_hybrid && !renderer.GetD3D12Renderer().m_device->m_dxr_support)
+		if (param_0 == 0)
 		{
-			first_time_hybrid = false;
-
-			// Open warning popup
-			MayaPopup::Options options;
-			options.window_name = "hybrid_open_popup";
-			options.width = 500;
-
-			MayaPopup::SpawnFromFile("resources/hybrid_switch.txt", options);
+			frame_graph.SetType(RendererFrameGraphType::DEFERRED);
+			return MStatus::kSuccess;
 		}
-		else 
+		else if (param_0 == 1)
 		{
-			frame_graph.SetType(RendererFrameGraphType::HYBRID_RAY_TRACING);
+			static bool first_time_hybrid = true;
+			if (first_time_hybrid && !renderer.GetD3D12Renderer().m_device->m_dxr_support)
+			{
+				first_time_hybrid = false;
+
+				// Open warning popup
+				MayaPopup::Options options;
+				options.window_name = "hybrid_open_popup";
+				options.width = 500;
+
+				MayaPopup::SpawnFromFile("resources/hybrid_switch.txt", options);
+			}
+			else
+			{
+				frame_graph.SetType(RendererFrameGraphType::HYBRID_RAY_TRACING);
+			}
+
+			return MStatus::kSuccess;
 		}
 	}
-	else
+	else if (arg_data.isFlagSet(SKYBOX_SHORT_FLAG))
 	{
+		auto param_0 = arg_data.flagArgumentString(SKYBOX_SHORT_FLAG, 0);
+
 		try
 		{
-			renderer.UpdateSkybox(skybox_path.asChar());
+			renderer.UpdateSkybox(param_0.asChar());
 		}
 		catch (std::exception& e)
 		{
-			LOGE("Could not load skybox texture {}, probably invalid file extension. {}", skybox_path.asChar(), e.what());
+			LOGE("Could not load skybox texture {}, probably invalid file extension. {}", param_0.asChar(), e.what());
 			return MStatus::kFailure;
 		}
 
 		return MStatus::kSuccess;
+	}
+	else if (arg_data.isFlagSet(DOF_BOKEH_SHAPE_SIZE_SHORT_FLAG))
+	{
+		camera->m_shape_amt = arg_data.flagArgumentDouble(DOF_BOKEH_SHAPE_SIZE_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(DOF_APERTURE_BLADE_COUNT_SHORT_FLAG))
+	{
+		camera->m_aperture_blades = arg_data.flagArgumentInt(DOF_APERTURE_BLADE_COUNT_SHORT_FLAG, 0);
+	}
+
+	// Auto-focus enabled
+	if (arg_data.flagArgumentBool(DOF_AUTO_FOCUS_SHORT_FLAG, 1))
+	{
+		camera->m_focal_length = 0.0f;
 	}
 
 	return MStatus::kSuccess;
@@ -102,11 +124,14 @@ MSyntax wmr::RenderPipelineSelectCommand::create_syntax()
 {
 	MSyntax syntax;
 
-	syntax.addArg(MSyntax::kString);
-	syntax.addFlag("-d", "-deferred",			MSyntax::kNoArg);
-	syntax.addFlag("-h", "-hybrid_ray_trace",	MSyntax::kNoArg);
+	syntax.addFlag(PIPELINE_SHORT_FLAG, PIPELINE_LONG_FLAG, MSyntax::kUnsigned);
+	syntax.addFlag(SKYBOX_SHORT_FLAG, SKYBOX_LONG_FLAG, MSyntax::kString);
+	syntax.addFlag(DOF_AUTO_FOCUS_SHORT_FLAG, DOF_AUTO_FOCUS_LONG_FLAG, MSyntax::kBoolean);
+	syntax.addFlag(DOF_FILM_SIZE_SHORT_FLAG, DOF_FILM_SIZE_LONG_FLAG, MSyntax::kDouble);
+	syntax.addFlag(DOF_BOKEH_SHAPE_SIZE_SHORT_FLAG, DOF_BOKEH_SHAPE_SIZE_LONG_FLAG, MSyntax::kDouble);
+	syntax.addFlag(DOF_APERTURE_BLADE_COUNT_SHORT_FLAG, DOF_APERTURE_BLADE_COUNT_LONG_FLAG, MSyntax::kUnsigned);
 
-	syntax.enableQuery(false);
+	syntax.enableQuery(true);
 	syntax.enableEdit(false);
 
 	LOG("Finished creating custom MEL command syntax.");
