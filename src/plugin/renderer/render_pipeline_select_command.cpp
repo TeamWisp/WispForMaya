@@ -14,22 +14,21 @@
 
 // Wisp
 #include <d3d12/d3d12_renderer.hpp>
-#include <util/log.hpp>
 #include <scene_graph/camera_node.hpp>
+#include <util/log.hpp>
 
 // Wisp plug-in
-#include "render_pipeline_select_command.hpp"
 #include "miscellaneous/maya_popup.hpp"
 #include "plugin/framegraph/frame_graph_manager.hpp"
 #include "plugin/viewport_renderer_override.hpp"
 #include "plugin/renderer/renderer.hpp"
+#include "render_pipeline_select_command.hpp"
 
 // Maya API
 #include <maya/MArgList.h>
 #include <maya/MArgParser.h>
 #include <maya/MSyntax.h>
 #include <maya/MViewport2Renderer.h>
-#include <maya/MGlobal.h>
 
 // C++ standard
 #include <string>
