@@ -103,29 +103,9 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 
 		return MStatus::kSuccess;
 	}
-	else if (arg_data.isFlagSet(DOF_ENABLE_SHORT_FLAG))
-	{
-		camera->m_enable_dof = arg_data.flagArgumentBool(DOF_ENABLE_SHORT_FLAG, 0);
-	}
-	else if (arg_data.isFlagSet(DOF_FNUM_SHORT_FLAG))
-	{
-		camera->m_f_number = arg_data.flagArgumentDouble(DOF_FNUM_SHORT_FLAG, 0);
-	}
-	else if (arg_data.isFlagSet(DOF_FOCAL_LENGTH_SHORT_FLAG))
-	{
-		camera->m_film_size = arg_data.flagArgumentDouble(DOF_FOCAL_LENGTH_SHORT_FLAG, 0);
-	}
 	else if (arg_data.isFlagSet(DOF_BOKEH_SHAPE_SIZE_SHORT_FLAG))
 	{
 		camera->m_shape_amt = arg_data.flagArgumentDouble(DOF_BOKEH_SHAPE_SIZE_SHORT_FLAG, 0);
-	}
-	else if (arg_data.isFlagSet(DOF_FOCAL_LENGTH_SHORT_FLAG))
-	{
-		camera->m_focal_length = arg_data.flagArgumentDouble(DOF_FOCAL_LENGTH_SHORT_FLAG, 0);
-	}
-	else if (arg_data.isFlagSet(DOF_FOCAL_PLANE_DISTANCE_SHORT_FLAG))
-	{
-		camera->m_focus_dist = arg_data.flagArgumentDouble(DOF_FOCAL_PLANE_DISTANCE_SHORT_FLAG, 0);
 	}
 	else if (arg_data.isFlagSet(DOF_APERTURE_BLADE_COUNT_SHORT_FLAG))
 	{
@@ -135,7 +115,7 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 	// Auto-focus enabled
 	if (arg_data.flagArgumentBool(DOF_AUTO_FOCUS_SHORT_FLAG, 1))
 	{
-		camera->m_focus_dist = 0.0f;
+		camera->m_focal_length = 0.0f;
 	}
 
 	return MStatus::kSuccess;
@@ -147,13 +127,9 @@ MSyntax wmr::RenderPipelineSelectCommand::create_syntax()
 
 	syntax.addFlag(PIPELINE_SHORT_FLAG, PIPELINE_LONG_FLAG, MSyntax::kUnsigned);
 	syntax.addFlag(SKYBOX_SHORT_FLAG, SKYBOX_LONG_FLAG, MSyntax::kString);
-	syntax.addFlag(DOF_ENABLE_SHORT_FLAG, DOF_ENABLE_LONG_FLAG, MSyntax::kBoolean);
 	syntax.addFlag(DOF_AUTO_FOCUS_SHORT_FLAG, DOF_AUTO_FOCUS_LONG_FLAG, MSyntax::kBoolean);
-	syntax.addFlag(DOF_FNUM_SHORT_FLAG, DOF_FNUM_LONG_FLAG, MSyntax::kDouble);
 	syntax.addFlag(DOF_FILM_SIZE_SHORT_FLAG, DOF_FILM_SIZE_LONG_FLAG, MSyntax::kDouble);
 	syntax.addFlag(DOF_BOKEH_SHAPE_SIZE_SHORT_FLAG, DOF_BOKEH_SHAPE_SIZE_LONG_FLAG, MSyntax::kDouble);
-	syntax.addFlag(DOF_FOCAL_LENGTH_SHORT_FLAG, DOF_FOCAL_LENGTH_LONG_FLAG, MSyntax::kDouble);
-	syntax.addFlag(DOF_FOCAL_PLANE_DISTANCE_SHORT_FLAG, DOF_FOCAL_PLANE_DISTANCE_LONG_FLAG, MSyntax::kDouble);
 	syntax.addFlag(DOF_APERTURE_BLADE_COUNT_SHORT_FLAG, DOF_APERTURE_BLADE_COUNT_LONG_FLAG, MSyntax::kUnsigned);
 
 	syntax.enableQuery(true);

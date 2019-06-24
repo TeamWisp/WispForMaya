@@ -8,18 +8,14 @@ global proc int onOpen(string $filename, string $type)
 global proc showCameraSettings()
 {
     window -title "Wisp depth of field settings" wisp_depth_of_field_settings;
-    
+
     columnLayout;
-        checkBox -label "Enable depth of field" -onCommand "wisp_handle_ui_input -de on" -offCommand "wisp_handle_ui_input -de off";
         checkBox -label "Depth of field auto-focus" -onCommand "wisp_handle_ui_input -af on" -offCommand "wisp_handle_ui_input -af off";
-        
-		floatSliderGrp -label "F number" -field true -fieldMinValue 1 -fieldMaxValue 128 -minValue 1 -maxValue 128 -value 32 -dragCommand "wisp_handle_ui_input -fn #1";
+
 		floatSliderGrp -label "Film size" -field true -fieldMinValue 25 -fieldMaxValue 100 -minValue 25 -maxValue 100 -value 45 -dragCommand "wisp_handle_ui_input -fs #1";
 		floatSliderGrp -label "Bokeh shape size" -field true -fieldMinValue 0 -fieldMaxValue 1 -minValue 0 -maxValue 1 -value 0.5 -dragCommand "wisp_handle_ui_input -bss #1";
-		floatSliderGrp -label "Focal length" -field true -fieldMinValue 1 -fieldMaxValue 300 -minValue 1 -maxValue 300 -value 35 -dragCommand "wisp_handle_ui_input -fl #1";
-		floatSliderGrp -label "Focal plane distance" -field true -fieldMinValue 0 -minValue 0 -maxValue 5000 -value 35 -dragCommand "wisp_handle_ui_input -fpd #1";
 		intSliderGrp -label "Aperture blade count" -field true -fieldMinValue 3 -fieldMaxValue 7 -minValue 3 -maxValue 7 -value 5 -dragCommand "wisp_handle_ui_input -abc #1";
-    
+
     showWindow wisp_depth_of_field_settings;
 }
 

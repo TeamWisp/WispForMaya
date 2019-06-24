@@ -20,23 +20,15 @@ namespace wmr
 {
 	const constexpr char* PIPELINE_SHORT_FLAG = "-p";
 	const constexpr char* SKYBOX_SHORT_FLAG = "-sb";
-	const constexpr char* DOF_ENABLE_SHORT_FLAG = "-de";
-	const constexpr char* DOF_FNUM_SHORT_FLAG = "-fn";
 	const constexpr char* DOF_FILM_SIZE_SHORT_FLAG = "-fs";
 	const constexpr char* DOF_BOKEH_SHAPE_SIZE_SHORT_FLAG = "-bss";
-	const constexpr char* DOF_FOCAL_LENGTH_SHORT_FLAG = "-fl";
-	const constexpr char* DOF_FOCAL_PLANE_DISTANCE_SHORT_FLAG = "-fpd";
 	const constexpr char* DOF_APERTURE_BLADE_COUNT_SHORT_FLAG = "-abc";
 	const constexpr char* DOF_AUTO_FOCUS_SHORT_FLAG = "-af";
 
 	const constexpr char* PIPELINE_LONG_FLAG = "-pipeline";
 	const constexpr char* SKYBOX_LONG_FLAG = "-skybox";
-	const constexpr char* DOF_ENABLE_LONG_FLAG = "-dof_enable";
-	const constexpr char* DOF_FNUM_LONG_FLAG = "-dof_f_number";
 	const constexpr char* DOF_FILM_SIZE_LONG_FLAG = "-dof_film_size";
 	const constexpr char* DOF_BOKEH_SHAPE_SIZE_LONG_FLAG = "-dof_bokeh_shape_size";
-	const constexpr char* DOF_FOCAL_LENGTH_LONG_FLAG = "-dof_focal_length";
-	const constexpr char* DOF_FOCAL_PLANE_DISTANCE_LONG_FLAG = "-dof_focal_plane_distance";
 	const constexpr char* DOF_APERTURE_BLADE_COUNT_LONG_FLAG = "-dof_aperature_blade_count";
 	const constexpr char* DOF_AUTO_FOCUS_LONG_FLAG = "-dof_auto_focus";
 
