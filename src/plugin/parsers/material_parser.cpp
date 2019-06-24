@@ -74,7 +74,7 @@ namespace wmr
 		wr::Material* material = material_manager.GetWispMaterial(material_handle);
 
 		// Get plug name that has changed value
-		MString changedPlugName = plug.partialName(false, false, false, false, false, true); MGlobal::displayInfo(changedPlugName);
+		MString changedPlugName = plug.partialName(false, false, false, false, false, true);
 
 		// Apply changes to material
 		MFnDependencyNode fn_dep_material(node);
