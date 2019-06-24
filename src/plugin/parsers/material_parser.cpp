@@ -494,18 +494,18 @@ wmr::ArnoldStandardSurfaceShaderData wmr::MaterialParser::ParseArnoldStandardSur
 
 	// Get all PBR variables
 	auto diffuse_color_plug			= GetPlugByName(plug,ArnoldStandardSurfaceShaderData::diffuse_color_plug_name);
-	auto diffuse_roughness_plug		= GetPlugByName(plug,ArnoldStandardSurfaceShaderData::diffuse_roughness_plug_name);
 	auto metalness_plug				= GetPlugByName(plug,ArnoldStandardSurfaceShaderData::metalness_plug_name);
-	auto specular_color_plug		= GetPlugByName(plug,ArnoldStandardSurfaceShaderData::specular_color_plug_name);
-	auto specular_roughness_plug	= GetPlugByName(plug,ArnoldStandardSurfaceShaderData::specular_roughness_plug_name);
+	auto emission_plug				= GetPlugByName(plug,ArnoldStandardSurfaceShaderData::emission_plug_name);
+	auto emission_color_plug		= GetPlugByName(plug,ArnoldStandardSurfaceShaderData::emission_color_plug_name);
+	auto roughness_plug				= GetPlugByName(plug,ArnoldStandardSurfaceShaderData::roughness_plug_name);
 	auto bump_map_plug				= GetPlugByName(plug,ArnoldStandardSurfaceShaderData::bump_map_plug_name);
 
 	// Attempt to retrieve a texture for each PBR variable
 	auto diffuse_color_texture_path			= GetPlugTexture(diffuse_color_plug);
-	auto diffuse_roughness_texture_path		= GetPlugTexture(diffuse_roughness_plug);
 	auto metalness_texture_path				= GetPlugTexture(metalness_plug);
-	auto specular_color_texture_path		= GetPlugTexture(specular_color_plug);
-	auto specular_roughness_texture_path	= GetPlugTexture(specular_roughness_plug);
+	auto emission_texture_path				= GetPlugTexture(emission_plug);
+	auto emission_color_texture_path		= GetPlugTexture(emission_color_plug);
+	auto roughness_texture_path				= GetPlugTexture(roughness_plug);
 	auto bump_map_texture_path				= GetPlugTexture(bump_map_plug);
 
 	// Diffuse color
@@ -525,15 +525,15 @@ wmr::ArnoldStandardSurfaceShaderData wmr::MaterialParser::ParseArnoldStandardSur
 		data.diffuse_color[2] = color.b;
 	}
 
-	// Diffuse roughness
-	if (diffuse_roughness_texture_path.has_value())
+	// Roughness
+	if (roughness_texture_path.has_value())
 	{
-		data.using_diffuse_roughness_value = false;
-		data.diffuse_roughness_texture_path = diffuse_roughness_texture_path.value().asChar();
+		data.using_roughness_value = false;
+		data.roughness_texture_path = roughness_texture_path.value().asChar();
 	}
 	else
 	{
-		dep_node_fn.findPlug(ArnoldStandardSurfaceShaderData::diffuse_roughness_plug_name).getValue(data.diffuse_roughness);
+		dep_node_fn.findPlug(ArnoldStandardSurfaceShaderData::roughness_plug_name).getValue(data.roughness);
 	}
 
 	// Metalness
@@ -547,32 +547,22 @@ wmr::ArnoldStandardSurfaceShaderData wmr::MaterialParser::ParseArnoldStandardSur
 		dep_node_fn.findPlug(ArnoldStandardSurfaceShaderData::metalness_plug_name).getValue(data.metalness);
 	}
 
-	// Specular color
-	if (specular_color_texture_path.has_value())
+	// Emission weight
+	if (!emission_texture_path.has_value())
 	{
-		data.using_specular_color_value = false;
-		data.specular_color_texture_path = specular_color_texture_path.value().asChar();
+		MString plug_name = ArnoldStandardSurfaceShaderData::emission_plug_name;
+		dep_node_fn.findPlug(plug_name).getValue(data.emission);
 	}
 	else
 	{
-		MString plug_name = ArnoldStandardSurfaceShaderData::specular_color_plug_name;
-
-		auto color = GetColor(dep_node_fn, plug_name);
-
-		data.specular_color[0] = color.r;
-		data.specular_color[1] = color.g;
-		data.specular_color[2] = color.b;
+		data.using_emission_value = false;
 	}
 
-	// Specular roughness
-	if (specular_roughness_texture_path.has_value())
+	// Emission color
+	if (emission_color_texture_path.has_value())
 	{
-		data.using_specular_roughness_value = false;
-		data.specular_roughness_texture_path = specular_roughness_texture_path.value().asChar();
-	}
-	else
-	{
-		dep_node_fn.findPlug(ArnoldStandardSurfaceShaderData::specular_roughness_plug_name).getValue(data.specular_roughness);
+		data.using_emission_color_value = false;
+		data.emission_color_texture_path = emission_color_texture_path.value().asChar();
 	}
 
 	// Bump map
@@ -652,6 +642,7 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::PhongShaderData & dat
 
 void wmr::MaterialParser::ConfigureWispMaterial(const wmr::ArnoldStandardSurfaceShaderData& data, wr::Material* material, TextureManager& texture_manager) const
 {
+	// Diffuse
 	if (data.using_diffuse_color_value)
 	{
 		material->SetConstant<wr::MaterialConstant::COLOR>({ data.diffuse_color[0], data.diffuse_color[1], data.diffuse_color[2] });
@@ -671,14 +662,15 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::ArnoldStandardSurface
 		}
 	}
 
-	if (data.using_specular_roughness_value)
+	// Roughness
+	if (data.using_roughness_value)
 	{
-		material->SetConstant<wr::MaterialConstant::ROUGHNESS>(data.diffuse_roughness);
+		material->SetConstant<wr::MaterialConstant::ROUGHNESS>(data.roughness);
 	}
 	else
 	{
 		// Request new Wisp textures
-		auto roughness_texture = texture_manager.CreateTexture(data.specular_roughness_texture_path);
+		auto roughness_texture = texture_manager.CreateTexture(data.roughness_texture_path);
 
 		if (roughness_texture != nullptr) {
 			// Use this texture as the material roughness texture
@@ -690,6 +682,7 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::ArnoldStandardSurface
 		}
 	}
 
+	// Metalness
 	if (data.using_metalness_value)
 	{
 		material->SetConstant<wr::MaterialConstant::METALLIC>(data.metalness);
@@ -709,11 +702,31 @@ void wmr::MaterialParser::ConfigureWispMaterial(const wmr::ArnoldStandardSurface
 		}
 	}
 
+	// Normal
 	if (strcmp(data.bump_map_texture_path, "") != 0)
 	{
 		auto bump = texture_manager.CreateTexture(data.bump_map_texture_path);
 		if (bump != nullptr) {
 			material->SetTexture(wr::TextureType::NORMAL, *bump);
+		}
+	}
+
+	// Emissive weight
+	if (data.using_emission_value)
+	{
+		material->SetConstant<wr::MaterialConstant::EMISSIVE_MULTIPLIER>(data.emission);
+	}
+
+	// Emissive color
+	if (!data.using_emission_color_value)
+	{
+		// Request new Wisp textures
+		auto emission_texture = texture_manager.CreateTexture(data.emission_color_texture_path);
+
+		if (emission_texture != nullptr)
+		{
+			// Use this texture as the material albedo texture
+			material->SetTexture(wr::TextureType::EMISSIVE, *emission_texture);
 		}
 	}
 }
