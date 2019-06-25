@@ -39,7 +39,7 @@ global proc showWispSettings()
           columnLayout;
             separator -w $frame_width -style "single";
 
-            floatSliderGrp -label "Film size" -fieldMinValue 25 -fieldMaxValue 100 -minValue 25 -maxValue 100 -value 45 -dragCommand "wisp_handle_ui_input -fs #1";;
+            floatSliderGrp -label "Film size" -fieldMinValue 25 -fieldMaxValue 100 -minValue 25 -maxValue 100 -value 45 -dragCommand "wisp_handle_ui_input -fs #1";
             floatSliderGrp -label "Bokeh shape size" -fieldMinValue 0 -fieldMaxValue 1 -minValue 0 -maxValue 1 -value 0.5 -dragCommand "wisp_handle_ui_input -bss #1";
             intSliderGrp -label "Aperture blade count" -fieldMinValue 3 -fieldMaxValue 7 -minValue 3 -maxValue 7 -value 5 -dragCommand "wisp_handle_ui_input -abc #1";
             setParent ..;
@@ -47,7 +47,8 @@ global proc showWispSettings()
 
         frameLayout -label "Bloom" bloom_settings;
           columnLayout;
-            checkBox -label "Enable" -value off -onCommand "wisp_handle_ui_input -eb on" -offCommand "wisp_handle_ui_input -eb on";
+            checkBox -label "Enable" -value off -onCommand "wisp_handle_ui_input -be on" -offCommand "wisp_handle_ui_input -be on";
+            floatSliderGrp -label "Intensity" -fieldMinValue 0 -fieldMaxValue 500 -minValue 0 -maxValue 500 -value 1 -dragCommand "wisp_handle_ui_input -bi #1";
             setParent ..;
           setParent ..;
 
