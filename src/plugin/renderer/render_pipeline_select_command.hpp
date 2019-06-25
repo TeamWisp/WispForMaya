@@ -24,6 +24,7 @@ namespace wmr
 	const constexpr char* DOF_BOKEH_SHAPE_SIZE_SHORT_FLAG = "-bss";
 	const constexpr char* DOF_APERTURE_BLADE_COUNT_SHORT_FLAG = "-abc";
 	const constexpr char* DOF_AUTO_FOCUS_SHORT_FLAG = "-af";
+	const constexpr char* BLOOM_ENABLE_SHORT_FLAG = "-be";
 
 	const constexpr char* PIPELINE_LONG_FLAG = "-pipeline";
 	const constexpr char* SKYBOX_LONG_FLAG = "-skybox";
@@ -31,6 +32,7 @@ namespace wmr
 	const constexpr char* DOF_BOKEH_SHAPE_SIZE_LONG_FLAG = "-dof_bokeh_shape_size";
 	const constexpr char* DOF_APERTURE_BLADE_COUNT_LONG_FLAG = "-dof_aperature_blade_count";
 	const constexpr char* DOF_AUTO_FOCUS_LONG_FLAG = "-dof_auto_focus";
+	const constexpr char* BLOOM_ENABLE_LONG_FLAG = "-enable_bloom";
 
 	class Renderer;
 

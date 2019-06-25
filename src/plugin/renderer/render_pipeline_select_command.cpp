@@ -19,6 +19,7 @@
 
 // Wisp plug-in
 #include "miscellaneous/maya_popup.hpp"
+#include "miscellaneous/render_settings.hpp"
 #include "plugin/framegraph/frame_graph_manager.hpp"
 #include "plugin/viewport_renderer_override.hpp"
 #include "plugin/renderer/renderer.hpp"
@@ -54,6 +55,10 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 
 	// Camera so we can set depth of field data
 	auto camera = renderer.GetScenegraph().GetActiveCamera();
+
+	// Bloom settings for all frame graphs
+	std::optional<wr::BloomSettings> bloom_settings_deferred = GetRenderSettings<wr::BloomSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::DEFERRED));
+	std::optional<wr::BloomSettings> bloom_settings_hybrid = GetRenderSettings<wr::BloomSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING));
 
 	if (arg_data.isFlagSet(PIPELINE_SHORT_FLAG))
 	{
@@ -110,6 +115,22 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 	{
 		camera->m_aperture_blades = arg_data.flagArgumentInt(DOF_APERTURE_BLADE_COUNT_SHORT_FLAG, 0);
 	}
+	else if (arg_data.isFlagSet(BLOOM_ENABLE_SHORT_FLAG))
+	{
+		bool state = arg_data.flagArgumentBool(BLOOM_ENABLE_SHORT_FLAG, 0);
+		bloom_settings_deferred->m_runtime.m_enable_bloom = state;
+		bloom_settings_hybrid->m_runtime.m_enable_bloom = state;
+	}
+
+	// Save bloom settings
+	if (bloom_settings_deferred.has_value())
+	{
+		SetRenderSettings<wr::BloomSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::DEFERRED), bloom_settings_deferred.value());
+	}
+	else if (bloom_settings_hybrid.has_value())
+	{
+		SetRenderSettings<wr::BloomSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING), bloom_settings_hybrid.value());
+	}
 
 	// Auto-focus enabled
 	if (arg_data.flagArgumentBool(DOF_AUTO_FOCUS_SHORT_FLAG, 1))
@@ -127,6 +148,7 @@ MSyntax wmr::RenderPipelineSelectCommand::create_syntax()
 	syntax.addFlag(PIPELINE_SHORT_FLAG, PIPELINE_LONG_FLAG, MSyntax::kUnsigned);
 	syntax.addFlag(SKYBOX_SHORT_FLAG, SKYBOX_LONG_FLAG, MSyntax::kString);
 	syntax.addFlag(DOF_AUTO_FOCUS_SHORT_FLAG, DOF_AUTO_FOCUS_LONG_FLAG, MSyntax::kBoolean);
+	syntax.addFlag(BLOOM_ENABLE_SHORT_FLAG, BLOOM_ENABLE_LONG_FLAG, MSyntax::kBoolean);
 	syntax.addFlag(DOF_FILM_SIZE_SHORT_FLAG, DOF_FILM_SIZE_LONG_FLAG, MSyntax::kDouble);
 	syntax.addFlag(DOF_BOKEH_SHAPE_SIZE_SHORT_FLAG, DOF_BOKEH_SHAPE_SIZE_LONG_FLAG, MSyntax::kDouble);
 	syntax.addFlag(DOF_APERTURE_BLADE_COUNT_SHORT_FLAG, DOF_APERTURE_BLADE_COUNT_LONG_FLAG, MSyntax::kUnsigned);
