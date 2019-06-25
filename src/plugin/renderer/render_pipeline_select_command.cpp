@@ -60,6 +60,16 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 	std::optional<wr::BloomSettings> bloom_settings_deferred = GetRenderSettings<wr::BloomSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::DEFERRED));
 	std::optional<wr::BloomSettings> bloom_settings_hybrid = GetRenderSettings<wr::BloomSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING));
 
+	// NVIDIA HBAO settings
+	std::optional<wr::HBAOSettings> hbao_settings = GetRenderSettings<wr::HBAOSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::DEFERRED));
+
+	// RTX AO settings
+	std::optional<wr::RTAOSettings> rtao_settings = GetRenderSettings<wr::RTAOSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING));
+
+	// Acceleration structure settings
+	std::optional<wr::ASBuildSettings> as_build_settings = GetRenderSettings<wr::ASBuildSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING));
+
+	//#TODO: Refactor this, it is a real mess...
 	if (arg_data.isFlagSet(PIPELINE_SHORT_FLAG))
 	{
 		auto param_0 = arg_data.flagArgumentInt(PIPELINE_SHORT_FLAG, 0);
@@ -121,15 +131,77 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 		bloom_settings_deferred->m_runtime.m_enable_bloom = state;
 		bloom_settings_hybrid->m_runtime.m_enable_bloom = state;
 	}
+	else if (arg_data.isFlagSet(HBAO_METERS_TO_UNITS_SHORT_FLAG))
+	{
+		hbao_settings->m_runtime.m_meters_to_view_space_units = arg_data.flagArgumentDouble(HBAO_METERS_TO_UNITS_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(HBAO_RADIUS_SHORT_FLAG))
+	{
+		hbao_settings->m_runtime.m_radius = arg_data.flagArgumentDouble(HBAO_RADIUS_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(HBAO_BIAS_SHORT_FLAG))
+	{
+		hbao_settings->m_runtime.m_bias = arg_data.flagArgumentDouble(HBAO_BIAS_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(HBAO_POWER_SHORT_FLAG))
+	{
+		hbao_settings->m_runtime.m_power_exp = arg_data.flagArgumentDouble(HBAO_POWER_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(HBAO_BLUR_SHORT_FLAG))
+	{
+		hbao_settings->m_runtime.m_enable_blur = arg_data.flagArgumentBool(HBAO_BLUR_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(HBAO_BLUR_SHARPNESS_SHORT_FLAG))
+	{
+		hbao_settings->m_runtime.m_blur_sharpness = arg_data.flagArgumentDouble(HBAO_BLUR_SHARPNESS_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(RTAO_BIAS_SHORT_FLAG))
+	{
+		rtao_settings->m_runtime.bias = arg_data.flagArgumentDouble(RTAO_BIAS_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(RTAO_RADIUS_SHORT_FLAG))
+	{
+		rtao_settings->m_runtime.radius = arg_data.flagArgumentDouble(RTAO_RADIUS_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(RTAO_POWER_SHORT_FLAG))
+	{
+		rtao_settings->m_runtime.power = arg_data.flagArgumentDouble(RTAO_POWER_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(RTAO_SAMPLES_PER_PIXEL_SHORT_FLAG))
+	{
+		rtao_settings->m_runtime.sample_count = arg_data.flagArgumentDouble(RTAO_SAMPLES_PER_PIXEL_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(AS_DISABLE_REBUILD_SHORT_FLAG))
+	{
+		as_build_settings->m_runtime.m_rebuild_as = arg_data.flagArgumentBool(AS_DISABLE_REBUILD_SHORT_FLAG, 0);
+	}
 
 	// Save bloom settings
 	if (bloom_settings_deferred.has_value())
 	{
 		SetRenderSettings<wr::BloomSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::DEFERRED), bloom_settings_deferred.value());
 	}
-	else if (bloom_settings_hybrid.has_value())
+	
+	if (bloom_settings_hybrid.has_value())
 	{
 		SetRenderSettings<wr::BloomSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING), bloom_settings_hybrid.value());
+	}
+
+	// Save AO settings
+	if (hbao_settings.has_value())
+	{
+		SetRenderSettings<wr::HBAOSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::DEFERRED), hbao_settings.value());
+	}
+	
+	if (rtao_settings.has_value())
+	{
+		SetRenderSettings<wr::RTAOSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING), rtao_settings.value());
+	}
+
+	// Save acceleration structure settings
+	if (as_build_settings.has_value())
+	{
+		SetRenderSettings<wr::ASBuildSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING), as_build_settings.value());
 	}
 
 	// Auto-focus enabled
@@ -146,11 +218,26 @@ MSyntax wmr::RenderPipelineSelectCommand::create_syntax()
 	MSyntax syntax;
 
 	syntax.addFlag(PIPELINE_SHORT_FLAG, PIPELINE_LONG_FLAG, MSyntax::kUnsigned);
+	
 	syntax.addFlag(SKYBOX_SHORT_FLAG, SKYBOX_LONG_FLAG, MSyntax::kString);
+	
 	syntax.addFlag(DOF_AUTO_FOCUS_SHORT_FLAG, DOF_AUTO_FOCUS_LONG_FLAG, MSyntax::kBoolean);
 	syntax.addFlag(BLOOM_ENABLE_SHORT_FLAG, BLOOM_ENABLE_LONG_FLAG, MSyntax::kBoolean);
+	syntax.addFlag(HBAO_BLUR_SHORT_FLAG, HBAO_BLUR_LONG_FLAG, MSyntax::kBoolean);
+	syntax.addFlag(AS_DISABLE_REBUILD_SHORT_FLAG, AS_DISABLE_REBUILD_LONG_FLAG, MSyntax::kBoolean);
+
 	syntax.addFlag(DOF_FILM_SIZE_SHORT_FLAG, DOF_FILM_SIZE_LONG_FLAG, MSyntax::kDouble);
 	syntax.addFlag(DOF_BOKEH_SHAPE_SIZE_SHORT_FLAG, DOF_BOKEH_SHAPE_SIZE_LONG_FLAG, MSyntax::kDouble);
+	syntax.addFlag(HBAO_METERS_TO_UNITS_SHORT_FLAG, HBAO_METERS_TO_UNITS_LONG_FLAG, MSyntax::kDouble);
+	syntax.addFlag(HBAO_RADIUS_SHORT_FLAG, HBAO_RADIUS_LONG_FLAG, MSyntax::kDouble);
+	syntax.addFlag(HBAO_BIAS_SHORT_FLAG, HBAO_BIAS_LONG_FLAG, MSyntax::kDouble);
+	syntax.addFlag(HBAO_POWER_SHORT_FLAG, HBAO_POWER_LONG_FLAG, MSyntax::kDouble);
+	syntax.addFlag(HBAO_BLUR_SHARPNESS_SHORT_FLAG, HBAO_BLUR_SHARPNESS_LONG_FLAG, MSyntax::kDouble);
+	syntax.addFlag(RTAO_BIAS_SHORT_FLAG, RTAO_BIAS_LONG_FLAG, MSyntax::kDouble);
+	syntax.addFlag(RTAO_RADIUS_SHORT_FLAG, RTAO_RADIUS_LONG_FLAG, MSyntax::kDouble);
+	syntax.addFlag(RTAO_POWER_SHORT_FLAG, RTAO_POWER_LONG_FLAG, MSyntax::kDouble);
+	syntax.addFlag(RTAO_SAMPLES_PER_PIXEL_SHORT_FLAG, RTAO_SAMPLES_PER_PIXEL_LONG_FLAG, MSyntax::kDouble);
+
 	syntax.addFlag(DOF_APERTURE_BLADE_COUNT_SHORT_FLAG, DOF_APERTURE_BLADE_COUNT_LONG_FLAG, MSyntax::kUnsigned);
 
 	syntax.enableQuery(true);
