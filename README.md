@@ -31,7 +31,7 @@ Bringing real-time ray-tracing to the Maya viewport using the [Wisp real-time ra
 
 ### 2. setup
 - **Users**
-   - follow instruction is readme file.
+   - follow instruction in README file included in the download.
 - **Developers**
     1. copy wisp-template.mod to:
         1. if ```MAYA_MODULE_PATH``` **is not** set, any of the following directories
