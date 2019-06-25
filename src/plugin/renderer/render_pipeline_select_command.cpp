@@ -57,17 +57,21 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 	auto camera = renderer.GetScenegraph().GetActiveCamera();
 
 	// Bloom settings for all frame graphs
-	std::optional<wr::BloomSettings> bloom_settings_deferred = GetRenderSettings<wr::BloomSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::DEFERRED));
-	std::optional<wr::BloomSettings> bloom_settings_hybrid = GetRenderSettings<wr::BloomSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING));
+	auto bloom_settings_deferred = GetRenderSettings<wr::BloomSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::DEFERRED));
+	auto bloom_settings_hybrid = GetRenderSettings<wr::BloomSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING));
 
 	// NVIDIA HBAO settings
-	std::optional<wr::HBAOSettings> hbao_settings = GetRenderSettings<wr::HBAOSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::DEFERRED));
+	auto hbao_settings = GetRenderSettings<wr::HBAOSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::DEFERRED));
 
 	// RTX AO settings
-	std::optional<wr::RTAOSettings> rtao_settings = GetRenderSettings<wr::RTAOSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING));
+	auto rtao_settings = GetRenderSettings<wr::RTAOSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING));
 
 	// Acceleration structure settings
-	std::optional<wr::ASBuildSettings> as_build_settings = GetRenderSettings<wr::ASBuildSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING));
+	auto as_build_settings = GetRenderSettings<wr::ASBuildSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING));
+
+	// RT shadow settings
+	auto rt_shadow_settings = GetRenderSettings<wr::RTShadowSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING));
+	auto rt_shadow_denoiser_settings = GetRenderSettings<wr::ShadowDenoiserSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING));
 
 	//#TODO: Refactor this, it is a real mess...
 	if (arg_data.isFlagSet(PIPELINE_SHORT_FLAG))
@@ -171,9 +175,33 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 	{
 		rtao_settings->m_runtime.sample_count = arg_data.flagArgumentDouble(RTAO_SAMPLES_PER_PIXEL_SHORT_FLAG, 0);
 	}
-	else if (arg_data.isFlagSet(AS_DISABLE_REBUILD_SHORT_FLAG))
+	else if (arg_data.isFlagSet(RT_SHADOWS_EPSILON_SHORT_FLAG))
 	{
-		as_build_settings->m_runtime.m_rebuild_as = arg_data.flagArgumentBool(AS_DISABLE_REBUILD_SHORT_FLAG, 0);
+		rt_shadow_settings->m_runtime.m_epsilon = arg_data.flagArgumentDouble(RT_SHADOWS_EPSILON_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(RT_SHADOWS_SAMPLES_PER_PIXEL_SHORT_FLAG))
+	{
+		rt_shadow_settings->m_runtime.m_sample_count = arg_data.flagArgumentInt(RT_SHADOWS_SAMPLES_PER_PIXEL_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(RT_SHADOWS_DENOISER_ALPHA_SHORT_FLAG))
+	{
+		rt_shadow_denoiser_settings->m_runtime.m_alpha = arg_data.flagArgumentDouble(RT_SHADOWS_DENOISER_ALPHA_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(RT_SHADOWS_DENOISER_MOMENTS_ALPHA_SHORT_FLAG))
+	{
+		rt_shadow_denoiser_settings->m_runtime.m_moments_alpha = arg_data.flagArgumentDouble(RT_SHADOWS_DENOISER_MOMENTS_ALPHA_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(RT_SHADOWS_DENOISER_L_PHI_SHORT_FLAG))
+	{
+		rt_shadow_denoiser_settings->m_runtime.m_l_phi = arg_data.flagArgumentDouble(RT_SHADOWS_DENOISER_L_PHI_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(RT_SHADOWS_DENOISER_N_PHI_SHORT_FLAG))
+	{
+		rt_shadow_denoiser_settings->m_runtime.m_n_phi = arg_data.flagArgumentDouble(RT_SHADOWS_DENOISER_L_PHI_SHORT_FLAG, 0);
+	}
+	else if (arg_data.isFlagSet(RT_SHADOWS_DENOISER_Z_PHI_SHORT_FLAG))
+	{
+		rt_shadow_denoiser_settings->m_runtime.m_z_phi = arg_data.flagArgumentDouble(RT_SHADOWS_DENOISER_L_PHI_SHORT_FLAG, 0);
 	}
 
 	// Save bloom settings
@@ -204,6 +232,18 @@ MStatus wmr::RenderPipelineSelectCommand::doIt(const MArgList& args)
 		SetRenderSettings<wr::ASBuildSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING), as_build_settings.value());
 	}
 
+	// Save shadow settings
+	if (rt_shadow_settings.has_value())
+	{
+		SetRenderSettings<wr::RTShadowSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING), rt_shadow_settings.value());
+	}
+
+	// Save shadow denoiser settings
+	if (rt_shadow_denoiser_settings.has_value())
+	{
+		SetRenderSettings<wr::ShadowDenoiserSettings>(frame_graph.GetSpecifiedFramegraph(RendererFrameGraphType::HYBRID_RAY_TRACING), rt_shadow_denoiser_settings.value());
+	}
+
 	// Auto-focus enabled
 	if (arg_data.flagArgumentBool(DOF_AUTO_FOCUS_SHORT_FLAG, 1))
 	{
@@ -217,15 +257,21 @@ MSyntax wmr::RenderPipelineSelectCommand::create_syntax()
 {
 	MSyntax syntax;
 
+	// Unsigned integers
 	syntax.addFlag(PIPELINE_SHORT_FLAG, PIPELINE_LONG_FLAG, MSyntax::kUnsigned);
-	
+	syntax.addFlag(DOF_APERTURE_BLADE_COUNT_SHORT_FLAG, DOF_APERTURE_BLADE_COUNT_LONG_FLAG, MSyntax::kUnsigned);
+	syntax.addFlag(RT_SHADOWS_SAMPLES_PER_PIXEL_SHORT_FLAG, RT_SHADOWS_SAMPLES_PER_PIXEL_LONG_FLAG, MSyntax::kUnsigned);
+
+	// Strings
 	syntax.addFlag(SKYBOX_SHORT_FLAG, SKYBOX_LONG_FLAG, MSyntax::kString);
 	
+	// Booleans
 	syntax.addFlag(DOF_AUTO_FOCUS_SHORT_FLAG, DOF_AUTO_FOCUS_LONG_FLAG, MSyntax::kBoolean);
 	syntax.addFlag(BLOOM_ENABLE_SHORT_FLAG, BLOOM_ENABLE_LONG_FLAG, MSyntax::kBoolean);
 	syntax.addFlag(HBAO_BLUR_SHORT_FLAG, HBAO_BLUR_LONG_FLAG, MSyntax::kBoolean);
 	syntax.addFlag(AS_DISABLE_REBUILD_SHORT_FLAG, AS_DISABLE_REBUILD_LONG_FLAG, MSyntax::kBoolean);
 
+	// Doubles
 	syntax.addFlag(DOF_FILM_SIZE_SHORT_FLAG, DOF_FILM_SIZE_LONG_FLAG, MSyntax::kDouble);
 	syntax.addFlag(DOF_BOKEH_SHAPE_SIZE_SHORT_FLAG, DOF_BOKEH_SHAPE_SIZE_LONG_FLAG, MSyntax::kDouble);
 	syntax.addFlag(HBAO_METERS_TO_UNITS_SHORT_FLAG, HBAO_METERS_TO_UNITS_LONG_FLAG, MSyntax::kDouble);
@@ -237,8 +283,12 @@ MSyntax wmr::RenderPipelineSelectCommand::create_syntax()
 	syntax.addFlag(RTAO_RADIUS_SHORT_FLAG, RTAO_RADIUS_LONG_FLAG, MSyntax::kDouble);
 	syntax.addFlag(RTAO_POWER_SHORT_FLAG, RTAO_POWER_LONG_FLAG, MSyntax::kDouble);
 	syntax.addFlag(RTAO_SAMPLES_PER_PIXEL_SHORT_FLAG, RTAO_SAMPLES_PER_PIXEL_LONG_FLAG, MSyntax::kDouble);
-
-	syntax.addFlag(DOF_APERTURE_BLADE_COUNT_SHORT_FLAG, DOF_APERTURE_BLADE_COUNT_LONG_FLAG, MSyntax::kUnsigned);
+	syntax.addFlag(RT_SHADOWS_EPSILON_SHORT_FLAG, RT_SHADOWS_EPSILON_LONG_FLAG, MSyntax::kDouble);
+	syntax.addFlag(RT_SHADOWS_DENOISER_ALPHA_SHORT_FLAG, RT_SHADOWS_DENOISER_ALPHA_LONG_FLAG, MSyntax::kDouble);
+	syntax.addFlag(RT_SHADOWS_DENOISER_MOMENTS_ALPHA_SHORT_FLAG, RT_SHADOWS_DENOISER_MOMENTS_ALPHA_LONG_FLAG, MSyntax::kDouble);
+	syntax.addFlag(RT_SHADOWS_DENOISER_L_PHI_SHORT_FLAG, RT_SHADOWS_DENOISER_L_PHI_LONG_FLAG, MSyntax::kDouble);
+	syntax.addFlag(RT_SHADOWS_DENOISER_N_PHI_SHORT_FLAG, RT_SHADOWS_DENOISER_N_PHI_LONG_FLAG, MSyntax::kDouble);
+	syntax.addFlag(RT_SHADOWS_DENOISER_Z_PHI_SHORT_FLAG, RT_SHADOWS_DENOISER_Z_PHI_LONG_FLAG, MSyntax::kDouble);
 
 	syntax.enableQuery(true);
 	syntax.enableEdit(false);

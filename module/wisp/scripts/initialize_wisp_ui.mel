@@ -76,14 +76,14 @@ global proc showWispSettings()
 
         frameLayout -label "Ray Traced Shadows" rtshadow_settings;
           columnLayout;
-            floatSliderGrp -label "Epsilon" -fieldMinValue 0 -fieldMaxValue 15 -minValue 0 -maxValue 15 -value 0.01;
-              intSliderGrp -label "Samples Per Pixel" -fieldMinValue 1 -fieldMaxValue 256 -minValue 1 -maxValue 256 -value 1;
+            floatSliderGrp -label "Epsilon" -fieldMinValue 0 -fieldMaxValue 15 -minValue 0 -maxValue 15 -value 0.01 -dragCommand "wisp_handle_ui_input -rse #1";
+              intSliderGrp -label "Samples Per Pixel" -fieldMinValue 1 -fieldMaxValue 256 -minValue 1 -maxValue 256 -value 1 -dragCommand "wisp_handle_ui_input -rss #1";
                 text " ";
-                floatSliderGrp -label "Denoiser - Alpha" -fieldMinValue 0.001 -fieldMaxValue 1 -minValue 0.001 -maxValue 1 -value 0.05;
-                floatSliderGrp -label "Denoiser - Moments Alpha" -fieldMinValue 0.001 -fieldMaxValue 1 -minValue 0.001 -maxValue 1 -value 0.2;
-                floatSliderGrp -label "Denoiser - L Phi" -fieldMinValue 0.1 -fieldMaxValue 16 -minValue 0.1 -maxValue 16 -value 4;
-                floatSliderGrp -label "Denoiser - N Phi" -fieldMinValue 1.0 -fieldMaxValue 360 -minValue 1.0 -maxValue 360 -value 128;
-                floatSliderGrp -label "Denoiser - Z Phi" -fieldMinValue 0.1 -fieldMaxValue 16 -minValue 0.1 -maxValue 16 -value 1;
+                floatSliderGrp -label "Denoiser - Alpha" -fieldMinValue 0.001 -fieldMaxValue 1 -minValue 0.001 -maxValue 1 -value 0.05 -dragCommand "wisp_handle_ui_input -dna #1";
+                floatSliderGrp -label "Denoiser - Moments Alpha" -fieldMinValue 0.001 -fieldMaxValue 1 -minValue 0.001 -maxValue 1 -value 0.2 -dragCommand "wisp_handle_ui_input -dma #1";
+                floatSliderGrp -label "Denoiser - L Phi" -fieldMinValue 0.1 -fieldMaxValue 16 -minValue 0.1 -maxValue 16 -value 4 -dragCommand "wisp_handle_ui_input -dnl #1";
+                floatSliderGrp -label "Denoiser - N Phi" -fieldMinValue 1.0 -fieldMaxValue 360 -minValue 1.0 -maxValue 360 -value 128 -dragCommand "wisp_handle_ui_input -dnn #1";
+                floatSliderGrp -label "Denoiser - Z Phi" -fieldMinValue 0.1 -fieldMaxValue 16 -minValue 0.1 -maxValue 16 -value 1 -dragCommand "wisp_handle_ui_input -dnz #1";
                 setParent ..;
               setParent ..;
 
@@ -137,5 +137,5 @@ global proc initialize_wisp_ui()
  		menuItem -label "PBR Materials Visualization" -command "wisp_handle_ui_input -p 0";
  		menuItem -label "Real-Time Final Render Preview" -command "wisp_handle_ui_input -p 1";
  		menuItem -label "Configure Skybox" -command "fileBrowser(\"onOpen\", \"Open\", \"\", 0)";
- 		menuItem -label "Configure depth of field" -command "showWispSettings()";
+ 		menuItem -label "Wisp Settings" -command "showWispSettings()";
 }

@@ -67,6 +67,21 @@ namespace wmr
 	const constexpr char* RTAO_SAMPLES_PER_PIXEL_LONG_FLAG = "-rtao_spp";
 
 	// Ray-traced shadows
+	const constexpr char* RT_SHADOWS_EPSILON_SHORT_FLAG = "-rse";
+	const constexpr char* RT_SHADOWS_SAMPLES_PER_PIXEL_SHORT_FLAG = "-rss";
+	const constexpr char* RT_SHADOWS_DENOISER_ALPHA_SHORT_FLAG = "-dna";
+	const constexpr char* RT_SHADOWS_DENOISER_MOMENTS_ALPHA_SHORT_FLAG = "-dma";
+	const constexpr char* RT_SHADOWS_DENOISER_L_PHI_SHORT_FLAG = "-dnl";
+	const constexpr char* RT_SHADOWS_DENOISER_N_PHI_SHORT_FLAG = "-dnn";
+	const constexpr char* RT_SHADOWS_DENOISER_Z_PHI_SHORT_FLAG = "-dnz";
+
+	const constexpr char* RT_SHADOWS_EPSILON_LONG_FLAG = "-rt_shadows_epsilon";
+	const constexpr char* RT_SHADOWS_SAMPLES_PER_PIXEL_LONG_FLAG = "-rt_shadows_spp";
+	const constexpr char* RT_SHADOWS_DENOISER_ALPHA_LONG_FLAG = "-rt_shadows_denoise_alpha";
+	const constexpr char* RT_SHADOWS_DENOISER_MOMENTS_ALPHA_LONG_FLAG = "-rt_shadows_denoise_moments_alpha";
+	const constexpr char* RT_SHADOWS_DENOISER_L_PHI_LONG_FLAG = "-rt_shadows_denoise_l_phi";
+	const constexpr char* RT_SHADOWS_DENOISER_N_PHI_LONG_FLAG = "-rt_shadows_denoise_n_phi";
+	const constexpr char* RT_SHADOWS_DENOISER_Z_PHI_LONG_FLAG = "-rt_shadows_denoise_z_phi";
 
 	// Acceleration structure
 	const constexpr char* AS_DISABLE_REBUILD_SHORT_FLAG = "-dr";
