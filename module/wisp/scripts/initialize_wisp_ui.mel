@@ -47,8 +47,7 @@ global proc showWispSettings()
 
         frameLayout -label "Bloom" bloom_settings;
           columnLayout;
-            checkBox -label "Enable" -value off -onCommand "wisp_handle_ui_input -be on" -offCommand "wisp_handle_ui_input -be on";
-            floatSliderGrp -label "Intensity" -fieldMinValue 0 -fieldMaxValue 500 -minValue 0 -maxValue 500 -value 1 -dragCommand "wisp_handle_ui_input -bi #1";
+            checkBox -label "Enable" -value on -onCommand "wisp_handle_ui_input -be on" -offCommand "wisp_handle_ui_input -be off";
             setParent ..;
           setParent ..;
 
