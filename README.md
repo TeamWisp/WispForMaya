@@ -20,7 +20,7 @@ Bringing real-time ray-tracing to the Maya viewport using the [Wisp real-time ra
 # Installation
 ### 1. Download
 - **Users**
-    - Expect a installer soon. For now follow developer instructions.
+    Download latest release from the [releases](https://github.com/TeamWisp/WispForMaya/releases) page.
 - **Developers**
    1. download or clone repository.
    2. make sure you have CMake 3.14 or higher, Visual Studio 2019, and Windows SDK 10.0.17763.0 or newer installed
@@ -31,7 +31,7 @@ Bringing real-time ray-tracing to the Maya viewport using the [Wisp real-time ra
 
 ### 2. setup
 - **Users**
-    - Expect a installer soon. For now follow developer instructions.
+   - follow instruction in README file included in the download.
 - **Developers**
     1. copy wisp-template.mod to:
         1. if ```MAYA_MODULE_PATH``` **is not** set, any of the following directories
@@ -99,10 +99,12 @@ To make it easy to launch the *Windows Remote Debugger*, click the arrow next to
 Thanks a lot, [Nick Cullen](https://nickcullen.net/blog/misc-tutorials/how-to-debug-a-maya-2016-c-plugin-using-visual-studio-<version>/), for the step-by-step instructions on how to get the Remote Windows Debugger to work with Autodesk Maya 2018.
 
 # Known issues
- - Hardcoded skybox.
- - Crash when using big models. Size unknown. Memory is limited.
- - Combining models leaves ghost models.
- - Using extrude and some other mesh editing tools work but require forced synchronization. (Force a model update by pressing 1/2/3/1, switching viewport 2.0 rendering mode).
- - Mesh outlines are not rendered properly in some cases.
- - The plug-in crashes Maya when the plug-in gets unloaded.
- - [NVIDIA RTX-series] Meshes might show black or wrong material. Add one more unique material and mesh.
+ - Crash when using big models. memory limitation.
+- Crash when using lots of objects, memory limitation.
+- Only supported PBR shader: **Arnold Standard Surface Shader**.
+- Outline not rendered properly in some cases, especially when dealing with small scales.
+- Nurbs not supported
+- Animations not supported / not updating model
+- Deleting the result of a boolean operation introduces ghost models
+- Unloading the plug-in **may crash Maya**.
+See [issues](https://github.com/TeamWisp/WispForMaya/issues) page for more detail
