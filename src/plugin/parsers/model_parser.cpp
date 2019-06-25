@@ -418,20 +418,6 @@ namespace wmr
 		// Make an MObject from the plug node
 		MObject object( plug.node() );
 
-		// Maya adds "__PrenotatoPerDuplicare_" in front of a temporary mesh duplicate, those objects can be ignored
-		// We only care about the final object
-		auto dep_node_fn = MFnDependencyNode(object);
-
-		std::string node_name = dep_node_fn.name().asChar();
-		auto result = node_name.find(settings::INTERMEDIATE_MESH_IGNORE_PREFIX);
-
-		// Ignore temporary objects
-		if (result != std::string::npos &&
-			result == 0)
-		{
-			return;
-		}
-
 		MStatus status = MS::kSuccess;
 		// Create mesh
 		MFnMesh mesh( object, &status );
@@ -546,6 +532,9 @@ void wmr::ModelParser::SubscribeObject( MObject & maya_object )
 {
 	MStatus status = MS::kSuccess;
 
+	MFnMesh fn_mesh(maya_object);
+
+	//Always 
 	// For this callback, we want to use a temporary functions to gather data from a mesh when it's added to the scene
 	auto meshCreatedID = MNodeMessage::addAttributeChangedCallback(
 		maya_object,
@@ -559,7 +548,21 @@ void wmr::ModelParser::SubscribeObject( MObject & maya_object )
 		LOGC("Could not subscribe object to attribute changed callback.");
 	}
 
-	m_mesh_added_callback_vector.push_back( std::make_pair( maya_object, meshCreatedID ) );
+	m_mesh_added_callback_vector.push_back(std::make_pair(maya_object, meshCreatedID));
+
+	// Check if mesh has vertices already
+	MPointArray temp_point_array;
+	fn_mesh.getPoints(temp_point_array);
+	// When wesh has vertices, manually call the callback function for added mesh
+	if (temp_point_array.length() > 0) {
+		MPlug plug = fn_mesh.findPlug("outMesh", status);
+		AttributeMeshAddedCallback(
+			MNodeMessage::AttributeMessage::kAttributeSet,
+			plug,
+			plug, // Reuse the same mesh plug for `other_plug`. It's not being used, but has to be passed.
+			this
+		);
+	}
 
 }
 
