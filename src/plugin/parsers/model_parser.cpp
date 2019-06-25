@@ -542,7 +542,7 @@ void wmr::ModelParser::SubscribeObject( MObject & maya_object )
 		this,
 		&status
 	);
-
+	 
 	if (status != MS::kSuccess)
 	{
 		LOGC("Could not subscribe object to attribute changed callback.");
@@ -556,7 +556,7 @@ void wmr::ModelParser::SubscribeObject( MObject & maya_object )
 	// When wesh has vertices, manually call the callback function for added mesh
 	if (temp_point_array.length() > 0) {
 		MPlug plug = fn_mesh.findPlug("outMesh", status);
-		AttributeMeshAddedCallback(
+		AttributeMeshAddedCallback( 
 			MNodeMessage::AttributeMessage::kAttributeSet,
 			plug,
 			plug, // Reuse the same mesh plug for `other_plug`. It's not being used, but has to be passed.
