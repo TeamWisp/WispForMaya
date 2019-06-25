@@ -1,0 +1,17 @@
+global proc loadWispUI()
+{
+    if(`menu -exists Wisp`)
+    {
+        deleteUI Wisp;
+    }
+
+    global string $gMainWindow;
+    setParent($gMainWindow);
+    
+    menu -label "Wisp" -to true -aob true Wisp;
+        menuItem -label "Deferred" -command ChangeWispRenderingPipeline "0";
+        menuItem -label "Hybrid Ray-Tracing" -command ChangeWispRenderingPipeline "1";
+        menuItem -label "Full Ray-Tracing" -command ChangeWispRenderingPipeline "2";
+}
+
+loadWispUI();

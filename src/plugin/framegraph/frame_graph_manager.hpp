@@ -84,6 +84,9 @@ namespace wmr
 		/*! /return Pair containing the width and height respectively. */
 		std::pair<std::uint32_t, std::uint32_t> GetCurrentDimensions() const noexcept;
 
+		//! Get the specified frame graph
+		wr::FrameGraph* GetSpecifiedFramegraph(RendererFrameGraphType type) const noexcept;
+
 	private:
 		//! Configure a frame graph for a full deferred rendering pipeline
 		void CreateDeferredPipeline() noexcept;

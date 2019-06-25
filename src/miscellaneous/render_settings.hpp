@@ -87,7 +87,7 @@ namespace wmr
 		{
 			if (frame_graph->HasTask<wr::RTAOData>())
 			{
-				frame_graph->UpdateSettings(settings);
+				frame_graph->UpdateSettings<wr::RTAOData>(settings);
 			}
 		}
 		// Horizon Based Ambient Oclussion settings
@@ -95,7 +95,7 @@ namespace wmr
 		{
 			if (frame_graph->HasTask<wr::HBAOData>())
 			{
-				frame_graph->UpdateSettings(settings);
+				frame_graph->UpdateSettings<wr::HBAOData>(settings);
 			}
 		}
 		// Acceleration Build settings
@@ -103,7 +103,7 @@ namespace wmr
 		{
 			if (frame_graph->HasTask<wr::ASBuildData>())
 			{
-				frame_graph->UpdateSettings(settings);
+				frame_graph->UpdateSettings<wr::ASBuildData>(settings);
 			}
 		}
 		// Ray Tracing Shadow settings
@@ -111,7 +111,7 @@ namespace wmr
 		{
 			if (frame_graph->HasTask<wr::RTShadowData>())
 			{
-				frame_graph->UpdateSettings(settings);
+				frame_graph->UpdateSettings<wr::RTShadowData>(settings);
 			}
 		}
 		// Ray Tracing Shadow Denoiser settings
@@ -119,7 +119,7 @@ namespace wmr
 		{
 			if (frame_graph->HasTask<wr::ShadowDenoiserData>())
 			{
-				frame_graph->UpdateSettings(settings);
+				frame_graph->UpdateSettings<wr::ShadowDenoiserData>(settings);
 			}
 		}
 		// Bloom settings
@@ -127,7 +127,7 @@ namespace wmr
 		{
 			if (frame_graph->HasTask<wr::BloomCompostionData>())
 			{
-				frame_graph->UpdateSettings(settings);
+				frame_graph->UpdateSettings<wr::BloomCompostionData>(settings);
 			}
 		}
 	}

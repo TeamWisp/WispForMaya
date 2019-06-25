@@ -161,6 +161,11 @@ namespace wmr
 		return std::pair<std::uint32_t, std::uint32_t>(m_width, m_height);
 	}
 
+	wr::FrameGraph* FrameGraphManager::GetSpecifiedFramegraph(RendererFrameGraphType type) const noexcept
+	{
+		return m_renderer_frame_graphs[static_cast<size_t>(type)];
+	}
+
 	void FrameGraphManager::CreateDeferredPipeline() noexcept
 	{
 		LOG("Starting deferred pipeline creation.");
