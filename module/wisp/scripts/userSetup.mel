@@ -5,13 +5,14 @@ global proc loadWispUI()
         deleteUI Wisp;
     }
 
+    // Add the drop-down menu that handles the pipeline selection and skybox update UI
     global string $gMainWindow;
     setParent($gMainWindow);
-    
+
     menu -label "Wisp" -to true -aob true Wisp;
-        menuItem -label "Deferred" -command ChangeWispRenderingPipeline "0";
-        menuItem -label "Hybrid Ray-Tracing" -command ChangeWispRenderingPipeline "1";
-        menuItem -label "Full Ray-Tracing" -command ChangeWispRenderingPipeline "2";
+	    menuItem -label "PBR Materials Visualization" -command "wisp_handle_ui_input -p 0";
+	    menuItem -label "Real-Time Final Render Preview" -command "wisp_handle_ui_input -p 1";
+	    menuItem -label "Configure Skybox" -command "fileBrowser(\"onOpen\", \"Open\", \"\", 0)";
 }
 
 loadWispUI();
