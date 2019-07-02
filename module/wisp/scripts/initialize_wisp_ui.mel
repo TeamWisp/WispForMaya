@@ -110,21 +110,21 @@ global proc wisp_viewport_overrideOptionBox()
   showWindow window_wispformaya_settings;
 }
 
-
 global proc initialize_wisp_ui()
 {
-  if(`menu -exists Wisp`)
-	{
- 		deleteUI Wisp;
- 	}
+    if(`menu -exists Wisp`)
+    {
+        deleteUI Wisp;
+    }
 
- 	global string $gMainWindow;
- 	setParent($gMainWindow);
+    // Add the drop-down menu that handles the pipeline selection and skybox update UI
+    global string $gMainWindow;
+    setParent($gMainWindow);
 
- 	menu -label "Wisp" -to true -aob true Wisp;
- 		menuItem -label "PBR Materials Visualization" -command "wisp_handle_ui_input -p 0";
- 		menuItem -label "Real-Time Final Render Preview" -command "wisp_handle_ui_input -p 1";
- 		menuItem -label "Configure Skybox" -command "fileBrowser(\"onOpen\", \"Open\", \"\", 0)";
+    menu -label "Wisp" -to true -aob true Wisp;
+	    menuItem -label "PBR Materials Visualization" -command "wisp_handle_ui_input -p 0";
+	    menuItem -label "Real-Time Final Render Preview" -command "wisp_handle_ui_input -p 1";
+	    menuItem -label "Configure Skybox" -command "fileBrowser(\"onOpen\", \"Open\", \"\", 0)";
 }
 
 
