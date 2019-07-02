@@ -94,6 +94,9 @@ void wmr::CameraParser::UpdateViewportCamera(const MString & panel_name)
 	m_viewport_camera->m_f_number = camera_functions.fStop();
 	m_viewport_camera->m_focus_dist = camera_functions.focusDistance();
 	m_viewport_camera->m_focal_length = camera_functions.focalLength();
+	// Get DoF region scale
+	// There is no function to get this value
+	m_viewport_camera->m_dof_range = camera_functions.findPlug("focusRegionScale").asFloat();
 
 	m_viewport_camera->SetFov(DirectX::XMConvertToDegrees(camera_functions.horizontalFieldOfView()));
 	m_viewport_camera->SetAspectRatio((float)current_viewport_width / (float)current_viewport_height);
